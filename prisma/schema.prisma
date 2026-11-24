@@ -1,0 +1,733 @@
+// Vendoor × ABG Work Tracker — data model (PRD section 8, plus additive tables documented in docs/PLAN.md §3 and §10).
+// Deletes are soft (archivedAt). All timestamps are stored in UTC; the UI renders Africa/Cairo.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ───────────────────────────── enums ─────────────────────────────
+
+enum Role {
+  owner
+  admin
+  requester
+  abg_lead
+  abg_member
+}
+
+enum TeamSide {
+  requester // Vendoor
+  delivery // ABG
+}
+
+enum MemberStatus {
+  invited
+  active
+  deactivated
+}
+
+enum TaskType {
+  bug
+  change
+  feature
+  question
+  ops
+}
+
+enum TaskStatus {
+  triage
+  needs_info
+  planned
+  in_progress
+  shipped
+  reopened
+  done
+  closed
+}
+
+enum Priority {
+  urgent
+  high
+  medium
+  low
+}
+
+enum CloseReason {
+  duplicate
+  wont_do
+  canceled
+}
+
+enum HowOften {
+  once
+  sometimes
+  always
+}
+
+enum RelationKind {
+  related
+  blocks
+  duplicate_of
+}
+
+enum ReleaseType {
+  planned
+  hotfix
+}
+
+enum ReleaseState {
+  upcoming
+  released
+}
+
+enum Health {
+  on_track
+  at_risk
+  off_track
+}
+
+enum IncidentState {
+  investigating
+  identified
+  monitoring
+  resolved
+}
+
+enum Channel {
+  in_app
+  email
+  whatsapp
+}
+
+enum CommentKind {
+  comment
+  ask_info
+  answer
+  reopen_note
+  status_request
+  close_note
+  verify_note
+}
+
+enum ProcessingState {
+  pending
+  ready
+  failed
+}
+
+enum HolidayCertainty {
+  confirmed
+  estimated
+}
+
+// ───────────────────────────── workspace & calendar ─────────────────────────────
+
+model Workspace {
+  id                        String   @id @default(uuid())
+  name                      String
+  timezone                  String   @default("Africa/Cairo")
+  workingDays               Int[]    @default([0, 1, 2, 3, 4]) // 0 = Sunday
+  workDayStartMin           Int      @default(600) // 10:00
+  workDayEndMin             Int      @default(1080) // 18:00
+  verifyReminderWorkingDays Int      @default(3)
+  unverifiedWorkingDays     Int      @default(7)
+  slaAtRiskPercentLeft      Int      @default(25)
+  createdAt                 DateTime @default(now()) @db.Timestamptz
+  updatedAt                 DateTime @updatedAt @db.Timestamptz
+
+  teams      Team[]
+  projects   Project[]
+  holidays   Holiday[]
+  seasons    WorkSeason[]
+  slaTargets SlaTarget[]
+}
+
+model SlaTarget {
+  id                   String   @id @default(uuid())
+  workspaceId          String
+  priority             Priority
+  firstResponseMinutes Int // working minutes
+  resolutionMinutes    Int? // working minutes; null = none
+  workspace            Workspace @relation(fields: [workspaceId], references: [id])
+
+  @@unique([workspaceId, priority])
+}
+
+model Holiday {
+  id          String           @id @default(uuid())
+  workspaceId String
+  date        DateTime         @db.Date
+  name        String
+  certainty   HolidayCertainty @default(confirmed)
+  workspace   Workspace        @relation(fields: [workspaceId], references: [id])
+
+  @@unique([workspaceId, date])
+}
+
+/// Optional period with different working hours (e.g. Ramadan).
+model WorkSeason {
+  id          String    @id @default(uuid())
+  workspaceId String
+  name        String
+  startDate   DateTime  @db.Date
+  endDate     DateTime  @db.Date
+  startMin    Int
+  endMin      Int
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+}
+
+model Team {
+  id          String    @id @default(uuid())
+  workspaceId String
+  name        String
+  side        TeamSide
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+  members     Member[]
+
+  @@unique([workspaceId, side])
+}
+
+// ───────────────────────────── members & auth (Better Auth tables) ─────────────────────────────
+
+/// A person. Also the Better Auth "user" model.
+model Member {
+  id            String       @id @default(uuid())
+  name          String
+  email         String       @unique
+  emailVerified Boolean      @default(false)
+  image         String?
+  teamId        String
+  handle        String       @unique
+  role          Role
+  status        MemberStatus @default(active)
+  locale        String       @default("en")
+  theme         String       @default("light")
+  lastActiveAt  DateTime?    @db.Timestamptz
+  createdAt     DateTime     @default(now()) @db.Timestamptz
+  updatedAt     DateTime     @updatedAt @db.Timestamptz
+  archivedAt    DateTime?    @db.Timestamptz
+
+  team              Team               @relation(fields: [teamId], references: [id])
+  sessions          Session[]
+  accounts          Account[]
+  notificationPrefs NotificationPref[]
+
+  requestedTasks Task[]         @relation("TaskRequester")
+  createdTasks   Task[]         @relation("TaskCreator")
+  assignedTasks  Task[]         @relation("TaskAssignee")
+  verifiedTasks  Task[]         @relation("TaskVerifier")
+  comments       Comment[]
+  notifications  Notification[]
+  followers      Follower[]
+  savedViews     SavedView[]
+  occurrences    Occurrence[]
+  attachments    Attachment[]
+  activity       ActivityEvent[]
+  credentials    AccessCredential[]
+  releases       Release[]
+  reactions      Reaction[]
+  vendoorLeadOf  Project[]      @relation("VendoorLead")
+  abgLeadOf      Project[]      @relation("AbgLead")
+
+  @@map("member")
+}
+
+model Session {
+  id        String   @id @default(uuid())
+  expiresAt DateTime @db.Timestamptz
+  token     String   @unique
+  createdAt DateTime @default(now()) @db.Timestamptz
+  updatedAt DateTime @updatedAt @db.Timestamptz
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      Member   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id @default(uuid())
+  accountId             String
+  providerId            String
+  userId                String
+  user                  Member    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime? @db.Timestamptz
+  refreshTokenExpiresAt DateTime? @db.Timestamptz
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now()) @db.Timestamptz
+  updatedAt             DateTime  @updatedAt @db.Timestamptz
+
+  @@index([userId])
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id @default(uuid())
+  identifier String
+  value      String
+  expiresAt  DateTime @db.Timestamptz
+  createdAt  DateTime @default(now()) @db.Timestamptz
+  updatedAt  DateTime @updatedAt @db.Timestamptz
+
+  @@index([identifier])
+  @@map("verification")
+}
+
+model RateLimit {
+  id          String @id @default(uuid())
+  key         String @unique
+  count       Int
+  lastRequest BigInt
+
+  @@map("rate_limit")
+}
+
+model NotificationPref {
+  memberId String
+  event    String
+  inApp    Boolean @default(true)
+  email    Boolean @default(true)
+  whatsapp Boolean @default(false)
+  member   Member  @relation(fields: [memberId], references: [id])
+
+  @@id([memberId, event])
+}
+
+model Invitation {
+  id          String    @id @default(uuid())
+  email       String
+  name        String
+  role        Role
+  teamId      String
+  tokenHash   String    @unique
+  invitedById String
+  expiresAt   DateTime  @db.Timestamptz
+  acceptedAt  DateTime? @db.Timestamptz
+  createdAt   DateTime  @default(now()) @db.Timestamptz
+}
+
+// ───────────────────────────── projects ─────────────────────────────
+
+model Project {
+  id             String    @id @default(uuid())
+  workspaceId    String
+  key            String    @unique
+  name           String
+  description    String?
+  health         Health    @default(on_track)
+  vendoorLeadId  String?
+  abgLeadId      String?
+  nextTaskNumber Int       @default(1)
+  position       Int       @default(0)
+  createdAt      DateTime  @default(now()) @db.Timestamptz
+  updatedAt      DateTime  @updatedAt @db.Timestamptz
+  archivedAt     DateTime? @db.Timestamptz
+
+  workspace   Workspace         @relation(fields: [workspaceId], references: [id])
+  vendoorLead Member?           @relation("VendoorLead", fields: [vendoorLeadId], references: [id])
+  abgLead     Member?           @relation("AbgLead", fields: [abgLeadId], references: [id])
+  categories  ProjectCategory[]
+  tasks       Task[]
+  updates     ProjectUpdate[]
+}
+
+model ProjectCategory {
+  id         String    @id @default(uuid())
+  projectId  String
+  name       String
+  position   Int
+  archivedAt DateTime? @db.Timestamptz
+  project    Project   @relation(fields: [projectId], references: [id])
+  tasks      Task[]
+}
+
+// ───────────────────────────── tasks ─────────────────────────────
+
+model Task {
+  id                String      @id @default(uuid())
+  projectId         String
+  number            Int
+  key               String      @unique
+  title             String
+  description       String      @default("") // Markdown
+  type              TaskType
+  status            TaskStatus  @default(triage)
+  previousStatus    TaskStatus?
+  statusChangedAt   DateTime    @default(now()) @db.Timestamptz
+  priority          Priority?
+  suggestedPriority Priority?
+  categoryId        String?
+  requesterId       String
+  createdById       String
+  assigneeId        String?
+  parentId          String?
+  currentReleaseId  String?
+
+  currentBehaviour  String?
+  expectedBehaviour String?
+  whyItMatters      String?
+  howOften          HowOften?
+  isOrderRelated    Boolean   @default(false)
+  accounts          String[]
+  orderCodes        String[]
+
+  decisionText        String?
+  decisionUpdatedAt   DateTime? @db.Timestamptz
+  decisionUpdatedById String?
+
+  dueAt                 DateTime? @db.Timestamptz
+  slaClockStartedAt     DateTime  @default(now()) @db.Timestamptz
+  slaFirstResponseDueAt DateTime? @db.Timestamptz
+  slaResolutionDueAt    DateTime? @db.Timestamptz
+  firstResponseAt       DateTime? @db.Timestamptz
+  shippedAt             DateTime? @db.Timestamptz
+  verifyReminderSentAt  DateTime? @db.Timestamptz
+  verifiedAt            DateTime? @db.Timestamptz
+  verifiedById          String?
+  reopenCount           Int       @default(0)
+  closeReason           CloseReason?
+  closeNote             String?
+  closedAt              DateTime? @db.Timestamptz
+  cancelProposedById    String?
+  cancelProposedReason  String?
+  occurrenceCount       Int       @default(0)
+  attachmentCount       Int       @default(0)
+  createdAt             DateTime  @default(now()) @db.Timestamptz
+  updatedAt             DateTime  @updatedAt @db.Timestamptz
+  archivedAt            DateTime? @db.Timestamptz
+
+  project        Project            @relation(fields: [projectId], references: [id])
+  category       ProjectCategory?   @relation(fields: [categoryId], references: [id])
+  requester      Member             @relation("TaskRequester", fields: [requesterId], references: [id])
+  createdBy      Member             @relation("TaskCreator", fields: [createdById], references: [id])
+  assignee       Member?            @relation("TaskAssignee", fields: [assigneeId], references: [id])
+  verifiedBy     Member?            @relation("TaskVerifier", fields: [verifiedById], references: [id])
+  parent         Task?              @relation("Subtasks", fields: [parentId], references: [id])
+  subtasks       Task[]             @relation("Subtasks")
+  currentRelease Release?           @relation(fields: [currentReleaseId], references: [id])
+  comments       Comment[]
+  occurrences    Occurrence[]
+  attachments    Attachment[]
+  followers      Follower[]
+  statusSpans    TaskStatusSpan[]
+  releaseTasks   ReleaseTask[]
+  relationsFrom  TaskRelation[]     @relation("RelFrom")
+  relationsTo    TaskRelation[]     @relation("RelTo")
+  credentials    AccessCredential[]
+  descriptionVersions DescriptionVersion[]
+
+  @@unique([projectId, number])
+  @@index([status])
+  @@index([assigneeId, status])
+  @@index([requesterId, status])
+  @@index([projectId, status])
+  @@index([dueAt])
+  @@index([updatedAt])
+  @@index([parentId])
+}
+
+model TaskKeyAlias {
+  key    String @id
+  taskId String
+}
+
+model DescriptionVersion {
+  id        String   @id @default(uuid())
+  taskId    String
+  authorId  String
+  body      String
+  createdAt DateTime @default(now()) @db.Timestamptz
+  task      Task     @relation(fields: [taskId], references: [id])
+
+  @@index([taskId, createdAt])
+}
+
+model TaskStatusSpan {
+  id        String     @id @default(uuid())
+  taskId    String
+  status    TaskStatus
+  enteredAt DateTime   @db.Timestamptz
+  leftAt    DateTime?  @db.Timestamptz
+  actorId   String?
+  task      Task       @relation(fields: [taskId], references: [id])
+
+  @@index([taskId, enteredAt])
+}
+
+model Follower {
+  taskId    String
+  memberId  String
+  following Boolean @default(true)
+  source    String
+  task      Task    @relation(fields: [taskId], references: [id])
+  member    Member  @relation(fields: [memberId], references: [id])
+
+  @@id([taskId, memberId])
+}
+
+/// Account access for a task (login the team needs to reproduce or fix).
+/// The password is encrypted at rest (AES-256-GCM, key in CREDENTIALS_KEY).
+model AccessCredential {
+  id                String    @id @default(uuid())
+  taskId            String
+  label             String?
+  username          String
+  passwordEncrypted String?
+  url               String?
+  note              String?
+  createdById       String
+  createdAt         DateTime  @default(now()) @db.Timestamptz
+  updatedAt         DateTime  @updatedAt @db.Timestamptz
+  archivedAt        DateTime? @db.Timestamptz
+  task              Task      @relation(fields: [taskId], references: [id])
+  createdBy         Member    @relation(fields: [createdById], references: [id])
+
+  @@index([taskId])
+}
+
+model Occurrence {
+  id               String    @id @default(uuid())
+  taskId           String
+  reportedById     String
+  accounts         String[]
+  orderCodes       String[]
+  happenedAt       DateTime  @db.Timestamptz
+  note             String?
+  mergedFromTaskId String?
+  createdAt        DateTime  @default(now()) @db.Timestamptz
+  updatedAt        DateTime  @updatedAt @db.Timestamptz
+  archivedAt       DateTime? @db.Timestamptz
+  task             Task      @relation(fields: [taskId], references: [id])
+  reportedBy       Member    @relation(fields: [reportedById], references: [id])
+  attachments      Attachment[]
+
+  @@index([taskId, happenedAt])
+}
+
+model Comment {
+  id         String      @id @default(uuid())
+  taskId     String
+  authorId   String
+  kind       CommentKind @default(comment)
+  body       String
+  isInternal Boolean     @default(false)
+  editedAt   DateTime?   @db.Timestamptz
+  createdAt  DateTime    @default(now()) @db.Timestamptz
+  updatedAt  DateTime    @updatedAt @db.Timestamptz
+  archivedAt DateTime?   @db.Timestamptz
+  task       Task        @relation(fields: [taskId], references: [id])
+  author     Member      @relation(fields: [authorId], references: [id])
+  reactions  Reaction[]
+  attachments Attachment[]
+
+  @@index([taskId, createdAt])
+}
+
+model Reaction {
+  commentId String
+  memberId  String
+  emoji     String
+  createdAt DateTime @default(now()) @db.Timestamptz
+  comment   Comment  @relation(fields: [commentId], references: [id])
+  member    Member   @relation(fields: [memberId], references: [id])
+
+  @@id([commentId, memberId, emoji])
+}
+
+model Attachment {
+  id              String          @id @default(uuid())
+  taskId          String?
+  commentId       String?
+  occurrenceId    String?
+  incidentId      String?
+  uploadedById    String
+  storageKey      String          @unique
+  playbackKey     String?
+  posterKey       String?
+  fileName        String
+  mime            String
+  size            BigInt
+  durationSec     Float?
+  width           Int?
+  height          Int?
+  waveform        Json?
+  processingState ProcessingState @default(pending)
+  createdAt       DateTime        @default(now()) @db.Timestamptz
+  updatedAt       DateTime        @updatedAt @db.Timestamptz
+  archivedAt      DateTime?       @db.Timestamptz
+  task            Task?           @relation(fields: [taskId], references: [id])
+  comment         Comment?        @relation(fields: [commentId], references: [id])
+  occurrence      Occurrence?     @relation(fields: [occurrenceId], references: [id])
+  incident        Incident?       @relation(fields: [incidentId], references: [id])
+  uploadedBy      Member          @relation(fields: [uploadedById], references: [id])
+
+  @@index([taskId])
+  @@index([commentId])
+  @@index([occurrenceId])
+}
+
+model TaskRelation {
+  id          String       @id @default(uuid())
+  fromTaskId  String
+  toTaskId    String
+  kind        RelationKind
+  createdById String
+  createdAt   DateTime     @default(now()) @db.Timestamptz
+  from        Task         @relation("RelFrom", fields: [fromTaskId], references: [id])
+  to          Task         @relation("RelTo", fields: [toTaskId], references: [id])
+
+  @@unique([fromTaskId, toTaskId, kind])
+}
+
+// ───────────────────────────── releases ─────────────────────────────
+
+model Release {
+  id          String       @id @default(uuid())
+  number      String       @unique
+  state       ReleaseState
+  type        ReleaseType
+  targetDate  DateTime?    @db.Timestamptz
+  releasedAt  DateTime?    @db.Timestamptz
+  notes       String       @default("")
+  createdById String
+  createdAt   DateTime     @default(now()) @db.Timestamptz
+  updatedAt   DateTime     @updatedAt @db.Timestamptz
+  archivedAt  DateTime?    @db.Timestamptz
+  createdBy   Member       @relation(fields: [createdById], references: [id])
+  tasks       ReleaseTask[]
+  currentFor  Task[]
+}
+
+model ReleaseTask {
+  releaseId String
+  taskId    String
+  addedAt   DateTime @default(now()) @db.Timestamptz
+  release   Release  @relation(fields: [releaseId], references: [id])
+  task      Task     @relation(fields: [taskId], references: [id])
+
+  @@id([releaseId, taskId])
+}
+
+// ───────────────────────────── phase 2 tables (UI later) ─────────────────────────────
+
+model Incident {
+  id                 String        @id @default(uuid())
+  number             Int           @unique
+  title              String
+  scope              String
+  state              IncidentState
+  startedAt          DateTime      @db.Timestamptz
+  resolvedAt         DateTime?     @db.Timestamptz
+  impact             String?
+  rootCause          String?
+  followUpTaskId     String?
+  followUpNoneReason String?
+  openedById         String
+  closedAt           DateTime?     @db.Timestamptz
+  createdAt          DateTime      @default(now()) @db.Timestamptz
+  updatedAt          DateTime      @updatedAt @db.Timestamptz
+  archivedAt         DateTime?     @db.Timestamptz
+  timeline           IncidentTimelineEntry[]
+  attachments        Attachment[]
+}
+
+model IncidentTimelineEntry {
+  id         String         @id @default(uuid())
+  incidentId String
+  authorId   String
+  state      IncidentState?
+  body       String
+  at         DateTime       @default(now()) @db.Timestamptz
+  incident   Incident       @relation(fields: [incidentId], references: [id])
+}
+
+model ProjectUpdate {
+  id          String   @id @default(uuid())
+  projectId   String
+  authorId    String
+  health      Health
+  body        String
+  periodStart DateTime @db.Date
+  periodEnd   DateTime @db.Date
+  createdAt   DateTime @default(now()) @db.Timestamptz
+  updatedAt   DateTime @updatedAt @db.Timestamptz
+  project     Project  @relation(fields: [projectId], references: [id])
+}
+
+// ───────────────────────────── activity, notifications, views ─────────────────────────────
+
+model ActivityEvent {
+  id          String   @id @default(uuid())
+  actorId     String?
+  subjectType String
+  subjectId   String
+  taskId      String?
+  verb        String
+  field       String?
+  fromValue   Json?
+  toValue     Json?
+  isInternal  Boolean  @default(false)
+  meta        Json?
+  at          DateTime @default(now()) @db.Timestamptz
+  actor       Member?  @relation(fields: [actorId], references: [id])
+  notifications Notification[]
+
+  @@index([taskId, at])
+  @@index([at])
+  @@index([subjectType, subjectId])
+}
+
+model Notification {
+  id           String        @id @default(uuid())
+  memberId     String
+  eventId      String
+  taskId       String?
+  kind         String
+  channel      Channel
+  readAt       DateTime?     @db.Timestamptz
+  snoozedUntil DateTime?     @db.Timestamptz
+  sentAt       DateTime?     @db.Timestamptz
+  createdAt    DateTime      @default(now()) @db.Timestamptz
+  member       Member        @relation(fields: [memberId], references: [id])
+  event        ActivityEvent @relation(fields: [eventId], references: [id])
+
+  @@index([memberId, readAt, createdAt])
+}
+
+model SavedView {
+  id         String    @id @default(uuid())
+  ownerId    String?
+  isShared   Boolean   @default(false)
+  name       String
+  query      String // URL query string of filters + display
+  position   Int       @default(0)
+  createdAt  DateTime  @default(now()) @db.Timestamptz
+  updatedAt  DateTime  @updatedAt @db.Timestamptz
+  archivedAt DateTime? @db.Timestamptz
+  owner      Member?   @relation(fields: [ownerId], references: [id])
+}
+
+/// Simple durable job queue (email, media processing, reminders). Polled by the worker.
+model Job {
+  id        String    @id @default(uuid())
+  kind      String
+  payload   Json
+  runAt     DateTime  @default(now()) @db.Timestamptz
+  attempts  Int       @default(0)
+  lastError String?
+  doneAt    DateTime? @db.Timestamptz
+  createdAt DateTime  @default(now()) @db.Timestamptz
+
+  @@index([doneAt, runAt])
+}

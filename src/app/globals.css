@@ -1,26 +1,194 @@
 @import "tailwindcss";
 
+/* PRD section 9 design tokens. Light theme ships first; dark values are defined from the same tokens (phase 3 switch). */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg-canvas: #fafafb;
+  --bg-surface: #ffffff;
+  --bg-subtle: #f3f4f6;
+  --border-default: #e5e7eb;
+  --text-primary: #111318;
+  --text-secondary: #5b6170;
+  --text-muted: #8b909b;
+  --action-primary: #111318;
+  --action-primary-fg: #ffffff;
+  --accent: #4f5bd5;
+  --waiting-you: #0a84ff;
+
+  --status-triage: #8e4ec6;
+  --status-needs-info: #0a84ff;
+  --status-planned: #8b8d98;
+  --status-in-progress: #e5a000;
+  --status-shipped: #0a84ff;
+  --status-reopened: #e5484d;
+  --status-done: #30a46c;
+  --status-closed: #b9bbc6;
+
+  --priority-urgent: #e5484d;
+  --priority-high: #f76b15;
+  --priority-medium: #e5a000;
+  --priority-low: #8b8d98;
+
+  --health-on-track: #30a46c;
+  --health-at-risk: #e5a000;
+  --health-off-track: #e5484d;
+
+  --danger: #d92d33;
+  --danger-subtle: #fdecec;
+  --warning-subtle: #fff6e0;
+  --success-subtle: #e8f6ee;
+  --info-subtle: #e7f2ff;
+  --internal-subtle: #fff8e6;
+}
+
+[data-theme="dark"] {
+  --bg-canvas: #0f1013;
+  --bg-surface: #16181d;
+  --bg-subtle: #1d2026;
+  --border-default: #2a2e36;
+  --text-primary: #edeef0;
+  --text-secondary: #a0a6b1;
+  --text-muted: #6e7480;
+  --action-primary: #edeef0;
+  --action-primary-fg: #111318;
+  --accent: #7c86f0;
+  --waiting-you: #3b9bff;
+  --danger-subtle: #3a1416;
+  --warning-subtle: #36290a;
+  --success-subtle: #10291b;
+  --info-subtle: #0d2440;
+  --internal-subtle: #2e2610;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono Variable", ui-monospace, monospace;
+
+  --color-canvas: var(--bg-canvas);
+  --color-surface: var(--bg-surface);
+  --color-subtle: var(--bg-subtle);
+  --color-border: var(--border-default);
+  --color-fg: var(--text-primary);
+  --color-fg-secondary: var(--text-secondary);
+  --color-fg-muted: var(--text-muted);
+  --color-primary: var(--action-primary);
+  --color-primary-fg: var(--action-primary-fg);
+  --color-accent: var(--accent);
+  --color-waiting: var(--waiting-you);
+  --color-danger: var(--danger);
+  --color-danger-subtle: var(--danger-subtle);
+  --color-warning-subtle: var(--warning-subtle);
+  --color-success-subtle: var(--success-subtle);
+  --color-info-subtle: var(--info-subtle);
+  --color-internal: var(--internal-subtle);
+
+  --color-st-triage: var(--status-triage);
+  --color-st-needs-info: var(--status-needs-info);
+  --color-st-planned: var(--status-planned);
+  --color-st-in-progress: var(--status-in-progress);
+  --color-st-shipped: var(--status-shipped);
+  --color-st-reopened: var(--status-reopened);
+  --color-st-done: var(--status-done);
+  --color-st-closed: var(--status-closed);
+  --color-pr-urgent: var(--priority-urgent);
+  --color-pr-high: var(--priority-high);
+  --color-pr-medium: var(--priority-medium);
+  --color-pr-low: var(--priority-low);
+  --color-on-track: var(--health-on-track);
+  --color-at-risk: var(--health-at-risk);
+  --color-off-track: var(--health-off-track);
+
+  /* Type scale (9.1): size / line height */
+  --text-display: 24px;
+  --text-display--line-height: 32px;
+  --text-title: 20px;
+  --text-title--line-height: 28px;
+  --text-heading: 16px;
+  --text-heading--line-height: 24px;
+  --text-body: 14px;
+  --text-body--line-height: 22px;
+  --text-ui: 13px;
+  --text-ui--line-height: 20px;
+  --text-meta: 12px;
+  --text-meta--line-height: 16px;
+  --text-kpi: 28px;
+  --text-kpi--line-height: 32px;
+
+  /* Radius (9.3) */
+  --radius-control: 6px;
+  --radius-card: 8px;
+  --radius-modal: 12px;
+
+  --shadow-pop: 0 8px 24px rgba(0, 0, 0, 0.12);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  background: var(--bg-canvas);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-feature-settings: "cv11", "ss01";
+  -webkit-font-smoothing: antialiased;
+  /* Keep focused items clear of sticky headers (WCAG 2.4.11). */
+  scroll-padding-block: 64px;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Visible focus everywhere (WCAG 2.4.7). */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.prose-task :where(p, ul, ol, pre, blockquote, h1, h2, h3) {
+  margin-block: 0 8px;
+}
+.prose-task :where(ul) {
+  list-style: disc;
+  padding-inline-start: 20px;
+}
+.prose-task :where(ol) {
+  list-style: decimal;
+  padding-inline-start: 20px;
+}
+.prose-task :where(h1, h2, h3) {
+  font-weight: 600;
+  font-size: 15px;
+}
+.prose-task :where(a) {
+  color: var(--accent);
+  text-decoration: underline;
+}
+.prose-task :where(code) {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  background: var(--bg-subtle);
+  padding: 1px 4px;
+  border-radius: 4px;
+}
+.prose-task :where(pre) {
+  background: var(--bg-subtle);
+  padding: 8px 12px;
+  border-radius: 6px;
+  overflow-x: auto;
+}
+.prose-task :where(img) {
+  max-width: 100%;
+  border-radius: 6px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }
