@@ -58,7 +58,7 @@ export function HomeView({
               <h2 id="h-waiting" className="mb-2 flex items-center gap-2 text-heading font-semibold">
                 <span className="h-2 w-2 rounded-full bg-waiting" aria-hidden />
                 {t("waitingOnYou")}
-                <span className="tabular text-ui font-normal text-fg-muted">{waiting.length}</span>
+                <span className="tabular text-ui font-normal text-fg-secondary">{waiting.length}</span>
               </h2>
               <ul className="grid gap-2 sm:grid-cols-2">
                 {waiting.map((task) => (
@@ -89,7 +89,7 @@ export function HomeView({
               <h2 id="h-overdue" className="mb-2 flex items-center gap-2 text-heading font-semibold">
                 <span className="h-2 w-2 rounded-full bg-danger" aria-hidden />
                 {t("overdue")}
-                <span className="tabular text-ui font-normal text-fg-muted">{overdue.length}</span>
+                <span className="tabular text-ui font-normal text-fg-secondary">{overdue.length}</span>
               </h2>
               <div className="overflow-hidden rounded-card border border-border bg-surface">
                 {overdue.map((task) => (

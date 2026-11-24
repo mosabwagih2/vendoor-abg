@@ -55,7 +55,7 @@ export function RequestsView({ rows, selected, title }: { rows: TaskRowData[]; s
                   <div className="flex items-center gap-2 text-meta text-fg-secondary">
                     <Mono>{r.key}</Mono>
                     <PriorityBadge priority={r.priority as Priority | null} suggested={r.suggestedPriority as Priority | null} iconOnly />
-                    <span>{t("age", { age: distance(r.createdAt) })}</span>
+                    <span suppressHydrationWarning>{t("age", { age: distance(r.createdAt) })}</span>
                     <span className="ms-auto">
                       <SlaBadge sla={r.sla} />
                     </span>
@@ -79,7 +79,7 @@ export function RequestsView({ rows, selected, title }: { rows: TaskRowData[]; s
                   <Button size="icon" variant="ghost" aria-label={t("next")} disabled={idx >= rows.length - 1} onClick={() => go(idx + 1)}>
                     <ChevronDown size={16} aria-hidden />
                   </Button>
-                  <span className="tabular text-meta text-fg-muted">
+                  <span className="tabular text-meta text-fg-secondary">
                     {idx + 1} / {rows.length}
                   </span>
                   <Button asChild size="sm" variant="ghost" className="ms-auto">

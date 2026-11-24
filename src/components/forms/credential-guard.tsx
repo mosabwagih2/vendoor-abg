@@ -21,7 +21,7 @@ export function CredentialGuardDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent title={t("title")}>
         <div className="flex gap-3">
-          <KeyRound className="mt-0.5 shrink-0 text-[#8a5a00]" size={20} aria-hidden />
+          <KeyRound className="mt-0.5 shrink-0 text-warning-text" size={20} aria-hidden />
           <p className="text-body text-fg-secondary">{t("body")}</p>
         </div>
         <div className="mt-4 flex flex-wrap justify-end gap-2">

@@ -35,19 +35,19 @@ export function CredentialsCard({ taskId, items, highlight }: { taskId: string; 
         <h2 id="cred-title" className="text-ui font-semibold">
           {t("title")}
         </h2>
-        <span className="tabular text-meta text-fg-muted">{items.length || ""}</span>
+        <span className="tabular text-meta text-fg-secondary">{items.length || ""}</span>
         <Button size="sm" variant="ghost" className="ms-auto" onClick={() => setAdding(true)}>
           <Plus size={14} aria-hidden />
           {t("add")}
         </Button>
       </div>
       <div className="space-y-2 p-3">
-        {!items.length && !adding && <p className="px-1 text-meta text-fg-muted">{t("empty")}</p>}
+        {!items.length && !adding && <p className="px-1 text-meta text-fg-secondary">{t("empty")}</p>}
         {items.map((c) => (
           <CredentialItem key={c.id} c={c} />
         ))}
         {adding && <CredentialEditor taskId={taskId} onDone={() => setAdding(false)} />}
-        <p className="px-1 text-meta text-fg-muted">{t("hint")}</p>
+        <p className="px-1 text-meta text-fg-secondary">{t("hint")}</p>
       </div>
     </section>
   );
@@ -110,7 +110,7 @@ function CredentialItem({ c }: { c: CredentialView }) {
         )}
       </dl>
       {c.note && <p className="mt-1.5 text-meta text-fg-secondary">{c.note}</p>}
-      <div className="mt-1.5 flex items-center gap-1 text-meta text-fg-muted">
+      <div className="mt-1.5 flex items-center gap-1 text-meta text-fg-secondary">
         {t("addedBy", { name: c.createdBy })}
         <button type="button" aria-label={tc("edit")} className="ms-auto rounded p-1 hover:bg-subtle hover:text-fg" onClick={() => setEditing(true)}>
           <Pencil size={12} aria-hidden />

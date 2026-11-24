@@ -35,13 +35,13 @@ export function PriorityBadge({ priority, suggested, iconOnly, className }: { pr
 /** "Waiting on" is a first-class badge, with text, never colour alone. */
 export function WaitingBadge({ side, viewerSide, className }: { side: "abg" | "vendoor" | null; viewerSide?: "abg" | "vendoor"; className?: string }) {
   const t = useTranslations("waiting");
-  if (!side) return <span className={cn("text-meta text-fg-muted", className)}>{t("nobody")}</span>;
+  if (!side) return <span className={cn("text-meta text-fg-secondary", className)}>{t("nobody")}</span>;
   const mine = viewerSide === side;
   return (
     <span
       className={cn(
         "inline-flex h-5 items-center gap-1 whitespace-nowrap rounded-full border px-2 text-meta font-medium",
-        mine ? "border-transparent bg-waiting text-white" : side === "vendoor" ? "border-waiting/40 bg-info-subtle text-[#0a5cc2]" : "border-border bg-subtle text-fg-secondary",
+        mine ? "border-transparent bg-waiting-strong text-white" : side === "vendoor" ? "border-waiting/40 bg-info-subtle text-[#0a5cc2]" : "border-border bg-subtle text-fg-secondary",
         className,
       )}
     >
@@ -59,8 +59,8 @@ export function SlaBadge({ sla }: { sla: { kind: "first_response" | "resolution"
     <span
       className={cn(
         "inline-flex h-5 items-center gap-1 whitespace-nowrap rounded-full px-1.5 text-meta font-medium",
-        sla.state === "breached" && "bg-danger-subtle text-danger",
-        sla.state === "at_risk" && "bg-warning-subtle text-[#8a5a00]",
+        sla.state === "breached" && "bg-danger-subtle text-danger-text",
+        sla.state === "at_risk" && "bg-warning-subtle text-warning-text",
         sla.state === "paused" && "bg-subtle text-fg-secondary",
       )}
     >
@@ -73,7 +73,7 @@ export function SlaBadge({ sla }: { sla: { kind: "first_response" | "resolution"
 }
 
 export function DueDate({ dueAt, overdue, className }: { dueAt: string | null; overdue?: boolean; className?: string }) {
-  if (!dueAt) return <span className={cn("text-fg-muted", className)}>—</span>;
+  if (!dueAt) return <span className={cn("text-fg-secondary", className)}>—</span>;
   return (
     <Tooltip content={formatExact(dueAt)}>
       <span className={cn("tabular whitespace-nowrap", overdue ? "font-medium text-danger" : "text-fg-secondary", className)}>{formatDue(dueAt)}</span>

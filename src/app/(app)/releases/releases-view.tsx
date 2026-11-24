@@ -59,7 +59,7 @@ export function ReleasesView({ title, releases, candidates, nextNumber }: { titl
               <Link href={`/releases/${r.number}`} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-1 px-4 py-3 hover:bg-subtle sm:grid-cols-[180px_110px_90px_minmax(0,1fr)]">
                 <Mono className="text-[13px] font-medium">{r.state === "upcoming" ? t("upcoming") : r.number}</Mono>
                 <span className="tabular text-ui text-fg-secondary">{r.releasedAt ? formatDue(r.releasedAt) : r.targetDate ? formatDue(r.targetDate) : "—"}</span>
-                <span className={cn("w-fit rounded-full px-2 text-meta font-medium", r.type === "hotfix" ? "bg-danger-subtle text-danger" : "bg-subtle text-fg-secondary")}>{t(r.type as "planned")}</span>
+                <span className={cn("w-fit rounded-full px-2 text-meta font-medium", r.type === "hotfix" ? "bg-danger-subtle text-danger-text" : "bg-subtle text-fg-secondary")}>{t(r.type as "planned")}</span>
                 <span className="col-span-2 flex flex-wrap items-center gap-3 text-meta text-fg-secondary sm:col-span-1">
                   <span>{t("tasks", { count: r.total })}</span>
                   {r.state === "released" && (
@@ -150,7 +150,7 @@ function ReleaseForm({ mode, candidates, nextNumber, onDone }: { mode: "record" 
       </div>
       <fieldset>
         <legend className="text-meta font-medium text-fg-secondary">{t("pickTasks")}</legend>
-        <p className="mb-1.5 text-meta text-fg-muted">{t("pickHint")}</p>
+        <p className="mb-1.5 text-meta text-fg-secondary">{t("pickHint")}</p>
         {!candidates.length ? (
           <p className="text-ui text-fg-secondary">{t("noTasks")}</p>
         ) : (

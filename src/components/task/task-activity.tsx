@@ -53,7 +53,7 @@ export function TaskActivity({ task, wf }: { task: TaskDetail; wf: WorkflowTask 
           ))}
         </div>
       </div>
-      <ol className="space-y-3" role="tabpanel">
+      <div role="tabpanel"><ol className="space-y-3">
         {items.map((x) =>
           x.kind === "comment" ? (
             <CommentItem key={x.c.id} c={x.c} />
@@ -68,7 +68,7 @@ export function TaskActivity({ task, wf }: { task: TaskDetail; wf: WorkflowTask 
             </li>
           ),
         )}
-      </ol>
+      </ol></div>
       <Composer task={task} wf={wf} />
     </section>
   );
@@ -80,7 +80,8 @@ function CommentItem({ c }: { c: TaskDetail["comments"][number] }) {
   const { me } = useApp();
   const [editing, setEditing] = useState(false);
   const [body, setBody] = useState(c.body);
-  const canEdit = c.author.id === me.id && Date.now() - new Date(c.createdAt).getTime() < 15 * 60_000;
+  const [mountedAt] = useState(() => Date.now());
+  const canEdit = c.author.id === me.id && mountedAt - new Date(c.createdAt).getTime() < 15 * 60_000;
   const grouped = EMOJI.map((e) => ({ e, who: c.reactions.filter((r) => r.emoji === e) })).filter((g) => g.who.length);
   const kindLabel: Record<string, string> = { ask_info: "Asked for info", answer: "Answered", reopen_note: "Still broken", status_request: "Any update?", close_note: "Closed", verify_note: "Works" };
   return (
@@ -96,9 +97,9 @@ function CommentItem({ c }: { c: TaskDetail["comments"][number] }) {
           </span>
         )}
         <RelativeTime at={c.createdAt} className="text-meta" />
-        {c.editedAt && <span className="text-fg-muted">· {t("edited")}</span>}
+        {c.editedAt && <span className="text-fg-secondary">· {t("edited")}</span>}
         {canEdit && !editing && (
-          <button type="button" className="ms-auto text-fg-muted hover:text-fg" onClick={() => setEditing(true)}>
+          <button type="button" className="ms-auto text-fg-secondary hover:text-fg" onClick={() => setEditing(true)}>
             {tc("edit")}
           </button>
         )}
@@ -155,7 +156,7 @@ function ReactionPicker({ onPick }: { onPick: (e: string) => void }) {
   const [open, setOpen] = useState(false);
   return (
     <span className="relative">
-      <button type="button" aria-label="Add reaction" aria-expanded={open} onClick={() => setOpen(!open)} className="inline-flex h-6 w-7 items-center justify-center rounded-full text-fg-muted hover:bg-subtle hover:text-fg">
+      <button type="button" aria-label="Add reaction" aria-expanded={open} onClick={() => setOpen(!open)} className="inline-flex h-6 w-7 items-center justify-center rounded-full text-fg-secondary hover:bg-subtle hover:text-fg">
         <SmilePlus size={14} aria-hidden />
       </button>
       {open && (

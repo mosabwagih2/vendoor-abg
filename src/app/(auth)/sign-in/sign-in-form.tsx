@@ -38,7 +38,7 @@ export function SignInForm({ next }: { next: string }) {
       <Button type="submit" variant="primary" className="w-full" disabled={pending}>
         {pending ? t("signingIn") : t("signIn")}
       </Button>
-      <div className="flex items-center gap-2 text-meta text-fg-muted">
+      <div className="flex items-center gap-2 text-meta text-fg-secondary">
         <span className="h-px flex-1 bg-border" />
         {t("or")}
         <span className="h-px flex-1 bg-border" />

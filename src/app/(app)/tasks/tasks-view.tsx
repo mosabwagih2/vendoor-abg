@@ -298,7 +298,7 @@ function ListView({
                   <ChevronRight size={14} aria-hidden className={cn("transition-transform rtl:rotate-180", !collapsed.has(item.g.id) && "rotate-90 rtl:rotate-90")} />
                   {item.g.icon}
                   {item.g.label}
-                  <span className="tabular font-normal text-fg-muted">{item.g.rows.length}</span>
+                  <span className="tabular font-normal text-fg-secondary">{item.g.rows.length}</span>
                 </button>
               ) : (
                 <TaskRow
@@ -389,7 +389,7 @@ function Column({ status, rows, children }: { status: TaskStatus; rows: TaskRowD
       <h2 className="flex h-10 items-center gap-2 px-3 text-ui font-medium">
         <StatusIcon status={status} />
         {t(status)}
-        <span className="tabular font-normal text-fg-muted">{rows.length}</span>
+        <span className="tabular font-normal text-fg-secondary">{rows.length}</span>
       </h2>
       <div className="flex min-h-16 flex-1 flex-col gap-2 overflow-y-auto px-2 pb-2">{children}</div>
     </section>
@@ -417,7 +417,7 @@ function Card({ task, href, onMove, columns }: { task: TaskRowData; href: string
             onPointerDown={(e) => e.stopPropagation()}
             onKeyDown={(e) => e.stopPropagation()}
             aria-label={t("tasks.moveCard", { key: task.key })}
-            className="ms-auto inline-flex h-6 w-6 items-center justify-center rounded text-fg-muted hover:bg-subtle hover:text-fg"
+            className="ms-auto inline-flex h-6 w-6 items-center justify-center rounded text-fg-secondary hover:bg-subtle hover:text-fg"
           >
             <MoreHorizontal size={14} aria-hidden />
           </MenuTrigger>
@@ -437,7 +437,7 @@ function Card({ task, href, onMove, columns }: { task: TaskRowData; href: string
       <Link href={href} onPointerDown={(e) => e.stopPropagation()} className="mt-1 line-clamp-3 block text-ui font-medium hover:underline">
         {task.title}
       </Link>
-      <div className="mt-2 flex items-center gap-2 text-meta text-fg-muted">
+      <div className="mt-2 flex items-center gap-2 text-meta text-fg-secondary">
         {task.occurrenceCount > 0 && (
           <span className="inline-flex items-center gap-0.5">
             <Repeat size={11} aria-hidden />

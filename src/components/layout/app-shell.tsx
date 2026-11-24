@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { useTranslations } from "next-intl";
 import {
   Home,
@@ -31,6 +31,22 @@ import { useLiveRefresh } from "./live-refresh";
 import { WorkflowProvider } from "@/components/task/workflow-actions";
 import type { CurrentMember } from "@/server/session";
 
+function subscribeCollapsed(cb: () => void) {
+  window.addEventListener("sidebar-collapsed", cb);
+  window.addEventListener("storage", cb);
+  return () => {
+    window.removeEventListener("sidebar-collapsed", cb);
+    window.removeEventListener("storage", cb);
+  };
+}
+function readCollapsed() {
+  try {
+    return localStorage.getItem("sidebar-collapsed") === "1";
+  } catch {
+    return false;
+  }
+}
+
 interface Props {
   me: CurrentMember;
   counts: { unread: number; waiting: number; triage: number };
@@ -47,20 +63,23 @@ export function AppShell({ me, counts, projects, members, incident, upcoming, ch
   const th = useTranslations("home");
   const pathname = usePathname();
   const router = useRouter();
-  const [collapsed, setCollapsed] = useState(false);
+  const collapsed = useSyncExternalStore(subscribeCollapsed, readCollapsed, () => false);
+  const setCollapsed = (v: boolean) => {
+    try {
+      localStorage.setItem("sidebar-collapsed", v ? "1" : "0");
+    } catch {}
+    window.dispatchEvent(new Event("sidebar-collapsed"));
+  };
   const [newOpen, setNewOpen] = useState(false);
   const [newOpts, setNewOpts] = useState<{ parentId?: string; projectId?: string; incident?: boolean }>({});
+  const [newKey, setNewKey] = useState(0);
   const searchRef = useRef<HTMLInputElement>(null);
   useLiveRefresh();
 
-  useEffect(() => {
-    try {
-      setCollapsed(localStorage.getItem("sidebar-collapsed") === "1");
-    } catch {}
-  }, []);
 
   const openNewRequest = useCallback((opts: { parentId?: string; projectId?: string; incident?: boolean } = {}) => {
     setNewOpts(opts);
+    setNewKey((k) => k + 1);
     setNewOpen(true);
   }, []);
 
@@ -134,19 +153,14 @@ export function AppShell({ me, counts, projects, members, incident, upcoming, ch
             <button
               type="button"
               aria-label={collapsed ? t("expand") : t("collapse")}
-              onClick={() => {
-                setCollapsed(!collapsed);
-                try {
-                  localStorage.setItem("sidebar-collapsed", collapsed ? "0" : "1");
-                } catch {}
-              }}
-              className={cn("ms-auto rounded-control p-1 text-fg-muted hover:bg-border/60 hover:text-fg", collapsed && "hidden")}
+              onClick={() => setCollapsed(!collapsed)}
+              className={cn("ms-auto rounded-control p-1 text-fg-secondary hover:bg-border/60 hover:text-fg", collapsed && "hidden")}
             >
               <PanelLeftClose size={16} aria-hidden />
             </button>
           </div>
           {collapsed && (
-            <button type="button" aria-label={t("expand")} onClick={() => setCollapsed(false)} className="mx-auto mb-2 rounded-control p-1.5 text-fg-muted hover:bg-border/60">
+            <button type="button" aria-label={t("expand")} onClick={() => setCollapsed(false)} className="mx-auto mb-2 rounded-control p-1.5 text-fg-secondary hover:bg-border/60">
               <PanelLeftOpen size={16} aria-hidden />
             </button>
           )}
@@ -161,14 +175,14 @@ export function AppShell({ me, counts, projects, members, incident, upcoming, ch
                 }}
                 className="relative"
               >
-                <Search size={14} className="pointer-events-none absolute start-2 top-1/2 -translate-y-1/2 text-fg-muted" aria-hidden />
+                <Search size={14} className="pointer-events-none absolute start-2 top-1/2 -translate-y-1/2 text-fg-secondary" aria-hidden />
                 <input
                   ref={searchRef}
                   aria-label={t("search")}
                   placeholder={t("search")}
                   className="h-8 w-full rounded-control border border-border bg-surface ps-7 pe-8 text-ui placeholder:text-fg-muted"
                 />
-                <kbd className="pointer-events-none absolute end-2 top-1/2 -translate-y-1/2 font-mono text-[10px] text-fg-muted">/</kbd>
+                <kbd className="pointer-events-none absolute end-2 top-1/2 -translate-y-1/2 font-mono text-[10px] text-fg-secondary">/</kbd>
               </form>
             )}
             <button
@@ -185,7 +199,7 @@ export function AppShell({ me, counts, projects, members, incident, upcoming, ch
           <div className="mt-3 flex-1 overflow-y-auto px-2">
             {groups.map((g, gi) => (
               <div key={gi} className="mb-3">
-                {g.label && !collapsed && <div className="px-2 pb-1 text-meta font-medium text-fg-muted">{g.label}</div>}
+                {g.label && !collapsed && <div className="px-2 pb-1 text-meta font-medium text-fg-secondary">{g.label}</div>}
                 <ul className="space-y-0.5">
                   {g.items.map((it) => (
                     <li key={it.href}>
@@ -204,7 +218,7 @@ export function AppShell({ me, counts, projects, members, incident, upcoming, ch
                         {!!it.badge && (
                           <span
                             aria-label={it.badgeLabel}
-                            className={cn("tabular ms-auto min-w-5 rounded-full bg-waiting px-1.5 text-center text-[11px] font-semibold leading-5 text-white", collapsed && "absolute ms-5 -mt-4 scale-90")}
+                            className={cn("tabular ms-auto min-w-5 rounded-full bg-waiting-strong px-1.5 text-center text-[11px] font-semibold leading-5 text-white", collapsed && "absolute ms-5 -mt-4 scale-90")}
                           >
                             {it.badge}
                           </span>
@@ -231,7 +245,7 @@ export function AppShell({ me, counts, projects, members, incident, upcoming, ch
 
         <div className="flex min-w-0 flex-1 flex-col">
           {incident && (
-            <div role="alert" className="flex items-center gap-2 bg-danger px-4 py-2 text-ui font-medium text-white">
+            <div role="alert" suppressHydrationWarning className="flex items-center gap-2 bg-danger px-4 py-2 text-ui font-medium text-white">
               <AlertOctagon size={16} aria-hidden />
               {th("openIncident", { title: `INC-${incident.number} ${incident.title}`, age: relative(incident.startedAt) })}
             </div>
@@ -250,7 +264,7 @@ export function AppShell({ me, counts, projects, members, incident, upcoming, ch
             <Link key={it.href} href={it.href} aria-current={isActive(it.href) ? "page" : undefined} className={cn("relative flex flex-col items-center justify-center gap-0.5 text-[11px] text-fg-secondary", isActive(it.href) && "text-fg")}>
               <it.icon size={20} aria-hidden />
               {it.label}
-              {!!it.badge && <span className="absolute top-1.5 start-1/2 ms-2 min-w-4 rounded-full bg-waiting px-1 text-center text-[10px] font-semibold leading-4 text-white">{it.badge}</span>}
+              {!!it.badge && <span className="absolute top-1.5 start-1/2 ms-2 min-w-4 rounded-full bg-waiting-strong px-1 text-center text-[10px] font-semibold leading-4 text-white">{it.badge}</span>}
             </Link>
           ))}
           <button type="button" onClick={() => openNewRequest()} className="flex flex-col items-center justify-center gap-0.5 text-[11px] text-fg" aria-label={t("newRequest")}>
@@ -285,7 +299,7 @@ export function AppShell({ me, counts, projects, members, incident, upcoming, ch
           </Menu>
         </nav>
       </div>
-      <NewRequestDialog open={newOpen} onOpenChange={setNewOpen} opts={newOpts} />
+      <NewRequestDialog key={newKey} open={newOpen} onOpenChange={setNewOpen} opts={newOpts} />
     </AppContext>
   );
 }

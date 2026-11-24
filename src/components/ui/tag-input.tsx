@@ -37,7 +37,7 @@ export function TagInput({
       {value.map((v) => (
         <span key={v} className={cn("inline-flex h-6 items-center gap-1 rounded-control bg-subtle ps-2 pe-0.5 text-meta", mono && "font-mono")}>
           {v}
-          <button type="button" aria-label={`Remove ${v}`} className="inline-flex h-6 w-6 items-center justify-center rounded text-fg-muted hover:text-fg" onClick={() => onChange(value.filter((x) => x !== v))}>
+          <button type="button" aria-label={`Remove ${v}`} className="inline-flex h-6 w-6 items-center justify-center rounded text-fg-secondary hover:text-fg" onClick={() => onChange(value.filter((x) => x !== v))}>
             <X size={12} aria-hidden />
           </button>
         </span>
@@ -46,7 +46,7 @@ export function TagInput({
         id={id}
         value={draft}
         aria-invalid={invalid || undefined}
-        aria-describedby={describedBy}
+        aria-labelledby={id ? undefined : describedBy}
         onChange={(e) => (e.target.value.includes(",") ? add(e.target.value) : setDraft(e.target.value))}
         onKeyDown={(e) => {
           if (e.key === "Enter") {

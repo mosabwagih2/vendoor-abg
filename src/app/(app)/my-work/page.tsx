@@ -7,12 +7,14 @@ import { MyWorkView } from "./my-work-view";
 
 export const metadata = { title: "My work" };
 
+const daysAgo = (n: number) => new Date(Date.now() - n * 86400_000);
+
 /** PRD 6.3: Waiting on me, Requested by me (Vendoor) / Assigned to me (ABG), Following, Done (last 30 days). */
 export default async function MyWorkPage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
   const me = await requireMember();
   const t = await getTranslations("myWork");
   const tab = (await searchParams).tab ?? "waiting";
-  const since = new Date(Date.now() - 30 * 86400_000);
+  const since = daysAgo(30);
   const mineWhere: Prisma.TaskWhereInput = me.side === "vendoor" ? { requesterId: me.id } : { assigneeId: me.id };
   const where: Record<string, Prisma.TaskWhereInput> = {
     mine: { archivedAt: null, ...mineWhere, status: { notIn: ["done", "closed"] } },

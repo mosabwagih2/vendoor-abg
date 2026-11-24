@@ -60,7 +60,7 @@ export default async function ProjectsPage() {
                   </Link>
                 </td>
                 <td className="tabular px-4 py-2 text-end">
-                  <Link href={`/tasks?project=${p.key}&due=overdue`} className={count(overdue, p.id) ? "font-medium text-danger hover:underline" : "text-fg-muted"}>
+                  <Link href={`/tasks?project=${p.key}&due=overdue`} className={count(overdue, p.id) ? "font-medium text-danger hover:underline" : "text-fg-secondary"}>
                     {count(overdue, p.id)}
                   </Link>
                 </td>

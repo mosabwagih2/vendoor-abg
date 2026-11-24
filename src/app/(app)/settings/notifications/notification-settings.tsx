@@ -24,7 +24,7 @@ export function NotificationSettings({ rows }: { rows: Array<{ kind: string; ema
                 <input type="checkbox" className="h-4 w-4" aria-label={`${label}: ${t("inAppOn")}`} defaultChecked={r.inApp} onChange={(e) => setNotificationPrefAction(r.kind, "inApp", e.target.checked)} />
               </td>
               <td className="px-4 py-2 text-center">
-                {r.emailAvailable ? <input type="checkbox" className="h-4 w-4" aria-label={`${label}: ${t("emailOn")}`} defaultChecked={r.email} onChange={(e) => setNotificationPrefAction(r.kind, "email", e.target.checked)} /> : <span className="text-fg-muted">—</span>}
+                {r.emailAvailable ? <input type="checkbox" className="h-4 w-4" aria-label={`${label}: ${t("emailOn")}`} defaultChecked={r.email} onChange={(e) => setNotificationPrefAction(r.kind, "email", e.target.checked)} /> : <span className="text-fg-secondary">—</span>}
               </td>
             </tr>
           );

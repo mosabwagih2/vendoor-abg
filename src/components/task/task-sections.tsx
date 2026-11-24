@@ -25,7 +25,7 @@ export function Section({ id, title, count, action, children, empty }: { id: str
         <h2 id={id} className="text-ui font-semibold">
           {title}
         </h2>
-        {count !== undefined && <span className="tabular text-meta text-fg-muted">{count}</span>}
+        {count !== undefined && <span className="tabular text-meta text-fg-secondary">{count}</span>}
         <div className="ms-auto">{action}</div>
       </div>
       {!empty && <div className="p-3">{children}</div>}
@@ -176,7 +176,7 @@ export function Occurrences({ task }: { task: TaskDetail }) {
           </div>
         </form>
       )}
-      {!task.occurrences.length && !open && <p className="px-1 text-meta text-fg-muted">{t("noOccurrences")}</p>}
+      {!task.occurrences.length && !open && <p className="px-1 text-meta text-fg-secondary">{t("noOccurrences")}</p>}
       <ol className="space-y-2">
         {task.occurrences.map((o) => (
           <li key={o.id} className="rounded-control border border-border p-2.5">
@@ -242,7 +242,7 @@ export function Relations({ task, canEdit }: { task: TaskDetail; canEdit: boolea
               <Mono>{r.task.key}</Mono> {r.task.title}
             </Link>
             {canEdit && (
-              <button type="button" aria-label={tc("remove")} className="inline-flex h-6 w-6 items-center justify-center rounded-full text-fg-muted hover:bg-subtle" onClick={() => removeRelationAction(r.id)}>
+              <button type="button" aria-label={tc("remove")} className="inline-flex h-6 w-6 items-center justify-center rounded-full text-fg-secondary hover:bg-subtle" onClick={() => removeRelationAction(r.id)}>
                 <X size={12} aria-hidden />
               </button>
             )}

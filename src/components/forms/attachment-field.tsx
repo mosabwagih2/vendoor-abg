@@ -37,7 +37,9 @@ export function AttachmentField({
   const [pending, setPending] = useState<Pending[]>([]);
   const [drag, setDrag] = useState(false);
   const valueRef = useRef(value);
-  valueRef.current = value;
+  useEffect(() => {
+    valueRef.current = value;
+  }, [value]);
 
   useEffect(() => onBusyChange?.(pending.length > 0), [pending.length, onBusyChange]);
 
@@ -86,7 +88,7 @@ export function AttachmentField({
           {t("browse")}
         </Button>
         <VoiceRecorder onRecorded={(f) => addFiles([f])} />
-        {!compact && <span className="text-meta text-fg-muted">{t("drop")}…</span>}
+        {!compact && <span className="text-meta text-fg-secondary">{t("drop")}…</span>}
         <input
           ref={inputRef}
           type="file"
@@ -99,7 +101,7 @@ export function AttachmentField({
           }}
         />
       </div>
-      {!compact && <p className="mt-1.5 text-meta text-fg-muted">{t("maxSize")}</p>}
+      {!compact && <p className="mt-1.5 text-meta text-fg-secondary">{t("maxSize")}</p>}
       {(value.length > 0 || pending.length > 0) && (
         <ul className="mt-2 space-y-1">
           {value.map((a) => (
@@ -108,15 +110,15 @@ export function AttachmentField({
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={a.previewUrl} alt="" className="h-8 w-8 rounded object-cover" />
               ) : a.mime.startsWith("audio/") ? (
-                <Music size={16} aria-hidden className="text-fg-muted" />
+                <Music size={16} aria-hidden className="text-fg-secondary" />
               ) : a.mime.startsWith("video/") ? (
-                <Film size={16} aria-hidden className="text-fg-muted" />
+                <Film size={16} aria-hidden className="text-fg-secondary" />
               ) : (
-                <FileText size={16} aria-hidden className="text-fg-muted" />
+                <FileText size={16} aria-hidden className="text-fg-secondary" />
               )}
               <span className="min-w-0 flex-1 truncate text-ui">{a.fileName}</span>
-              <span className="tabular text-meta text-fg-muted">{fileSize(a.size)}</span>
-              <button type="button" aria-label={t("remove", { name: a.fileName })} className="rounded p-1 text-fg-muted hover:bg-subtle hover:text-fg" onClick={() => onChange(value.filter((x) => x.key !== a.key))}>
+              <span className="tabular text-meta text-fg-secondary">{fileSize(a.size)}</span>
+              <button type="button" aria-label={t("remove", { name: a.fileName })} className="rounded p-1 text-fg-secondary hover:bg-subtle hover:text-fg" onClick={() => onChange(value.filter((x) => x.key !== a.key))}>
                 <X size={14} aria-hidden />
               </button>
             </li>
@@ -141,20 +143,18 @@ function VoiceRecorder({ onRecorded }: { onRecorded: (f: File) => void }) {
   const [secs, setSecs] = useState(0);
   const chunks = useRef<Blob[]>([]);
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
+  const limit = useRef<ReturnType<typeof setTimeout> | null>(null);
   const cancelled = useRef(false);
 
-  const stop = (cancel = false) => {
+  const stopRecorder = (r: MediaRecorder | null, cancel: boolean) => {
     cancelled.current = cancel;
-    rec?.stop();
-    rec?.stream.getTracks().forEach((tr) => tr.stop());
+    if (r && r.state !== "inactive") r.stop();
+    r?.stream.getTracks().forEach((tr) => tr.stop());
     if (timer.current) clearInterval(timer.current);
+    if (limit.current) clearTimeout(limit.current);
     setRec(null);
   };
-
-  useEffect(() => {
-    if (secs >= MAX_RECORD_SECONDS) stop();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [secs]);
+  const stop = (cancel = false) => stopRecorder(rec, cancel);
 
   if (rec) {
     const mm = Math.floor(secs / 60);
@@ -196,6 +196,8 @@ function VoiceRecorder({ onRecorded }: { onRecorded: (f: File) => void }) {
           r.start(1000);
           setSecs(0);
           timer.current = setInterval(() => setSecs((s) => s + 1), 1000);
+          // Hard stop at 5 minutes (FR-7.1).
+          limit.current = setTimeout(() => stopRecorder(r, false), MAX_RECORD_SECONDS * 1000);
           setRec(r);
         } catch {
           toast.error(t("micDenied"));

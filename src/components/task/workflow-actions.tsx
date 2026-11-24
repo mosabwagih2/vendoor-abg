@@ -215,7 +215,7 @@ function ActionForm({ kind, task, releases, onDone }: { kind: DialogKind; task: 
             <div>
               <Label htmlFor="wf-due">{t("dueDate")}</Label>
               <Input id="wf-due" type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
-              <p className="mt-1 text-meta text-fg-muted">{t("dueHint")}</p>
+              <p className="mt-1 text-meta text-fg-secondary">{t("dueHint")}</p>
             </div>
           </div>
         </>

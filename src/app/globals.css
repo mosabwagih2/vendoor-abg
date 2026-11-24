@@ -13,6 +13,11 @@
   --action-primary-fg: #ffffff;
   --accent: #4f5bd5;
   --waiting-you: #0a84ff;
+  /* Darker shades for white text on filled badges and buttons (WCAG AA 4.5:1); the PRD colours stay for icons, dots and borders. */
+  --waiting-strong: #0062d6;
+  --success-strong: #1e7a4c;
+  --danger-text: #b42318;
+  --warning-text: #7a5000;
 
   --status-triage: #8e4ec6;
   --status-needs-info: #0a84ff;
@@ -74,6 +79,10 @@
   --color-primary-fg: var(--action-primary-fg);
   --color-accent: var(--accent);
   --color-waiting: var(--waiting-you);
+  --color-waiting-strong: var(--waiting-strong);
+  --color-success-strong: var(--success-strong);
+  --color-danger-text: var(--danger-text);
+  --color-warning-text: var(--warning-text);
   --color-danger: var(--danger);
   --color-danger-subtle: var(--danger-subtle);
   --color-warning-subtle: var(--warning-subtle);

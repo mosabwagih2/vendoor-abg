@@ -34,7 +34,7 @@ export function MyWorkView({ title, tabs, tab, rows }: { title: string; tabs: Ar
             <h2 className="flex h-9 items-center gap-2 border-b border-border bg-subtle px-4 text-ui font-medium">
               <StatusIcon status={g.s as TaskStatus} />
               {t(`status.${g.s}`)}
-              <span className="tabular font-normal text-fg-muted">{g.rows.length}</span>
+              <span className="tabular font-normal text-fg-secondary">{g.rows.length}</span>
             </h2>
             {g.rows.map((r) => (
               <TaskRow key={r.id} task={r} props={["priority", "waiting", "assignee", "due", "project"]} trailing={tab === "waiting" ? <span className="hidden md:block"><ActionButtons task={toWorkflowTask(r)} /></span> : undefined} />

@@ -1,7 +1,7 @@
 "use client";
 import { useTranslations } from "next-intl";
 import { ChevronDown, Search, X, SlidersHorizontal, Check } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Menu, MenuContent, MenuItem, MenuTrigger, MenuLabel, MenuSeparator } from "@/components/ui/menu";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
@@ -84,21 +84,13 @@ function SingleFilter({ label, value, options, onChange }: { label: string; valu
 export function FilterBar({ filters, onChange }: { filters: TaskFilters; onChange: (f: Partial<TaskFilters>) => void }) {
   const t = useTranslations();
   const { projects, members } = useApp();
-  const [q, setQ] = useState(filters.q);
-  useEffect(() => setQ(filters.q), [filters.q]);
-  useEffect(() => {
-    if (q === filters.q) return;
-    const id = setTimeout(() => onChange({ q }), 300);
-    return () => clearTimeout(id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [q]);
   const any = JSON.stringify({ ...filters, q: "" }) !== JSON.stringify({ ...DEFAULT_FILTERS, q: "" }) || !!filters.q;
   const people = [{ value: "me", label: t("common.me") }, ...members.map((m) => ({ value: m.id, label: m.name }))];
   return (
     <div className="flex flex-wrap items-center gap-1.5 border-b border-border px-4 py-2">
       <div className="relative me-1 w-full sm:w-64">
-        <Search size={14} className="pointer-events-none absolute start-2 top-1/2 -translate-y-1/2 text-fg-muted" aria-hidden />
-        <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("tasks.searchPlaceholder")} aria-label={t("common.search")} className="h-7 ps-7" />
+        <Search size={14} className="pointer-events-none absolute start-2 top-1/2 -translate-y-1/2 text-fg-secondary" aria-hidden />
+        <SearchBox key={filters.q} initial={filters.q} onSearch={(q) => onChange({ q })} placeholder={t("tasks.searchPlaceholder")} label={t("common.search")} />
       </div>
       <MultiFilter label={t("tasks.filters.project")} values={filters.project} options={projects.map((p) => ({ value: p.key, label: `${p.key} · ${p.name}` }))} onChange={(v) => onChange({ project: v })} />
       <MultiFilter
@@ -136,6 +128,20 @@ export function FilterBar({ filters, onChange }: { filters: TaskFilters; onChang
       )}
     </div>
   );
+}
+
+function SearchBox({ initial, onSearch, placeholder, label }: { initial: string; onSearch: (q: string) => void; placeholder: string; label: string }) {
+  const [q, setQ] = useState(initial);
+  const onSearchRef = useRef(onSearch);
+  useEffect(() => {
+    onSearchRef.current = onSearch;
+  });
+  useEffect(() => {
+    if (q === initial) return;
+    const id = setTimeout(() => onSearchRef.current(q), 300);
+    return () => clearTimeout(id);
+  }, [q, initial]);
+  return <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder={placeholder} aria-label={label} className="h-7 ps-7" />;
 }
 
 export function DisplayMenu({ display, onChange }: { display: TaskDisplay; onChange: (d: Partial<TaskDisplay>) => void }) {

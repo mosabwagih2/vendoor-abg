@@ -39,7 +39,7 @@ export function CredentialFields({ value, onChange, idPrefix = "cred" }: { value
           </div>
           <div className="sm:col-span-2">
             <Label htmlFor={`${idPrefix}-url-${i}`}>
-              {t("url")} <span className="font-normal text-fg-muted">({tc("optional")})</span>
+              {t("url")} <span className="font-normal text-fg-secondary">({tc("optional")})</span>
             </Label>
             <Input id={`${idPrefix}-url-${i}`} value={c.url ?? ""} placeholder="https://" onChange={(e) => set(i, { url: e.target.value })} />
           </div>
@@ -65,7 +65,7 @@ export function PasswordInput({ id, value, onChange, placeholder }: { id: string
   return (
     <div className="relative">
       <Input id={id} type={show ? "text" : "password"} autoComplete="new-password" className="pe-9 font-mono" value={value} placeholder={placeholder} onChange={(e) => onChange(e.target.value)} />
-      <button type="button" aria-label={show ? t("hidePassword") : t("showPassword")} className="absolute end-1 top-1/2 -translate-y-1/2 rounded p-1 text-fg-muted hover:text-fg" onClick={() => setShow(!show)}>
+      <button type="button" aria-label={show ? t("hidePassword") : t("showPassword")} className="absolute end-1 top-1/2 -translate-y-1/2 rounded p-1 text-fg-secondary hover:text-fg" onClick={() => setShow(!show)}>
         {show ? <EyeOff size={14} aria-hidden /> : <Eye size={14} aria-hidden />}
       </button>
     </div>

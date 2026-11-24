@@ -73,10 +73,8 @@ const KINDS: Array<{ id: Kind; icon: typeof Bug }> = [
 
 export function NewRequestDialog({ open, onOpenChange, opts }: { open: boolean; onOpenChange: (o: boolean) => void; opts: { parentId?: string; projectId?: string; incident?: boolean } }) {
   const t = useTranslations("newRequest");
-  const [incident, setIncident] = useState(false);
-  useEffect(() => {
-    if (open) setIncident(!!opts.incident);
-  }, [open, opts.incident]);
+  // The dialog is remounted on every open (keyed in AppShell), so initial state is enough.
+  const [incident, setIncident] = useState(!!opts.incident);
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent title={incident ? t("systemDown") : t("title")} wide>
@@ -84,6 +82,19 @@ export function NewRequestDialog({ open, onOpenChange, opts }: { open: boolean; 
       </DialogContent>
     </Dialog>
   );
+}
+
+function loadDraft(key: string | null): Draft | null {
+  if (!key || typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return null;
+    const saved = JSON.parse(raw) as Draft;
+    if (!saved.title && !saved.currentBehaviour && !saved.type) return null;
+    return { ...EMPTY, ...saved, attachments: (saved.attachments ?? []).map((a) => ({ ...a, previewUrl: undefined })) };
+  } catch {
+    return null;
+  }
 }
 
 export function RequestForm({ opts, onDone, onIncident }: { opts: { parentId?: string; projectId?: string }; onDone: () => void; onIncident: () => void }) {
@@ -94,30 +105,18 @@ export function RequestForm({ opts, onDone, onIncident }: { opts: { parentId?: s
   const tcom = useTranslations("common");
   const router = useRouter();
   const { me, projects, members } = useApp();
-  const [d, setD] = useState<Draft>(() => ({ ...EMPTY, projectId: opts.projectId ?? "" }));
+  // FR-7.4 local draft (passwords are never stored in the draft). Read once when the form mounts.
+  const [initial] = useState(() => loadDraft(opts.parentId ? null : DRAFT_KEY));
+  const [d, setD] = useState<Draft>(() => initial ?? { ...EMPTY, projectId: opts.projectId ?? "" });
   const [creds, setCreds] = useState<CredentialDraft[]>([]);
   const [showErrors, setShowErrors] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [guardOpen, setGuardOpen] = useState(false);
-  const [restored, setRestored] = useState(false);
+  const [restored, setRestored] = useState(!!initial);
   const [dups, setDups] = useState<Array<{ id: string; key: string; title: string; status: string; occurrenceCount: number }>>([]);
   const credRef = useRef<HTMLDivElement>(null);
 
-  // FR-7.4 local draft (passwords are never stored in the draft).
-  useEffect(() => {
-    if (opts.parentId) return;
-    try {
-      const raw = localStorage.getItem(DRAFT_KEY);
-      if (raw) {
-        const saved = JSON.parse(raw) as Draft;
-        if (saved.title || saved.currentBehaviour || saved.type) {
-          setD({ ...EMPTY, ...saved, attachments: (saved.attachments ?? []).map((a) => ({ ...a, previewUrl: undefined })) });
-          setRestored(true);
-        }
-      }
-    } catch {}
-  }, [opts.parentId]);
   useEffect(() => {
     if (opts.parentId) return;
     try {
@@ -140,14 +139,13 @@ export function RequestForm({ opts, onDone, onIncident }: { opts: { parentId?: s
   const err = (f: string) => showErrors && missing.includes(f);
 
   // FR-7.2 possible duplicates as the title is typed.
+  const lookForDups = !opts.parentId && d.title.trim().length >= 4;
   useEffect(() => {
-    if (opts.parentId || d.title.trim().length < 4) {
-      setDups([]);
-      return;
-    }
+    if (!lookForDups) return;
     const id = setTimeout(async () => setDups(await duplicatesAction(d.projectId || null, d.title)), 350);
     return () => clearTimeout(id);
-  }, [d.title, d.projectId, opts.parentId]);
+  }, [d.title, d.projectId, lookForDups]);
+  const shownDups = lookForDups ? dups : [];
 
   const allText = [d.title, d.currentBehaviour, d.expectedBehaviour, d.whyItMatters, d.description].join("\n");
 
@@ -342,12 +340,12 @@ export function RequestForm({ opts, onDone, onIncident }: { opts: { parentId?: s
               {t("titleLabel")} <Req />
             </Label>
             <Input id="nr-title" value={d.title} placeholder={t("titlePlaceholder")} aria-invalid={err("title")} onChange={(e) => set("title", e.target.value)} />
-            {dups.length > 0 && (
+            {shownDups.length > 0 && (
               <div className="mt-2 rounded-card border border-border bg-warning-subtle p-2" role="region" aria-label={t("duplicates")}>
                 <div className="text-meta font-medium">{t("duplicates")}</div>
                 <p className="mb-1 text-meta text-fg-secondary">{t("duplicatesHint")}</p>
                 <ul className="space-y-1">
-                  {dups.map((x) => (
+                  {shownDups.map((x) => (
                     <li key={x.id} className="flex flex-wrap items-center gap-2 text-ui">
                       <StatusIcon status={x.status as TaskStatus} />
                       <Mono className="text-fg-secondary">{x.key}</Mono>
@@ -502,7 +500,7 @@ export function RequestForm({ opts, onDone, onIncident }: { opts: { parentId?: s
                 {t("subtasksFromPdf")} <Opt />
               </Label>
               <Textarea id="nr-sub" rows={3} value={d.subtasks} placeholder={"1. …\n2. …"} onChange={(e) => set("subtasks", e.target.value)} />
-              <p className="mt-1 text-meta text-fg-muted">{t("subtasksFromPdfHint")}</p>
+              <p className="mt-1 text-meta text-fg-secondary">{t("subtasksFromPdfHint")}</p>
             </div>
           )}
 
@@ -549,7 +547,7 @@ function Req() {
 }
 function Opt() {
   const t = useTranslations("common");
-  return <span className="font-normal text-fg-muted">({t("optional")})</span>;
+  return <span className="font-normal text-fg-secondary">({t("optional")})</span>;
 }
 
 function IncidentForm({ onDone }: { onDone: () => void }) {

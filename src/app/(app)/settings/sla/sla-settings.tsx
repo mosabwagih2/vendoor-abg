@@ -81,7 +81,7 @@ export function SlaSettings(props: {
               <Label htmlFor="sla-to">{t("to")}</Label>
               <Input id="sla-to" type="time" value={end} onChange={(e) => setEnd(e.target.value)} />
             </div>
-            <span className="pb-2 text-meta text-fg-muted">Africa/Cairo · {dayMinutes / 60} h</span>
+            <span className="pb-2 text-meta text-fg-secondary">Africa/Cairo · {dayMinutes / 60} h</span>
           </div>
           <table className="w-full text-ui">
             <thead className="text-meta text-fg-secondary">
@@ -158,9 +158,9 @@ export function SlaSettings(props: {
             <li key={h.id} className="flex items-center gap-3 py-1.5 text-ui">
               <span className="tabular w-36 text-fg-secondary">{formatDue(h.date + "T12:00:00Z")}</span>
               <span className="flex-1">{h.name}</span>
-              {h.certainty === "estimated" && <span className="rounded-full bg-warning-subtle px-2 text-meta text-[#8a5a00]">{t("estimated")}</span>}
+              {h.certainty === "estimated" && <span className="rounded-full bg-warning-subtle px-2 text-meta text-warning-text">{t("estimated")}</span>}
               {editable && (
-                <button type="button" aria-label={`${tc("remove")} ${h.name}`} onClick={() => removeHolidayAction(h.id)} className="rounded p-1 text-fg-muted hover:bg-subtle hover:text-danger">
+                <button type="button" aria-label={`${tc("remove")} ${h.name}`} onClick={() => removeHolidayAction(h.id)} className="rounded p-1 text-fg-secondary hover:bg-subtle hover:text-danger">
                   <Trash2 size={13} aria-hidden />
                 </button>
               )}

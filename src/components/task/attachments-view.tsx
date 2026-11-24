@@ -27,10 +27,10 @@ export function AttachmentsView({ items }: { items: AttachmentView[] }) {
       )}
       {files.map((a) => (
         <a key={a.id} href={src(a.id, "original")} target="_blank" rel="noreferrer" className="flex items-center gap-2 rounded-control border border-border bg-surface px-3 py-2 text-ui hover:bg-subtle">
-          <FileText size={16} aria-hidden className="text-fg-muted" />
+          <FileText size={16} aria-hidden className="text-fg-secondary" />
           <span className="min-w-0 flex-1 truncate">{a.fileName}</span>
-          <span className="tabular text-meta text-fg-muted">{fileSize(a.size)}</span>
-          <Download size={14} aria-hidden className="text-fg-muted" />
+          <span className="tabular text-meta text-fg-secondary">{fileSize(a.size)}</span>
+          <Download size={14} aria-hidden className="text-fg-secondary" />
         </a>
       ))}
     </div>
@@ -135,7 +135,7 @@ export function AudioPlayer({ a }: { a: AttachmentView }) {
       <button type="button" aria-label={`${t("playbackSpeed")}: ${rate}×`} onClick={() => setRate(rate === 1 ? 1.5 : rate === 1.5 ? 2 : 1)} className="tabular h-7 shrink-0 rounded-full bg-subtle px-2 text-meta font-semibold">
         {rate}×
       </button>
-      <a href={src(a.id, "original")} download aria-label={`${tc("download")} ${a.fileName}`} className="shrink-0 rounded p-1 text-fg-muted hover:bg-subtle">
+      <a href={src(a.id, "original")} download aria-label={`${tc("download")} ${a.fileName}`} className="shrink-0 rounded p-1 text-fg-secondary hover:bg-subtle">
         <Download size={14} aria-hidden />
       </a>
       <audio

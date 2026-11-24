@@ -19,7 +19,7 @@ export default async function SignInPage({ searchParams }: { searchParams: Promi
           <p className="text-ui text-fg-secondary">{t("subtitle")}</p>
         </div>
         <SignInForm next={sp.next?.startsWith("/") ? sp.next : "/home"} />
-        {devPassword && <p className="mt-4 text-center text-meta text-fg-muted">{t("devHint", { password: devPassword })}</p>}
+        {devPassword && <p className="mt-4 text-center text-meta text-fg-secondary">{t("devHint", { password: devPassword })}</p>}
       </div>
     </main>
   );

@@ -1,7 +1,7 @@
 import { cn } from "@/lib/cn";
 import { initials } from "@/lib/format";
 
-const COLORS = ["#4F5BD5", "#0A84FF", "#30A46C", "#E5A000", "#8E4EC6", "#F76B15", "#E5484D", "#12A594"];
+const COLORS = ["#4F5BD5", "#0062D6", "#1E7A4C", "#8A5A00", "#7A3EB0", "#B4470C", "#B42318", "#0B7569"];
 
 function colorFor(name: string) {
   let h = 0;

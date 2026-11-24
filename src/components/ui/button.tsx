@@ -14,8 +14,8 @@ export const buttonVariants = cva(
         ghost: "text-fg-secondary hover:bg-subtle hover:text-fg",
         danger: "bg-danger text-white hover:opacity-90",
         dangerOutline: "border border-border bg-surface text-danger hover:bg-danger-subtle",
-        success: "bg-st-done text-white hover:opacity-90",
-        waiting: "bg-waiting text-white hover:opacity-90",
+        success: "bg-success-strong text-white hover:opacity-90",
+        waiting: "bg-waiting-strong text-white hover:opacity-90",
       },
       size: {
         sm: "h-7 px-2.5",

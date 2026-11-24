@@ -42,7 +42,8 @@ export const auth = betterAuth({
     updateAge: 60 * 60 * 24,
     cookieCache: { enabled: false },
   },
-  rateLimit: { enabled: true, storage: "database", window: 60, max: 100 },
+  // On in production (stored in the DB so it survives restarts); off locally so tests can sign in repeatedly.
+  rateLimit: { enabled: process.env.NODE_ENV === "production" || process.env.RATE_LIMIT === "on", storage: "database", window: 60, max: 100 },
   databaseHooks: {
     session: {
       create: {

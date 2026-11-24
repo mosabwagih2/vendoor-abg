@@ -1,36 +1,70 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Vendoor × ABG Work Tracker
 
-## Getting Started
+Phase 1 of the PRD (`docs/PRD.md`): requests, triage, tasks (list and board), task page with verify / reopen,
+releases, Home, My work, Inbox, in-app and email notifications, the seeded backlog, and **Account access**
+(encrypted logins with one-click copy).
 
-First, run the development server:
+Plan: `docs/PLAN.md` · Design references: `docs/DESIGN-REFERENCES.md` · Research: `docs/research/` · Screens: `docs/screenshots/`
+
+## Run it on your computer
+
+You need: **Node.js 22**, **pnpm** (`npm i -g pnpm`), **Docker Desktop** (for PostgreSQL) and, for voice notes and
+videos to be converted for every browser, **ffmpeg** on the PATH (`winget install ffmpeg` on Windows).
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+pnpm install
+docker compose up -d
+cp .env.example .env
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Fill the three secrets in `.env` (any random 32-byte base64 values), for example with
+`node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"` run three times:
+`BETTER_AUTH_SECRET`, `CREDENTIALS_KEY`, `FILE_URL_SECRET`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+pnpm db:migrate
+pnpm db:seed
+pnpm dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Open http://localhost:3000 and sign in with any seeded account; the password is `Vendoor!2026`.
 
-## Learn More
+| Person | Email | Role |
+|---|---|---|
+| Mohammed Wagih | mohammed@vendoor.test | Owner |
+| Yara | yara@vendoor.test | Admin |
+| Mosab Wagih | mosab@vendoor.test | Requester |
+| Abdel-fattah | abdelfattah@vendoor.test | Requester |
+| Eng. Mohamed Adel | mohamed.adel@vendoor.test | Requester |
+| Za8loul | za8loul@abg.test | ABG Lead |
+| Ahmed Shiha | ahmed.shiha@abg.test | ABG Member |
+| Ahmed Kamal Soliman | ahmed.kamal@abg.test | ABG Member |
 
-To learn more about Next.js, take a look at the following resources:
+Emails are placeholders until the real ones are confirmed. Emails are printed in the terminal (`EMAIL_DRIVER=console`);
+set `EMAIL_DRIVER=resend` and `RESEND_API_KEY` to send real mail. Files are stored in `./storage` (`STORAGE_DRIVER=local`);
+set `STORAGE_DRIVER=s3` and the `S3_*` variables for an S3/R2 bucket.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+`pnpm db:reset` wipes the database and seeds it again.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Checks
 
-## Deploy on Vercel
+```bash
+pnpm lint
+pnpm typecheck
+pnpm test
+pnpm e2e
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+`pnpm e2e` needs `pnpm dev` running and `npx playwright install chromium` once.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Where things are
+
+| Path | What |
+|---|---|
+| `src/domain/` | Pure rules: permission matrix (`policy.ts`), workflow and Waiting on (`workflow.ts`), SLA working-hours maths (`sla.ts`), typed request fields, credential guard |
+| `src/server/services/` | All writes. Every status change, field change and comment writes an ActivityEvent; permissions are checked here, on the server |
+| `src/server/actions/` | Server actions (validated with zod) used by the UI |
+| `src/app/(app)/` | Pages |
+| `scripts/worker.ts` | Background worker: emails, ffmpeg media conversion, 3-working-day verify reminder |
+| `prisma/` | Schema, migrations, seed (people, 11 projects, SLA, Egypt holidays, PRD 11.1 backlog) |
+| `messages/en.json` | All UI text (Arabic file goes next to it later) |

@@ -37,7 +37,7 @@ export function MenuItem({ className, checked, children, ...p }: M.DropdownMenuI
 }
 
 export function MenuLabel({ className, ...p }: M.DropdownMenuLabelProps) {
-  return <M.Label className={cn("px-2 py-1 text-meta font-medium text-fg-muted", className)} {...p} />;
+  return <M.Label className={cn("px-2 py-1 text-meta font-medium text-fg-secondary", className)} {...p} />;
 }
 
 export function MenuSeparator() {

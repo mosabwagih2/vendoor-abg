@@ -86,9 +86,9 @@ export function TaskRow({
       </span>
       <Link href={href ?? `/tasks/${task.key}`} className="min-w-0 flex-1 truncate py-2 after:absolute after:inset-0 focus-visible:outline-none focus-visible:after:outline-2 focus-visible:after:outline-accent">
         <span className={cn(status === "closed" && "text-fg-secondary line-through")}>{task.title}</span>
-        <Mono className="ms-2 text-fg-muted sm:hidden">{task.key}</Mono>
+        <Mono className="ms-2 text-fg-secondary sm:hidden">{task.key}</Mono>
       </Link>
-      <span className="relative z-10 hidden shrink-0 items-center gap-2 text-fg-muted md:flex">
+      <span className="relative z-10 hidden shrink-0 items-center gap-2 text-fg-secondary md:flex">
         {task.occurrenceCount > 0 && (
           <span className="inline-flex items-center gap-0.5 text-meta" title={t("task.occurrences")}>
             <Repeat size={12} aria-hidden />
@@ -104,12 +104,12 @@ export function TaskRow({
         )}
         {task.attachmentCount > 0 && <Paperclip size={12} aria-label={t("task.attachments")} />}
       </span>
-      {p.has("project") && <span className="hidden w-12 shrink-0 font-mono text-[11px] text-fg-muted lg:inline">{task.project.key}</span>}
+      {p.has("project") && <span className="hidden w-12 shrink-0 font-mono text-[11px] text-fg-secondary lg:inline">{task.project.key}</span>}
       {p.has("type") && <span className="hidden w-16 shrink-0 text-meta text-fg-secondary lg:inline">{t(`type.${task.type}`)}</span>}
       <span className="relative z-10 hidden shrink-0 sm:inline-flex">
         <SlaBadge sla={task.sla} />
       </span>
-      {task.unverified && <span className="hidden shrink-0 rounded-full bg-warning-subtle px-1.5 text-meta font-medium text-[#8a5a00] sm:inline">{t("sla.unverified")}</span>}
+      {task.unverified && <span className="hidden shrink-0 rounded-full bg-warning-subtle px-1.5 text-meta font-medium text-warning-text sm:inline">{t("sla.unverified")}</span>}
       {p.has("waiting") && <WaitingBadge side={task.waitingOn} viewerSide={me.side} className="relative z-10 shrink-0" />}
       {p.has("requester") && (
         <span className="relative z-10 hidden shrink-0 lg:inline" title={task.requester.name}>

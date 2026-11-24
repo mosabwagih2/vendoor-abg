@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Bell, BellOff, ChevronRight, MoreHorizontal, Pin, Pencil, Ban, History } from "lucide-react";
@@ -272,13 +273,13 @@ function Description({ task, canEdit }: { task: TaskDetail; canEdit: boolean }) 
           {t("description")}
         </h2>
         {task.descriptionVersions > 0 && (
-          <span className="inline-flex items-center gap-1 text-meta text-fg-muted" title="Edits are kept in History">
+          <span className="inline-flex items-center gap-1 text-meta text-fg-secondary" title="Edits are kept in History">
             <History size={11} aria-hidden />
             {task.descriptionVersions}
           </span>
         )}
         {canEdit && !editing && (
-          <button type="button" aria-label={t("editDescription")} className="rounded p-1 text-fg-muted hover:bg-subtle hover:text-fg" onClick={() => setEditing(true)}>
+          <button type="button" aria-label={t("editDescription")} className="rounded p-1 text-fg-secondary hover:bg-subtle hover:text-fg" onClick={() => setEditing(true)}>
             <Pencil size={12} aria-hidden />
           </button>
         )}
@@ -306,7 +307,7 @@ function Description({ task, canEdit }: { task: TaskDetail; canEdit: boolean }) 
       ) : task.description ? (
         <Markdown>{task.description}</Markdown>
       ) : (
-        <p className="text-ui text-fg-muted">{t("noDescription")}</p>
+        <p className="text-ui text-fg-secondary">{t("noDescription")}</p>
       )}
     </section>
   );
@@ -320,11 +321,12 @@ function Properties({ task }: { task: TaskDetail }) {
   const tt = useTranslations("type");
   const tc = useTranslations("common");
   const { me, members, projects } = useApp();
+  const router = useRouter();
   const ctx = { status: task.status, requesterId: task.requesterId, assigneeId: task.assigneeId };
   const save = async (field: Parameters<typeof updateFieldAction>[0]["field"], value: unknown) => {
     const r = await updateFieldAction({ taskId: task.id, field, value });
     if (!r.ok) toast.error(r.error === "forbidden" ? (r.message ?? tc("forbidden")) : tc("error"));
-    else if (field === "projectId" && r.data?.key && r.data.key !== task.key) window.location.assign(`/tasks/${r.data.key}`);
+    else if (field === "projectId" && r.data?.key && r.data.key !== task.key) router.push(`/tasks/${r.data.key}`);
   };
   const project = projects.find((p) => p.id === task.project.id);
   const abg = members.filter((m) => m.side === "abg");
@@ -341,7 +343,7 @@ function Properties({ task }: { task: TaskDetail }) {
           className={cn(
             "font-medium",
             c.state === "breached" && "text-danger",
-            c.state === "at_risk" && "text-[#8a5a00]",
+            c.state === "at_risk" && "text-warning-text",
             c.state === "met" && "text-st-done",
             c.state === "paused" && "text-fg-secondary",
           )}

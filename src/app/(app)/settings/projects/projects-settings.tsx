@@ -109,7 +109,7 @@ function ProjectForm({ p, editable, onDone }: { p: P; editable: boolean; onDone?
           <div className="sm:row-span-2">
             <Label htmlFor={`pc-${id}`}>{t("categories")}</Label>
             <Textarea id={`pc-${id}`} rows={5} value={v.categoriesText} onChange={(e) => setV({ ...v, categoriesText: e.target.value })} />
-            <p className="mt-1 text-meta text-fg-muted">{t("categoriesHint")}</p>
+            <p className="mt-1 text-meta text-fg-secondary">{t("categoriesHint")}</p>
           </div>
           <div>
             <Label htmlFor={`pd-${id}`}>{tc("more")}</Label>
