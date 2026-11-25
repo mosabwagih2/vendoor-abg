@@ -374,7 +374,22 @@
     "proposeCancel": "Propose cancel",
     "cancelTask": "Cancel task",
     "closedAs": "Closed as {reason}",
-    "notFound": "Task not found."
+    "notFound": "Task not found.",
+    "tabInternal": "Internal notes",
+    "audience": "Who can read this",
+    "audienceReply": "Reply to Vendoor",
+    "audienceInternal": "Internal note",
+    "visibleAll": "Visible to Vendoor and ABG",
+    "visibleAbg": "Only ABG sees this",
+    "noActivity": "Nothing here yet.",
+    "reply": {
+      "worksForMe": "Works for me",
+      "needMoreInfo": "Need more info",
+      "pleaseCheckAgain": "Please check again",
+      "fixedPleaseTest": "Fixed, please test",
+      "needMoreDetails": "Need more details",
+      "cantReproduce": "Can't reproduce"
+    }
   },
   "actions": {
     "accept": "Accept",

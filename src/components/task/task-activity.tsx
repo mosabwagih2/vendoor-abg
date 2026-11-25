@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
-import { Lock, Paperclip, SmilePlus } from "lucide-react";
+import { Eye, Lock, Paperclip, SmilePlus } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/input";
@@ -16,6 +16,7 @@ import { useActivityText } from "./activity-line";
 import { useWorkflow, type WorkflowTask } from "./workflow-actions";
 import { cn } from "@/lib/cn";
 import { analyzeText, redactSecrets } from "@/domain/credential-guard";
+import { countTabs, inTab, prefilledReplies, tabsFor, type ActivityTab } from "@/domain/activity-tabs";
 import type { UploadedRef } from "@/lib/upload";
 import type { TaskDetail } from "@/server/task-detail";
 import { addCommentAction, addCredentialAction, editCommentAction, toggleReactionAction } from "@/server/actions/tasks";
@@ -24,51 +25,56 @@ const EMOJI = ["👍", "✅", "👀", "🙏", "❤️"];
 
 export function TaskActivity({ task, wf }: { task: TaskDetail; wf: WorkflowTask }) {
   const t = useTranslations("task");
-  const [tab, setTab] = useState<"all" | "comments" | "history">("all");
+  const { me } = useApp();
+  const [tab, setTab] = useState<ActivityTab>("all");
   const describe = useActivityText();
-  const items = [
-    ...task.comments.map((c) => ({ kind: "comment" as const, at: c.createdAt, c })),
-    ...task.history.filter((h) => h.verb !== "commented").map((h) => ({ kind: "event" as const, at: h.at, h })),
-  ]
-    .filter((x) => (tab === "all" ? true : tab === "comments" ? x.kind === "comment" : x.kind === "event"))
-    .sort((a, b) => a.at.localeCompare(b.at));
+  const all = [
+    ...task.comments.map((c) => ({ kind: "comment" as const, at: c.createdAt, isInternal: c.isInternal, c })),
+    ...task.history.filter((h) => h.verb !== "commented").map((h) => ({ kind: "event" as const, at: h.at, isInternal: !!h.isInternal, h })),
+  ];
+  const counts = countTabs(all, me.side);
+  const items = all.filter((x) => inTab(x, tab)).sort((a, b) => a.at.localeCompare(b.at));
+  const label = (k: ActivityTab) => (k === "all" ? t("tabAll") : k === "comments" ? t("tabComments") : k === "internal" ? t("tabInternal") : t("tabHistory"));
 
   return (
     <section aria-labelledby="act-title">
-      <div className="mb-3 flex items-center gap-3 border-b border-border">
-        <h2 id="act-title" className="pb-2 text-ui font-semibold">
-          {t("activity")}
-        </h2>
-        <div role="tablist" aria-label={t("activity")} className="ms-auto flex">
-          {(["all", "comments", "history"] as const).map((k) => (
-            <button
-              key={k}
-              role="tab"
-              aria-selected={tab === k}
-              onClick={() => setTab(k)}
-              className={cn("-mb-px border-b-2 px-2.5 pb-2 text-ui", tab === k ? "border-fg font-medium text-fg" : "border-transparent text-fg-secondary hover:text-fg")}
-            >
-              {k === "all" ? t("tabAll") : k === "comments" ? t("tabComments") : t("tabHistory")}
-            </button>
-          ))}
-        </div>
+      <h2 id="act-title" className="sr-only">
+        {t("activity")}
+      </h2>
+      <div role="tablist" aria-label={t("activity")} className="mb-3 flex gap-5 border-b border-border">
+        {tabsFor(me.side).map((k) => (
+          <button
+            key={k}
+            role="tab"
+            aria-selected={tab === k}
+            onClick={() => setTab(k)}
+            className={cn("-mb-px flex items-center gap-1.5 border-b-2 pb-2.5 text-[13.5px]", tab === k ? "border-fg font-semibold text-fg" : "border-transparent font-medium text-fg-muted hover:text-fg")}
+          >
+            {k === "internal" && <Lock size={13} aria-hidden />}
+            {label(k)}
+            {counts[k] > 0 && <span className="tabular text-[12.5px] font-normal text-fg-muted">{counts[k]}</span>}
+          </button>
+        ))}
       </div>
-      <div role="tabpanel"><ol className="space-y-3">
-        {items.map((x) =>
-          x.kind === "comment" ? (
-            <CommentItem key={x.c.id} c={x.c} />
-          ) : (
-            <li key={x.h.id} className="flex items-baseline gap-2 ps-1 text-meta text-fg-secondary">
-              <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-border" aria-hidden />
-              <span className="min-w-0 flex-1">
-                {describe(x.h)}
-                {x.h.isInternal && <Lock size={10} className="ms-1 inline" aria-label={t("internalBadge")} />}
-              </span>
-              <RelativeTime at={x.h.at} className="text-meta" />
-            </li>
-          ),
-        )}
-      </ol></div>
+      <div role="tabpanel">
+        <ol className="space-y-3">
+          {items.map((x) =>
+            x.kind === "comment" ? (
+              <CommentItem key={x.c.id} c={x.c} />
+            ) : (
+              <li key={x.h.id} className="flex items-baseline gap-2 ps-1 text-meta text-fg-secondary">
+                <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-border" aria-hidden />
+                <span className="min-w-0 flex-1">
+                  {describe(x.h)}
+                  {x.h.isInternal && <Lock size={10} className="ms-1 inline" aria-label={t("internalBadge")} />}
+                </span>
+                <RelativeTime at={x.h.at} className="text-meta" />
+              </li>
+            ),
+          )}
+        </ol>
+        {!items.length && <p className="py-4 text-ui text-fg-muted">{t("noActivity")}</p>}
+      </div>
       <Composer task={task} wf={wf} />
     </section>
   );
@@ -228,14 +234,29 @@ function Composer({ task, wf }: { task: TaskDetail; wf: WorkflowTask }) {
 
   return (
     <div className={cn("mt-4 rounded-card border bg-surface p-2", internal ? "border-[#f0d58a] bg-internal" : "border-border")}>
-      <div className="mb-2 flex flex-wrap gap-1.5">
+      <div className="mb-2 flex flex-wrap items-center gap-1.5">
+        {isAbg && (
+          <div role="group" aria-label={t("audience")} className="me-1 inline-flex rounded-lg bg-canvas p-0.5">
+            {[false, true].map((v) => (
+              <button key={String(v)} type="button" aria-pressed={internal === v} onClick={() => setInternal(v)} className={cn("inline-flex h-[26px] items-center gap-1 rounded-md px-2.5 text-[12.5px] font-semibold", internal === v ? "bg-surface text-fg shadow-sm" : "text-fg-muted")}>
+                {v && <Lock size={12} aria-hidden />}
+                {v ? t("audienceInternal") : t("audienceReply")}
+              </button>
+            ))}
+          </div>
+        )}
         {quick
           .filter((q) => q.show)
           .map((q) => (
-            <button key={q.label} type="button" onClick={q.onClick} className="h-7 rounded-full border border-border bg-surface px-2.5 text-meta hover:bg-subtle">
+            <button key={q.label} type="button" onClick={q.onClick} className="h-[26px] rounded-full border border-border bg-surface px-2.5 text-[12.5px] font-medium text-fg-secondary hover:bg-subtle">
               {q.label}
             </button>
           ))}
+        {prefilledReplies(me.side).map((k) => (
+          <button key={k} type="button" onClick={() => setBody(t(`reply.${k}`))} className="h-[26px] rounded-full border border-border bg-surface px-2.5 text-[12.5px] font-medium text-fg-secondary hover:bg-subtle">
+            {t(`reply.${k}`)}
+          </button>
+        ))}
       </div>
       <label htmlFor="composer" className="sr-only">
         {t("comment")}
@@ -256,15 +277,12 @@ function Composer({ task, wf }: { task: TaskDetail; wf: WorkflowTask }) {
         <Button size="icon" variant="ghost" aria-label={t("attachments")} onClick={() => setShowFiles(!showFiles)}>
           <Paperclip size={15} aria-hidden />
         </Button>
-        {isAbg && (
-          <label className="inline-flex items-center gap-1.5 text-meta text-fg-secondary">
-            <input type="checkbox" checked={internal} onChange={(e) => setInternal(e.target.checked)} className="h-4 w-4" />
-            <Lock size={12} aria-hidden />
-            {t("internal")}
-          </label>
-        )}
+        <span className="inline-flex items-center gap-1.5 rounded-lg bg-canvas px-2 py-1 text-[12.5px] text-fg-secondary">
+          {internal ? <Lock size={13} aria-hidden /> : <Eye size={13} aria-hidden />}
+          {internal ? t("visibleAbg") : t("visibleAll")}
+        </span>
         <Button size="sm" variant="primary" className="ms-auto" disabled={busy || uploading || (!body.trim() && !files.length)} onClick={() => void send()}>
-          {t("send")}
+          {t("comment")}
         </Button>
       </div>
       <CredentialGuardDialog
