@@ -445,7 +445,9 @@
     "copyBoth": "Copy both",
     "emailShort": "Email",
     "untitled": "Account",
-    "copied": "Copied"
+    "copied": "Copied",
+    "account": "Account {n}",
+    "formHint": "Optional. Shared with ABG, shown as typed."
   },
   "guard": {
     "title": "This looks like a password",
@@ -495,7 +497,16 @@
     "missing": "Fill in the required fields.",
     "subtasksFromPdf": "Change-request points",
     "subtasksFromPdfHint": "Optional: one point per line. Each becomes a sub-task.",
-    "fieldRequired": "Required"
+    "fieldRequired": "Required",
+    "kindHint": {
+      "bug": "Broken",
+      "change": "Improve",
+      "feature": "New",
+      "question": "Ask",
+      "ops": "Server"
+    },
+    "systemProblem": "System problem",
+    "systemProblemHint": "Down or slow"
   },
   "incident": {
     "title": "System is down",

@@ -242,30 +242,29 @@ export function RequestForm({ opts, onDone, onIncident }: { opts: { parentId?: s
         <h3 id="nr-kind" className="mb-2 text-ui font-semibold">
           1. {t("stepKind")}
         </h3>
-        <div className="flex flex-wrap items-center gap-2">
-          <div role="radiogroup" aria-labelledby="nr-kind" className="flex flex-wrap gap-2">
-            {KINDS.map((k) => (
+        <div role="radiogroup" aria-labelledby="nr-kind" className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
+          {KINDS.map((k) => {
+            const on = d.type === k.id;
+            return (
               <button
                 key={k.id}
                 type="button"
                 role="radio"
-                aria-checked={d.type === k.id}
+                aria-checked={on}
                 onClick={() => set("type", k.id)}
-                className={cn(
-                  "inline-flex h-9 items-center gap-1.5 rounded-control border px-3 text-ui font-medium",
-                  d.type === k.id ? "border-primary bg-primary text-primary-fg" : "border-border bg-surface hover:bg-subtle",
-                  err("type") && "border-danger",
-                )}
+                className={cn("flex flex-col items-start gap-0.5 rounded-xl border p-3 text-start", on ? "border-accent bg-info-subtle text-[#1d4ed8]" : "border-border bg-surface hover:bg-subtle", err("type") && "border-danger")}
               >
-                <k.icon size={15} aria-hidden />
-                {tt(k.id)}
+                <k.icon size={16} aria-hidden />
+                <span className="text-[12.5px] font-semibold">{tt(k.id)}</span>
+                <span className={cn("text-[11.5px]", on ? "text-[#1d4ed8]/80" : "text-fg-muted")}>{t(`kindHint.${k.id}`)}</span>
               </button>
-            ))}
-          </div>
+            );
+          })}
           {!opts.parentId && (
-            <button type="button" onClick={onIncident} className="ms-auto inline-flex h-9 items-center gap-1.5 rounded-control bg-danger px-3 text-ui font-medium text-white hover:opacity-90" title={t("systemDownHint")}>
-              <AlertOctagon size={15} aria-hidden />
-              {t("systemDown")}
+            <button type="button" onClick={onIncident} title={t("systemDownHint")} className="flex flex-col items-start gap-0.5 rounded-xl border border-[#f3c5c4] bg-danger-subtle p-3 text-start text-danger-text hover:opacity-90">
+              <AlertOctagon size={16} aria-hidden />
+              <span className="text-[12.5px] font-semibold">{t("systemProblem")}</span>
+              <span className="text-[11.5px] opacity-80">{t("systemProblemHint")}</span>
             </button>
           )}
         </div>
