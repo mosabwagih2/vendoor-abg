@@ -98,7 +98,7 @@ export function AppShell({ me, counts, projects, members, incident, upcoming, ch
         <nav aria-label={t("mainNav")} className="fixed inset-x-0 bottom-0 z-30 grid h-16 grid-cols-5 border-t border-border bg-surface pb-1 md:hidden">
           {tabs.map((it) =>
             it ? (
-              <Link key={it.href} href={it.href} aria-current={on(it.href) ? "page" : undefined} className={cn("relative flex flex-col items-center justify-center gap-0.5 text-[11px] font-medium", it.danger ? "text-danger" : on(it.href) ? "text-accent" : "text-fg-muted")}>
+              <Link key={it.href} href={it.href} aria-current={on(it.href) ? "page" : undefined} className={cn("relative flex flex-col items-center justify-center gap-0.5 text-[11px] font-medium", it.danger ? "text-danger-text" : on(it.href) ? "text-accent" : "text-fg-muted")}>
                 <it.icon size={22} aria-hidden />
                 {it.label}
                 {!!it.badge && <span className="absolute start-1/2 top-1 ms-2 grid h-4 min-w-4 place-items-center rounded-full bg-accent px-1 text-[10px] font-bold text-white">{it.badge}</span>}

@@ -36,7 +36,7 @@ export function Topbar({ onCreate, unread }: { onCreate: () => void; unread: num
         <kbd className="pointer-events-none absolute end-3 top-1/2 hidden -translate-y-1/2 font-mono text-[11px] text-fg-muted sm:block">⌘K</kbd>
       </form>
       <div className="flex-1" />
-      <button type="button" onClick={onCreate} className="inline-flex h-[34px] items-center gap-1.5 rounded-lg bg-accent px-3.5 text-[13px] font-semibold text-white hover:opacity-90">
+      <button type="button" onClick={onCreate} aria-label={t("newRequest")} className="inline-flex h-[34px] items-center gap-1.5 rounded-lg bg-accent px-3.5 text-[13px] font-semibold text-white hover:opacity-90">
         <Plus size={14} aria-hidden />
         <span className="hidden sm:inline">{t("create")}</span>
       </button>

@@ -55,16 +55,18 @@ pnpm test
 pnpm e2e
 ```
 
-`pnpm e2e` needs `pnpm dev` running and `npx playwright install chromium` once.
+`pnpm e2e` needs `pnpm dev:web` running and `npx playwright install chromium` once. If the browser is installed somewhere else, point `PW_CHROMIUM_PATH` at it.
 
 ## Where things are
 
 | Path | What |
 |---|---|
-| `src/domain/` | Pure rules: permission matrix (`policy.ts`), workflow and Waiting on (`workflow.ts`), SLA working-hours maths (`sla.ts`), typed request fields, credential guard |
+| `src/domain/` | Pure rules, no I/O, all unit-tested: permission matrix (`policy.ts`), workflow and Waiting on (`workflow.ts`), five display statuses (`status-display.ts`), SLA working hours (`sla.ts`), inbox tabs (`inbox.ts`), release states (`release-state.ts`), incidents (`incident.ts`), work week Sat to Thu (`week.ts`), credential guard and copy format |
 | `src/server/services/` | All writes. Every status change, field change and comment writes an ActivityEvent; permissions are checked here, on the server |
 | `src/server/actions/` | Server actions (validated with zod) used by the UI |
-| `src/app/(app)/` | Pages |
+| `src/app/(app)/` | Thin pages: home, inbox, requests (triage), my-work, tasks, releases, trouble (incidents), reports and reports/weekly, projects, settings. Each has `loading.tsx`/`error.tsx` at the frame level |
+| `src/components/` | Feature folders (`task`, `trouble`, `forms`, `layout`) and the UI kit in `ui/` |
+| `tests/unit`, `tests/e2e` | Vitest for the domain rules, Playwright for the main flows and accessibility |
 | `scripts/worker.ts` | Background worker: emails, ffmpeg media conversion, 3-working-day verify reminder |
 | `prisma/` | Schema, migrations, seed (people, 11 projects, SLA, Egypt holidays, PRD 11.1 backlog) |
 | `messages/en.json` | All UI text (Arabic file goes next to it later) |

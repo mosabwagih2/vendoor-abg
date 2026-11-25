@@ -16,13 +16,13 @@ test.describe("Phase 1 main flows", () => {
     await lead.goto(`/requests?peek=${key}`);
     await lead.getByRole("button", { name: "Accept" }).first().click();
     const dlg = lead.getByRole("dialog");
-    await dlg.getByRole("button", { name: "Urgent" }).click();
+    await dlg.getByRole("button", { name: "Highest" }).click();
     await dlg.getByRole("button", { name: "Accept" }).click();
-    await expect(lead.getByText(`${key} moved to Planned`)).toBeVisible();
+    await expect(lead.getByText(`${key} moved to Processing`)).toBeVisible();
 
     await lead.goto(`/tasks/${key}`);
     await lead.getByRole("button", { name: "Start" }).click();
-    await expect(lead.getByText(`${key} moved to In progress`)).toBeVisible();
+    await expect(lead.getByText(`${key} moved to Processing`)).toBeVisible();
 
     // Record a release with this task: it moves to Shipped.
     await lead.goto("/releases");
@@ -54,12 +54,12 @@ test.describe("Phase 1 main flows", () => {
     await lead.goto(`/tasks/${key}`);
     await lead.getByRole("button", { name: "Accept" }).first().click();
     await lead.getByRole("dialog").getByRole("button", { name: "Accept" }).click();
-    await expect(lead.getByText(`${key} moved to Planned`)).toBeVisible();
+    await expect(lead.getByText(`${key} moved to Processing`)).toBeVisible();
     await lead.getByRole("button", { name: "Start" }).click();
-    await expect(lead.getByText(`${key} moved to In progress`)).toBeVisible();
+    await expect(lead.getByText(`${key} moved to Processing`)).toBeVisible();
     await lead.getByRole("button", { name: "Mark shipped" }).click();
     await lead.getByRole("dialog").getByRole("button", { name: "Mark shipped" }).click();
-    await expect(lead.getByText(`${key} moved to Shipped`)).toBeVisible();
+    await expect(lead.getByText(`${key} moved to Completed`)).toBeVisible();
 
     await yara.goto(`/tasks/${key}`);
     await yara.getByRole("button", { name: "Still broken" }).first().click();
@@ -68,12 +68,12 @@ test.describe("Phase 1 main flows", () => {
     await expect(dlg.getByRole("alert")).toBeVisible(); // note is required
     await dlg.getByLabel("What is still broken?").fill("Still charges full COD on exchange order si1267.");
     await dlg.getByRole("button", { name: "Still broken" }).click();
-    await expect(yara.getByText(`${key} moved to Reopened`)).toBeVisible();
+    await expect(yara.getByText(`${key} moved to Processing`)).toBeVisible();
     await yara.reload();
     await expect(yara.locator("dt", { hasText: "Reopen count" }).locator("xpath=..").getByText("1")).toBeVisible();
   });
 
-  test("Account access: password is masked, revealed on demand and logged", async ({ browser }) => {
+  test("Account access: email and password are visible with copy buttons, extra accounts append", async ({ browser }) => {
     const lead = await signIn(browser, ZA8LOUL);
     await lead.goto("/tasks/ACC-1");
     await lead.getByRole("button", { name: "Add account" }).click();
@@ -82,22 +82,17 @@ test.describe("Phase 1 main flows", () => {
     await lead.getByRole("button", { name: "Save" }).click();
     await expect(lead.locator("#c-user-new")).toHaveCount(0); // editor closed
     await expect(lead.getByText("ve5372@vendoor.test").first()).toBeVisible();
-    await expect(lead.getByText("Ve5372!secret")).toHaveCount(0);
-    await lead.getByRole("button", { name: "Show password" }).last().click();
-    await expect(lead.getByText("Ve5372!secret").first()).toBeVisible({ timeout: 15_000 });
-    await expect(lead.getByText(/revealed a password on ACC-1/)).toBeVisible({ timeout: 10_000 }).catch(async () => {
-      await lead.reload();
-      await expect(lead.getByText(/revealed a password on ACC-1/).first()).toBeVisible();
-    });
+    await expect(lead.getByText("Ve5372!secret").first()).toBeVisible();
+    await expect(lead.getByRole("button", { name: /^Copy/ }).first()).toBeVisible();
   });
 
   test("credential guard offers to move a pasted password into Account access", async ({ browser }) => {
     const yara = await signIn(browser, YARA);
     await yara.goto("/tasks/ORD-2");
-    await yara.getByLabel("Comment").fill("arc login\narc@vendoor.test\npassword: Arc#2026x");
-    await yara.getByRole("button", { name: "Send" }).click();
+    await yara.getByPlaceholder(/Write a comment/).fill("arc login\narc@vendoor.test\npassword: Arc#2026x");
+    await yara.getByRole("button", { name: "Comment", exact: true }).click();
     await expect(yara.getByRole("heading", { name: "This looks like a password" })).toBeVisible();
     await yara.getByRole("button", { name: "Move to Account access" }).click();
-    await expect(yara.getByLabel("Comment")).toHaveValue(/\[see Account access\]/);
+    await expect(yara.getByPlaceholder(/Write a comment/)).toHaveValue(/\[see Account access\]/);
   });
 });

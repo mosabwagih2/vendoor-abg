@@ -31,7 +31,7 @@ export async function fileBug(page: Page, title: string): Promise<string> {
   await dialog.locator('input[type="file"]').setInputFiles("tests/e2e/fixtures/screenshot.png");
   await expect(dialog.getByText("screenshot.png")).toBeVisible();
   await dialog.getByRole("button", { name: "Always" }).click();
-  await dialog.getByRole("button", { name: "High" }).click();
+  await dialog.getByRole("button", { name: "High", exact: true }).click();
   await dialog.getByRole("button", { name: "Submit request" }).click();
   const toast = page.getByText(/BOS-\d+ created/);
   await expect(toast).toBeVisible();

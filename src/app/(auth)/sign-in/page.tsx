@@ -21,17 +21,17 @@ export default async function SignInPage({ searchParams }: { searchParams: Promi
         </div>
         <div>
           <h2 className="font-serif text-[64px] leading-[0.98] tracking-[-0.02em]">{t("headline")}</h2>
-          <p className="mt-5 max-w-md text-[15px] leading-relaxed text-white/70">{t("pitch")}</p>
+          <p className="mt-5 max-w-md text-[15px] leading-relaxed text-white/85">{t("pitch")}</p>
           <ol className="mt-10 grid max-w-lg grid-cols-5 gap-2" aria-hidden>
             {STEPS.map((s, i) => (
               <li key={s}>
                 <span className="block h-1.5 rounded-full" style={{ background: i < 3 ? "#fff" : i === 3 ? "#60a5fa" : "rgba(255,255,255,0.18)" }} />
-                <span className={`mt-2 block text-[11.5px] ${i === 3 ? "font-semibold text-white" : "text-white/60"}`}>{s}</span>
+                <span className={`mt-2 block text-[11.5px] ${i === 3 ? "font-semibold text-white" : "text-white/85"}`}>{s}</span>
               </li>
             ))}
           </ol>
         </div>
-        <p className="text-[12px] text-white/50">{t("footer")}</p>
+        <p className="text-[12px] text-white/75">{t("footer")}</p>
         <div aria-hidden className="pointer-events-none absolute -end-24 -top-24 h-72 w-72 rounded-full bg-[#2563eb]/30 blur-3xl" />
       </section>
       <section className="flex items-center justify-center px-5 py-10">
