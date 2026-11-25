@@ -967,7 +967,44 @@
     "subtitle": "Where all tasks stand right now",
     "overall": "Overall progress",
     "tasks": "{count} tasks",
-    "weekly": "Weekly report"
+    "weekly": "Weekly report",
+    "tabWeekly": "Weekly report",
+    "tabMonth": "Month and year",
+    "export": "Export",
+    "period": "Period",
+    "kind": {
+      "day": "Day",
+      "week": "Week",
+      "month": "Month",
+      "year": "Year"
+    },
+    "prev": "Previous",
+    "next": "Next",
+    "compareTo": "Compare to {name}",
+    "project": "Project",
+    "assignee": "Assignee",
+    "created": "Created",
+    "completed": "Completed",
+    "firstResponse": "First response",
+    "resolutionTime": "Resolution time",
+    "reopened": "Reopened",
+    "vs": "{delta} vs {name}",
+    "chart": "Created vs completed",
+    "nowTitle": "Where tasks are now",
+    "group": {
+      "request": "Request",
+      "processing": "Processing",
+      "stuck": "Stuck",
+      "completed": "Completed",
+      "done": "Done"
+    },
+    "byProject": "By project",
+    "byPerson": "By person",
+    "person": "Person",
+    "assigned": "Assigned",
+    "done": "Done",
+    "progress": "Progress",
+    "avgTime": "Avg time"
   },
   "releaseLine": {
     "live": "Live on the server",
@@ -999,7 +1036,8 @@
     "fridayOff": "Friday is a day off, so it is not counted.",
     "releases": "Releases this week",
     "noReleases": "Nothing was released this week.",
-    "tasksShipped": "{count, plural, one {# task} other {# tasks}}"
+    "tasksShipped": "{count, plural, one {# task} other {# tasks}}",
+    "monthTab": "Month and year"
   },
   "errorPage": {
     "title": "Something went wrong on our side",

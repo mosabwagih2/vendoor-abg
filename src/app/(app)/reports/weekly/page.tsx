@@ -31,6 +31,14 @@ export default async function WeeklyReportPage({ searchParams }: { searchParams:
   return (
     <>
       <PageHeader title={t("title")} subtitle={t("range", { from: r.week.start, to: r.week.end })}>
+        <div role="tablist" className="inline-flex rounded-control border border-border bg-subtle p-0.5">
+          <span role="tab" aria-selected className="rounded bg-surface px-3 py-1 text-ui font-medium shadow-sm">
+            {t("title")}
+          </span>
+          <Link role="tab" aria-selected={false} href="/reports" className="rounded px-3 py-1 text-ui text-fg-secondary">
+            {t("monthTab")}
+          </Link>
+        </div>
         <nav aria-label={t("weekNav")} className="flex items-center gap-1">
           <Link href={`/reports/weekly?week=${previousWeek(start)}`} aria-label={t("prev")} className="grid h-8 w-8 place-items-center rounded-control hover:bg-subtle">
             <ChevronLeft size={16} aria-hidden />

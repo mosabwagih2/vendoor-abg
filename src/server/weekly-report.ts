@@ -2,6 +2,7 @@ import "server-only";
 import { db } from "./db";
 import { getWorkspaceConfig } from "./calendar";
 import { localDateKey } from "@/domain/sla";
+import { startOfLocalDay } from "./local-time";
 import { addDays, previousWeek, weekRange, type WeekRange } from "@/domain/week";
 
 export interface WeekTotals {
@@ -19,17 +20,6 @@ export interface WeeklyReport {
   /** Per worked day: requests filed and tasks completed. */
   days: Array<{ key: string; requested: number; completed: number }>;
   releases: Array<{ number: string; type: string; releasedAt: string; taskCount: number }>;
-}
-
-/** Midnight of a local day key as an instant. The workspace timezone is Africa/Cairo (UTC+2/+3), so we resolve the offset per day. */
-function startOfLocalDay(key: string, tz: string): Date {
-  const guess = new Date(`${key}T00:00:00Z`);
-  // Shift by the zone's offset at that moment so localDateKey(result) === key.
-  for (const hours of [0, -1, -2, -3, -4]) {
-    const d = new Date(guess.getTime() + hours * 3_600_000);
-    if (localDateKey(d, tz) === key && localDateKey(new Date(d.getTime() - 1), tz) !== key) return d;
-  }
-  return guess;
 }
 
 async function totalsFor(range: WeekRange, tz: string): Promise<{ totals: WeekTotals; byDay: WeeklyReport["days"] }> {
