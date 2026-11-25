@@ -7,6 +7,7 @@ import { db } from "../db";
 import { recordEvent } from "../activity";
 import { notify } from "../notify";
 import * as rel from "../services/releases";
+import * as inc from "../services/incidents";
 import { can } from "@/domain/policy";
 
 function refresh() {
@@ -96,32 +97,43 @@ export async function deleteViewAction(id: string) {
 
 const incidentSchema = z.object({ scope: z.string().max(200), title: z.string().max(300), details: z.string().max(10_000).optional(), startedAt: z.string().nullish() });
 
-/** "System is down" (FR-12.1, minimal in Phase 1): opens an incident and alerts everyone at once. */
+/** "System is down": opens an incident, writes the first timeline entries and alerts everyone at once. */
 export async function openIncidentAction(input: z.input<typeof incidentSchema>) {
   return runAction(async () => {
     const me = await requireMember();
-    const data = incidentSchema.parse(input);
-    const r = await db.$transaction(async (tx) => {
-      const last = await tx.incident.findFirst({ orderBy: { number: "desc" } });
-      const inc = await tx.incident.create({
-        data: { number: (last?.number ?? 0) + 1, title: data.title || "System is down", scope: data.scope, state: "investigating", startedAt: data.startedAt ? new Date(data.startedAt) : new Date(), openedById: me.id, impact: data.details || null },
-      });
-      const ev = await recordEvent(tx, { actorId: me.id, subjectType: "incident", subjectId: inc.id, verb: "incident_opened", meta: { number: inc.number } });
-      const everyone = await tx.member.findMany({ where: { status: { not: "deactivated" } }, select: { id: true } });
-      await notify(tx, { eventId: ev.id, kind: "task.new_request", actorId: me.id, recipients: everyone.map((m) => m.id), email: { subject: `[INC-${inc.number}] System is down`, line: `${me.name} reported: ${data.scope}. ${data.details ?? ""}`, actionLabel: "Open tracker", path: "/home" } });
-      return inc;
-    });
+    const r = await inc.openIncident(me, incidentSchema.parse(input));
     refresh();
     return { number: r.number };
   });
 }
 
-export async function resolveIncidentAction(id: string) {
+const updateSchema = z.object({ incidentId: z.string().uuid(), body: z.string().trim().min(1).max(5000), state: z.enum(["investigating", "identified", "monitoring"]).optional() });
+
+/** ABG posts a status update on the timeline, optionally moving the incident to another state. */
+export async function postIncidentUpdateAction(input: z.input<typeof updateSchema>) {
   return runAction(async () => {
     const me = await requireMember();
-    if (me.role === "requester") throw new AppError("forbidden");
-    await db.incident.update({ where: { id }, data: { state: "resolved", resolvedAt: new Date() } });
-    await db.$transaction((tx) => recordEvent(tx, { actorId: me.id, subjectType: "incident", subjectId: id, verb: "incident_resolved" }));
+    await inc.postUpdate(me, updateSchema.parse(input));
+    refresh();
+  });
+}
+
+const closeSchema = z.object({ incidentId: z.string().uuid(), summary: z.string().max(5000), impact: z.string().max(5000), resolution: z.string().max(5000) });
+
+/** ABG closes the incident with Summary, Impact and Resolution (all required). */
+export async function resolveIncidentAction(input: z.input<typeof closeSchema>) {
+  return runAction(async () => {
+    const me = await requireMember();
+    await inc.resolveIncident(me, closeSchema.parse(input));
+    refresh();
+  });
+}
+
+/** Re-sends the alert to every ABG member (the "Alert ABG" button). */
+export async function alertAbgAction(incidentId: string) {
+  return runAction(async () => {
+    const me = await requireMember();
+    await inc.alertAbg(me, incidentId);
     refresh();
   });
 }

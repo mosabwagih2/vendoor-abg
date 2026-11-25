@@ -16,11 +16,11 @@ export function IncidentBanner({ incident }: { incident: { number: number; title
       <span className="shrink-0 font-semibold">{t("bannerTitle", { title: incident.title })}</span>
       <span suppressHydrationWarning className="hidden min-w-0 flex-1 truncate md:block">{t("bannerSince", { age: relative(incident.startedAt) })}</span>
       <span className="flex-1 md:hidden" />
-      <Link href="/trouble" className="hidden h-7 shrink-0 items-center gap-1.5 rounded-lg border border-[#f3d98b] bg-white px-2.5 text-[12px] font-semibold sm:inline-flex">
+      <Link href={`/trouble/${incident.number}`} className="hidden h-7 shrink-0 items-center gap-1.5 rounded-lg border border-[#f3d98b] bg-white px-2.5 text-[12px] font-semibold sm:inline-flex">
         <Send size={13} aria-hidden />
         {t("alertAbg")}
       </Link>
-      <Link href="/trouble" className="inline-flex shrink-0 items-center gap-1.5 font-semibold">
+      <Link href={`/trouble/${incident.number}`} className="inline-flex shrink-0 items-center gap-1.5 font-semibold">
         {t("viewTrouble")}
         <ArrowRight size={14} aria-hidden />
       </Link>

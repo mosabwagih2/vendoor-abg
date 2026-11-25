@@ -783,6 +783,33 @@
       "identified": "Cause found",
       "monitoring": "Monitoring",
       "resolved": "Fixed"
+    },
+    "summary": "Summary",
+    "summaryHint": "One line: what broke",
+    "impactHint": "Who was affected and for how long",
+    "resolutionHint": "What fixed it",
+    "timeline": "Timeline",
+    "closing": "Closing summary",
+    "startedAt": "Started {when}",
+    "lasted": "lasted {duration}",
+    "alerted": "ABG was alerted again.",
+    "postUpdate": "Post an update",
+    "updatePlaceholder": "What is happening now?",
+    "moveTo": "Move to",
+    "keepState": "Keep current state",
+    "post": "Post update",
+    "updatePosted": "Update posted.",
+    "markFixed": "Mark as fixed",
+    "closeTitle": "Close this incident",
+    "closeBody": "Write all three parts so Vendoor knows what happened and what changed.",
+    "closed": "Incident closed.",
+    "kind": {
+      "reported": "Reported",
+      "alert_sent": "ABG alerted",
+      "acknowledged": "Acknowledged",
+      "status": "Status changed",
+      "update": "Update",
+      "resolved": "Fixed"
     }
   },
   "statusGroup": {

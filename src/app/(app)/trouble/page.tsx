@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { requireMember } from "@/server/session";
 import { db } from "@/server/db";
@@ -29,7 +30,7 @@ export default async function TroublePage() {
         {!incidents.length && <EmptyState title={t("none")} />}
         {open.length > 0 && <h2 className="text-meta font-semibold uppercase tracking-[0.06em] text-fg-muted">{t("ongoing")}</h2>}
         {[...open, ...incidents.filter((i) => i.state === "resolved")].map((i) => (
-          <article key={i.id} className="rounded-card border border-border bg-surface p-4">
+          <Link key={i.id} href={`/trouble/${i.number}`} className="block rounded-card border border-border bg-surface p-4 hover:border-border-strong">
             <div className="flex flex-wrap items-center gap-2">
               <span className="font-mono text-meta text-fg-muted">INC-{i.number}</span>
               <span className={`rounded-full px-2 py-0.5 text-meta font-semibold ${STATE_TONE[i.state]}`}>{t(`state.${i.state}`)}</span>
@@ -53,7 +54,7 @@ export default async function TroublePage() {
                 )}
               </dl>
             )}
-          </article>
+          </Link>
         ))}
       </div>
     </>
