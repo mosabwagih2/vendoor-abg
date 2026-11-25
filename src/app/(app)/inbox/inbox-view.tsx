@@ -26,13 +26,13 @@ interface Props {
 export function InboxView({ tab, counts, rows, selectedKey, explicit, detail, viewerSide }: Props) {
   const t = useTranslations("inbox");
   return (
-    <div className="flex h-full min-h-0 max-md:flex-col">
-      <div className={cn("min-h-0 max-md:flex-1", explicit && "max-md:hidden")}>
+    <div className="flex h-full min-h-0 max-lg:flex-col">
+      <div className={cn("min-h-0 max-lg:flex-1", explicit && "max-lg:hidden")}>
         <InboxList tab={tab} counts={counts} rows={rows} selectedKey={selectedKey} viewerSide={viewerSide} />
       </div>
-      <div className={cn("min-h-0 min-w-0 flex-1 overflow-y-auto", !explicit && "max-md:hidden")}>
+      <div className={cn("min-h-0 min-w-0 flex-1 overflow-y-auto", !explicit && "max-lg:hidden")}>
         {explicit && (
-          <Link href={`/inbox?tab=${tab}`} className="flex h-10 items-center gap-1.5 border-b border-border px-4 text-ui text-fg-secondary md:hidden">
+          <Link href={`/inbox?tab=${tab}`} className="flex h-10 items-center gap-1.5 border-b border-border px-4 text-ui text-fg-secondary lg:hidden">
             <ArrowLeft size={16} aria-hidden />
             {t("back")}
           </Link>

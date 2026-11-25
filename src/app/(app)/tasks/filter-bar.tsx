@@ -101,7 +101,7 @@ export function FilterBar({ filters, onChange }: { filters: TaskFilters; onChang
             type="button"
             aria-pressed={quick === q}
             onClick={() => onChange(quickPatch(q, me.side))}
-            className={cn("h-8 rounded-full border px-3 text-[13px] font-semibold", quick === q ? "border-fg bg-fg text-white" : "border-border bg-surface text-fg-secondary hover:bg-subtle")}
+            className={cn("h-8 shrink-0 whitespace-nowrap rounded-full border px-3 text-[13px] font-semibold", quick === q ? "border-fg bg-fg text-white" : "border-border bg-surface text-fg-secondary hover:bg-subtle")}
           >
             {t(`tasks.quick.${q}`)}
           </button>

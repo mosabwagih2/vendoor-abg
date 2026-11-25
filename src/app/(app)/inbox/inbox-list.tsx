@@ -25,7 +25,7 @@ export function InboxList({ tab, counts, rows, selectedKey, viewerSide }: { tab:
   ].filter((g) => g.rows.length);
 
   return (
-    <div className="flex min-h-0 flex-col border-border bg-surface md:w-[420px] md:shrink-0 md:border-e">
+    <div className="flex min-h-0 flex-col border-border bg-surface lg:w-[420px] lg:shrink-0 lg:border-e">
       <div className="flex h-[52px] shrink-0 items-center gap-3 ps-5 pe-4">
         <h1 className="text-[16px] font-semibold">{t("title")}</h1>
         <Button size="icon" variant="ghost" className="ms-auto" aria-label={t("markAllRead")} title={t("markAllRead")} onClick={() => markAllReadAction()}>
