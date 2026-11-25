@@ -873,7 +873,7 @@
     }
   },
   "journey": {
-    "label": "Progress: {step} of 5, {status}"
+    "label": "Progress: {step} of 4, {status}"
   },
   "notFoundPage": {
     "badge": "ERROR 404",
