@@ -865,5 +865,42 @@
     "body": "Nothing you did. Try again, and if it keeps happening tell ABG with the reference below.",
     "reference": "Reference {id}",
     "retry": "Try again"
+  },
+  "drawer": {
+    "title": "Notifications",
+    "markAllRead": "Mark all read",
+    "close": "Close",
+    "incoming": "Incoming",
+    "archive": "Archive",
+    "loading": "Loading…",
+    "emptyIncoming": "You are all caught up.",
+    "emptyArchive": "Nothing in the archive yet.",
+    "someone": "Someone",
+    "day": {
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "earlier": "Earlier"
+    },
+    "incident": "System problem reported. ABG has been alerted.",
+    "kind": {
+      "task": {
+        "new_request": "{actor} filed a new request.",
+        "accepted": "{actor} accepted your request.",
+        "needs_info": "{actor} asked a question and is waiting for your answer.",
+        "answered": "{actor} answered your question.",
+        "shipped": "{actor} marked it Completed. Please test it.",
+        "reopened": "{actor} sent it back. It is being worked on again.",
+        "done": "{actor} confirmed it works. Done.",
+        "mentioned": "{actor} mentioned you.",
+        "commented": "{actor} commented.",
+        "status_request": "{actor} asked for an update.",
+        "assigned": "{actor} assigned it to you.",
+        "verify_reminder": "Reminder: this is waiting for your check.",
+        "cancel_proposed": "{actor} proposes to cancel it."
+      },
+      "release": {
+        "recorded": "A release was recorded."
+      }
+    }
   }
 }

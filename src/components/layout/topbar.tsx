@@ -1,9 +1,9 @@
 "use client";
-import Link from "next/link";
+import { NotificationsDrawer } from "./notifications-drawer";
 import { useRouter } from "next/navigation";
 import { useRef, useEffect } from "react";
 import { useTranslations } from "next-intl";
-import { Bell, Plus, Search } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 
 /** Figma topbar: search (⌘K), Create, bell. */
 export function Topbar({ onCreate, unread }: { onCreate: () => void; unread: number }) {
@@ -40,10 +40,7 @@ export function Topbar({ onCreate, unread }: { onCreate: () => void; unread: num
         <Plus size={14} aria-hidden />
         <span className="hidden sm:inline">{t("create")}</span>
       </button>
-      <Link href="/inbox" aria-label={t("notifications")} className="relative grid h-8 w-8 place-items-center rounded-lg text-fg-secondary hover:bg-black/[0.04]">
-        <Bell size={18} aria-hidden />
-        {unread > 0 && <span aria-hidden className="absolute end-1.5 top-1.5 h-2 w-2 rounded-full border-2 border-surface bg-danger" />}
-      </Link>
+      <NotificationsDrawer unread={unread} />
     </header>
   );
 }

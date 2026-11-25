@@ -8,6 +8,7 @@ import { recordEvent } from "../activity";
 import { notify } from "../notify";
 import * as rel from "../services/releases";
 import * as inc from "../services/incidents";
+import { loadDrawer } from "../notifications";
 import { can } from "@/domain/policy";
 
 function refresh() {
@@ -64,6 +65,11 @@ export async function markReadAction(ids: string[]) {
     await db.notification.updateMany({ where: { id: { in: ids }, memberId: me.id, readAt: null }, data: { readAt: new Date() } });
     refresh();
   });
+}
+
+/** Loads the bell drawer. Called each time the drawer opens so it is always current. */
+export async function loadDrawerAction() {
+  return runAction(async () => loadDrawer(await requireMember()));
 }
 
 export async function markAllReadAction() {
