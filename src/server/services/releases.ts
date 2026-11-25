@@ -7,6 +7,7 @@ import { can, type Actor } from "@/domain/policy";
 import { getWorkspaceConfig } from "../calendar";
 import { localDateKey } from "@/domain/sla";
 import { refreshSla } from "./tasks";
+import { canRollBack, statusAfterRollback } from "@/domain/release-state";
 
 /** R-YYYY-MM-DD, with -2, -3 … for further releases the same day (FR-11.2). */
 export function releaseNumber(dateKey: string, existing: string[]): string {
@@ -42,8 +43,8 @@ export async function recordRelease(actor: Actor, input: RecordReleaseInput) {
   return db.$transaction(async (tx) => {
     const tasks = await tx.task.findMany({ where: { id: { in: input.taskIds }, status: { in: ["in_progress", "shipped", "planned", "reopened"] } } });
     const release = input.upcomingId
-      ? await tx.release.update({ where: { id: input.upcomingId }, data: { number, state: "released", releasedAt, type: input.type, notes: input.notes } })
-      : await tx.release.create({ data: { number, state: "released", type: input.type, releasedAt, notes: input.notes, createdById: actor.id } });
+      ? await tx.release.update({ where: { id: input.upcomingId }, data: { number, state: "released", releasedAt, type: input.type, notes: input.notes, deployedById: actor.id, deployNote: input.notes || null } })
+      : await tx.release.create({ data: { number, state: "released", type: input.type, releasedAt, notes: input.notes, deployedById: actor.id, deployNote: input.notes || null, createdById: actor.id } });
     const ev = await recordEvent(tx, { actorId: actor.id, subjectType: "release", subjectId: release.id, verb: "release_recorded", meta: { number, tasks: tasks.length } });
     for (const t of tasks) {
       await tx.releaseTask.upsert({ where: { releaseId_taskId: { releaseId: release.id, taskId: t.id } }, create: { releaseId: release.id, taskId: t.id }, update: {} });
@@ -81,5 +82,50 @@ export async function createUpcomingRelease(actor: Actor, input: { targetDate: s
     for (const id of input.taskIds) await tx.releaseTask.create({ data: { releaseId: r.id, taskId: id } });
     await recordEvent(tx, { actorId: actor.id, subjectType: "release", subjectId: r.id, verb: "release_planned", meta: { targetDate: input.targetDate } });
     return r;
+  });
+}
+
+export interface RollbackInput {
+  releaseId: string;
+  reason: string;
+}
+
+/**
+ * Take a live release off the server. Completed tasks in it go back to Processing and their requesters are told.
+ * The release keeps its tasks and its history; it just shows as "Rolled back" with the reason.
+ */
+export async function rollbackRelease(actor: Actor, input: RollbackInput) {
+  if (!can(actor, "record_release")) throw new AppError("forbidden");
+  const reason = input.reason.trim();
+  if (!reason) throw new AppError("invalid_input", "A reason is required");
+  const cfg = await getWorkspaceConfig();
+  return db.$transaction(async (tx) => {
+    const release = await tx.release.findUnique({ where: { id: input.releaseId }, include: { tasks: { include: { task: true } } } });
+    if (!release) throw new AppError("not_found");
+    if (!canRollBack(release.state)) throw new AppError("conflict", "Only a live release can be rolled back");
+    const now = new Date();
+    await tx.release.update({ where: { id: release.id }, data: { state: "rolled_back", rolledBackAt: now, rollbackReason: reason } });
+    await recordEvent(tx, { actorId: actor.id, subjectType: "release", subjectId: release.id, verb: "release_rolled_back", meta: { number: release.number, reason } });
+    let reverted = 0;
+    for (const { task: t } of release.tasks) {
+      const to = statusAfterRollback(t.status);
+      if (!to) continue;
+      await tx.task.update({ where: { id: t.id }, data: { status: to, statusChangedAt: now, shippedAt: null, verifyReminderSentAt: null } });
+      await tx.taskStatusSpan.updateMany({ where: { taskId: t.id, leftAt: null }, data: { leftAt: now } });
+      await tx.taskStatusSpan.create({ data: { taskId: t.id, status: to, enteredAt: now, actorId: actor.id } });
+      const tev = await recordEvent(tx, { actorId: actor.id, subjectType: "task", subjectId: t.id, taskId: t.id, verb: "status_changed", field: "status", from: t.status, to, meta: { release: release.number, rolledBack: true, reason } });
+      const fol = await tx.follower.findMany({ where: { taskId: t.id, following: true }, select: { memberId: true } });
+      await notify(tx, {
+        eventId: tev.id,
+        kind: "task.reopened",
+        actorId: actor.id,
+        recipients: [t.requesterId, t.assigneeId, ...fol.map((f) => f.memberId)].filter((x): x is string => !!x),
+        taskId: t.id,
+        email: { subject: `[${t.key}] Release rolled back`, line: `${release.number} was rolled back: ${reason}. ${t.key} is back with ABG.`, actionLabel: "Open task", path: `/tasks/${t.key}` },
+      });
+      await refreshSla(tx, t.id, cfg);
+      reverted += 1;
+    }
+    return { number: release.number, reverted };
   });
 }

@@ -4,6 +4,8 @@ import { PageHeader } from "@/components/layout/page-header";
 import { TaskRow, type TaskRowData } from "@/components/task/task-row";
 import { Markdown } from "@/components/ui/markdown";
 import { formatExact } from "@/lib/format";
+import type { ReleaseState } from "@/domain/release-state";
+import { ReleaseStatusCard } from "../release-status-card";
 
 export function ReleaseDetail({
   title,
@@ -12,7 +14,7 @@ export function ReleaseDetail({
   regressed,
 }: {
   title: string;
-  release: { number: string; state: string; type: string; releasedAt: string | null; targetDate: string | null; notes: string; createdBy: string };
+  release: { id: string; number: string; state: ReleaseState; type: string; releasedAt: string | null; targetDate: string | null; notes: string; createdBy: string; deployedBy: string | null; rolledBackAt: string | null; rollbackReason: string | null };
   rows: TaskRowData[];
   regressed: string[];
 }) {
@@ -24,6 +26,7 @@ export function ReleaseDetail({
     <div>
       <PageHeader title={<span className="font-mono">{title}</span>} subtitle={`${t(release.type as "planned")} · ${release.releasedAt ? formatExact(release.releasedAt) : release.targetDate ? formatExact(release.targetDate) : ""} · ${release.createdBy}`} />
       <div className="mx-auto max-w-[1200px] space-y-5 px-4 py-5">
+        <ReleaseStatusCard release={release} />
         <section className="rounded-card border border-border bg-surface p-4">
           <div className="flex flex-wrap gap-4 text-ui">
             <span>

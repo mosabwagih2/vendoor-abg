@@ -578,7 +578,23 @@
     "regressed": "Regressed",
     "upcoming": "Upcoming",
     "empty": "No releases yet.",
-    "noTasks": "No tasks ready to ship."
+    "noTasks": "No tasks ready to ship.",
+    "liveTitle": "Live on the server",
+    "draftTitle": "Draft: not on the server yet",
+    "rolledBackTitle": "Rolled back",
+    "deployedBy": "by {name}",
+    "rollbackReason": "Why: {reason}",
+    "noteLine": "Note: “{note}”",
+    "rollback": "Roll back",
+    "rollbackTitle": "Roll back {number}",
+    "rollbackBody": "Tasks in this release that are waiting for Vendoor go back to Processing. Their requesters are told.",
+    "rollbackReasonLabel": "Why are you rolling it back?",
+    "rolledBackDone": "Rolled back. {count} tasks are back with ABG.",
+    "state": {
+      "draft": "Draft",
+      "live": "Live",
+      "rolledBack": "Rolled back"
+    }
   },
   "inbox": {
     "title": "Inbox",

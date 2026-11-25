@@ -14,6 +14,7 @@ import { useApp } from "@/components/layout/app-context";
 import { cn } from "@/lib/cn";
 import { formatDue, formatExact } from "@/lib/format";
 import type { TaskStatus } from "@/domain/types";
+import { RELEASE_LABEL, type ReleaseState } from "@/domain/release-state";
 import { createUpcomingReleaseAction, recordReleaseAction } from "@/server/actions/misc";
 
 interface R {
@@ -57,7 +58,10 @@ export function ReleasesView({ title, releases, candidates, nextNumber }: { titl
           {releases.map((r) => (
             <li key={r.id}>
               <Link href={`/releases/${r.number}`} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-1 px-4 py-3 hover:bg-subtle sm:grid-cols-[180px_110px_90px_minmax(0,1fr)]">
-                <Mono className="text-[13px] font-medium">{r.state === "upcoming" ? t("upcoming") : r.number}</Mono>
+                <span className="flex items-center gap-2">
+                  <Mono className="text-[13px] font-medium">{r.state === "upcoming" ? t("upcoming") : r.number}</Mono>
+                  <ReleaseStatePill state={r.state as ReleaseState} />
+                </span>
                 <span className="tabular text-ui text-fg-secondary">{r.releasedAt ? formatDue(r.releasedAt) : r.targetDate ? formatDue(r.targetDate) : "—"}</span>
                 <span className={cn("w-fit rounded-full px-2 text-meta font-medium", r.type === "hotfix" ? "bg-danger-subtle text-danger-text" : "bg-subtle text-fg-secondary")}>{t(r.type as "planned")}</span>
                 <span className="col-span-2 flex flex-wrap items-center gap-3 text-meta text-fg-secondary sm:col-span-1">
@@ -92,6 +96,24 @@ export function ReleasesView({ title, releases, candidates, nextNumber }: { titl
         )}
       </Dialog>
     </div>
+  );
+}
+
+const PILL: Record<ReleaseState, { bg: string; fg: string; dot: string }> = {
+  upcoming: { bg: "#eef0f3", fg: "#4b5160", dot: "#7a8090" },
+  released: { bg: "#e4f6ec", fg: "#0e7c4f", dot: "#16a06a" },
+  rolled_back: { bg: "#fdecec", fg: "#b42318", dot: "#e5484d" },
+};
+
+/** Draft / Live / Rolled back, the same three states everywhere a release is shown. */
+function ReleaseStatePill({ state }: { state: ReleaseState }) {
+  const t = useTranslations("releases");
+  const c = PILL[state];
+  return (
+    <span className="inline-flex h-5 items-center gap-1.5 rounded-full px-2 text-[11.5px] font-semibold" style={{ background: c.bg, color: c.fg }}>
+      <span aria-hidden className="h-1.5 w-1.5 rounded-full" style={{ background: c.dot }} />
+      {t(`state.${RELEASE_LABEL[state]}`)}
+    </span>
   );
 }
 

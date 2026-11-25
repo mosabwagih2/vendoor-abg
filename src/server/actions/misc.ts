@@ -41,6 +41,17 @@ export async function createUpcomingReleaseAction(input: z.input<typeof upcoming
   });
 }
 
+const rollbackSchema = z.object({ releaseId: z.string().uuid(), reason: z.string().min(2).max(2000) });
+
+export async function rollbackReleaseAction(input: z.input<typeof rollbackSchema>) {
+  return runAction(async () => {
+    const me = await requireMember();
+    const r = await rel.rollbackRelease(me, rollbackSchema.parse(input));
+    refresh();
+    return r;
+  });
+}
+
 export async function nextReleaseNumberAction() {
   await requireMember();
   return rel.nextReleaseNumber();

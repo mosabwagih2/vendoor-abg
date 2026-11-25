@@ -14,7 +14,7 @@ export default async function ReleasePage({ params }: { params: Promise<{ number
   await requireMember();
   const { number } = await params;
   const t = await getTranslations("releases");
-  const r = await db.release.findUnique({ where: { number: decodeURIComponent(number) }, include: { tasks: true, createdBy: { select: { name: true } } } });
+  const r = await db.release.findUnique({ where: { number: decodeURIComponent(number) }, include: { tasks: true, createdBy: { select: { name: true } }, deployedBy: { select: { name: true } } } });
   if (!r) notFound();
   const ids = r.tasks.map((x) => x.taskId);
   const rows = await decorate(await db.task.findMany({ where: { id: { in: ids } }, select: taskRowSelect }));
@@ -25,7 +25,7 @@ export default async function ReleasePage({ params }: { params: Promise<{ number
   return (
     <ReleaseDetail
       title={r.state === "upcoming" ? t("upcoming") : r.number}
-      release={{ number: r.number, state: r.state, type: r.type, releasedAt: r.releasedAt?.toISOString() ?? null, targetDate: r.targetDate?.toISOString() ?? null, notes: r.notes, createdBy: r.createdBy.name }}
+      release={{ id: r.id, number: r.number, state: r.state, type: r.type, releasedAt: r.releasedAt?.toISOString() ?? null, targetDate: r.targetDate?.toISOString() ?? null, notes: r.notes, createdBy: r.createdBy.name, deployedBy: r.deployedBy?.name ?? null, rolledBackAt: r.rolledBackAt?.toISOString() ?? null, rollbackReason: r.rollbackReason }}
       rows={rows}
       regressed={[...regressed]}
     />
