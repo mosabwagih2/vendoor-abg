@@ -671,5 +671,18 @@
   },
   "journey": {
     "label": "Progress: {step} of 5, {status}"
+  },
+  "notFoundPage": {
+    "badge": "ERROR 404",
+    "title": "Hello, world!",
+    "subtitle": "That is all we found at this address.",
+    "body": "This page was marked Done before it was ever Requested. We asked ABG. They said it works on their machine.",
+    "termCommand": "$ git blame {path}",
+    "termResult": "nobody (this page was never committed)",
+    "bubble": "It's work in my machine.",
+    "notFoundTag": "Not found",
+    "backToInbox": "Back to Inbox",
+    "openAllTasks": "Open All tasks",
+    "hint": "Lost? Press ⌘K and search. It works better than guessing URLs."
   }
 }
