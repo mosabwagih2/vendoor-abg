@@ -17,7 +17,7 @@ export interface TaskFilters {
 }
 
 export interface TaskDisplay {
-  view: "list" | "board";
+  view: "list" | "board" | "calendar" | "timeline";
   group: "status" | "project" | "priority" | "assignee" | "waiting" | "none";
   order: "priority" | "due" | "updated" | "created";
   showClosed: boolean;
@@ -73,7 +73,7 @@ export function parseFilters(sp: URLSearchParams): { filters: TaskFilters; displ
     q: sp.get("q") ?? "",
   };
   const display: TaskDisplay = {
-    view: sp.get("view") === "board" ? "board" : "list",
+    view: (["board", "calendar", "timeline"] as const).find((v) => v === sp.get("view")) ?? "list",
     group: (["status", "project", "priority", "assignee", "waiting", "none"] as const).find((g) => g === sp.get("group")) ?? DEFAULT_DISPLAY.group,
     order: (["priority", "due", "updated", "created"] as const).find((o) => o === sp.get("order")) ?? DEFAULT_DISPLAY.order,
     showClosed: sp.get("closed") === "1",

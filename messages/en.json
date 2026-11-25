@@ -319,6 +319,35 @@
       "needs_me": "Needs me",
       "due_week": "Due this week",
       "overdue": "Overdue"
+    },
+    "calendar": {
+      "prev": "Previous",
+      "next": "Next",
+      "today": "Today",
+      "month": "Month",
+      "week": "Week",
+      "mode": "Calendar range",
+      "weekOf": "Week of {date}",
+      "weekNote": "Week: Sat – Thu · Friday off",
+      "dayOff": "Day off",
+      "noDeadline": "No deadline",
+      "noDeadlineHint": "Tasks without a due date. Open one to set it."
+    },
+    "timeline": {
+      "scale": "Zoom",
+      "weeks": "Weeks",
+      "months": "Months",
+      "quarters": "Quarters",
+      "fridays": "Fridays shaded",
+      "hint": "One bar per project. Open a project to see its tasks.",
+      "project": "Project",
+      "today": "Today"
+    },
+    "viewLabel": {
+      "list": "List",
+      "board": "Board",
+      "calendar": "Calendar",
+      "timeline": "Timeline"
     }
   },
   "task": {

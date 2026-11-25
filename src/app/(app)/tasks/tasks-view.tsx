@@ -6,7 +6,7 @@ import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { DndContext, KeyboardSensor, PointerSensor, useDraggable, useDroppable, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
-import { ChevronRight, Download, List, Columns3, Bookmark, MoreHorizontal, X, Expand, Repeat, Paperclip, Trash2 } from "lucide-react";
+import { CalendarDays, ChevronRight, Download, GanttChart, List, Columns3, Bookmark, MoreHorizontal, X, Expand, Repeat, Paperclip, Trash2 } from "lucide-react";
 import { PageHeader, EmptyState } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { Input, Select } from "@/components/ui/input";
@@ -29,6 +29,8 @@ import type { TaskDetail } from "@/server/task-detail";
 import { bulkAction } from "@/server/actions/tasks";
 import { deleteViewAction, saveViewAction } from "@/server/actions/misc";
 import { DisplayMenu, FilterBar } from "./filter-bar";
+import { CalendarView } from "./calendar-view";
+import { TimelineView } from "./timeline-view";
 
 interface Props {
   rows: TaskRowData[];
@@ -37,9 +39,11 @@ interface Props {
   query: string;
   savedViews: Array<{ id: string; name: string; query: string; shared: boolean; mine: boolean }>;
   peek: TaskDetail | null;
+  /** Per project: percent of tasks Done and health, for the Timeline. */
+  projectInfo: { progress: Record<string, number>; health: Record<string, string> };
 }
 
-export function TasksView({ rows, filters, display, query, savedViews, peek }: Props) {
+export function TasksView({ rows, filters, display, query, savedViews, peek, projectInfo }: Props) {
   const t = useTranslations();
   const router = useRouter();
   const pathname = usePathname();
@@ -56,7 +60,7 @@ export function TasksView({ rows, filters, display, query, savedViews, peek }: P
     <div className="flex h-full flex-col max-md:h-[calc(100dvh-56px)]">
       <PageHeader title={t("tasks.title")}>
         <div role="group" aria-label={t("tasks.title")} className="inline-flex rounded-control border border-border bg-surface p-0.5">
-          {(["list", "board"] as const).map((v) => (
+          {(["list", "board", "calendar", "timeline"] as const).map((v) => (
             <button
               key={v}
               type="button"
@@ -64,8 +68,8 @@ export function TasksView({ rows, filters, display, query, savedViews, peek }: P
               onClick={() => navigate({}, { view: v })}
               className={cn("inline-flex h-6 items-center gap-1 rounded px-2 text-meta", display.view === v ? "bg-subtle font-medium text-fg" : "text-fg-secondary")}
             >
-              {v === "list" ? <List size={13} aria-hidden /> : <Columns3 size={13} aria-hidden />}
-              {t(`tasks.${v}`)}
+              {v === "list" ? <List size={13} aria-hidden /> : v === "board" ? <Columns3 size={13} aria-hidden /> : v === "calendar" ? <CalendarDays size={13} aria-hidden /> : <GanttChart size={13} aria-hidden />}
+              {t(`tasks.viewLabel.${v}`)}
             </button>
           ))}
         </div>
@@ -94,8 +98,12 @@ export function TasksView({ rows, filters, display, query, savedViews, peek }: P
             </EmptyState>
           ) : display.view === "list" ? (
             <ListView rows={rows} display={display} selected={selected} setSelected={setSelected} peekHref={peekHref} activeKey={peek?.key} />
-          ) : (
+          ) : display.view === "board" ? (
             <BoardView rows={rows} display={display} peekHref={peekHref} />
+          ) : display.view === "calendar" ? (
+            <CalendarView rows={rows} peekHref={peekHref} />
+          ) : (
+            <TimelineView rows={rows} progress={projectInfo.progress} health={projectInfo.health} peekHref={peekHref} />
           )}
         </div>
         {peek && (
@@ -123,7 +131,7 @@ export function TasksView({ rows, filters, display, query, savedViews, peek }: P
 
 function ViewsStrip({ query, savedViews }: { query: string; savedViews: Props["savedViews"] }) {
   const t = useTranslations("tasks");
-  const current = query.replace(/&?view=board/, "");
+  const current = query.replace(/&?view=(board|calendar|timeline)/, "");
   return (
     <nav aria-label={t("views")} className="flex gap-1 overflow-x-auto border-b border-border px-4 py-1.5">
       {DEFAULT_VIEWS.map((v) => (
