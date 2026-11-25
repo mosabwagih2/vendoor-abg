@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { requireMember } from "@/server/session";
 import { db } from "@/server/db";
@@ -24,7 +25,11 @@ export default async function ReportsPage() {
   const total = Object.values(counts).reduce((a, b) => a + b, 0) || 1;
   return (
     <>
-      <PageHeader title={t("title")} subtitle={t("subtitle")} />
+      <PageHeader title={t("title")} subtitle={t("subtitle")}>
+        <Link href="/reports/weekly" className="rounded-control border border-border px-3 py-1.5 text-ui font-medium hover:bg-subtle">
+          {t("weekly")}
+        </Link>
+      </PageHeader>
       <div className="mx-auto max-w-5xl space-y-4 p-4 md:p-6">
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
           {GROUPS.map((g) => (

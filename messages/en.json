@@ -824,7 +824,8 @@
     "title": "Reports",
     "subtitle": "Where all tasks stand right now",
     "overall": "Overall progress",
-    "tasks": "{count} tasks"
+    "tasks": "{count} tasks",
+    "weekly": "Weekly report"
   },
   "releaseLine": {
     "live": "Live on the server",
@@ -835,5 +836,27 @@
     "draftIn": "In draft release {number}",
     "willGo": "It will go out in the next release",
     "open": "Open release"
+  },
+  "weekly": {
+    "title": "Weekly report",
+    "range": "Sat {from} to Thu {to}",
+    "weekNav": "Choose week",
+    "prev": "Previous week",
+    "next": "Next week",
+    "thisWeek": "This week",
+    "card": {
+      "requested": "Requested",
+      "completed": "Completed",
+      "done": "Done",
+      "released": "Releases",
+      "incidents": "System problems"
+    },
+    "same": "Same as last week",
+    "vsLast": "{diff} vs last week",
+    "byDay": "By day",
+    "fridayOff": "Friday is a day off, so it is not counted.",
+    "releases": "Releases this week",
+    "noReleases": "Nothing was released this week.",
+    "tasksShipped": "{count, plural, one {# task} other {# tasks}}"
   }
 }
