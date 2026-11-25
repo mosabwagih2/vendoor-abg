@@ -106,7 +106,7 @@ export function ReportsView({ title, kind, rangeTitle, prevName, prevDate, nextD
             </span>
             {t("compareTo", { name: prevName })}
           </button>
-          <div className="ms-auto flex gap-2">
+          <div className="flex w-full flex-wrap gap-2 sm:ms-auto sm:w-auto">
             <select aria-label={t("project")} value={filters.project ?? ""} onChange={(e) => router.push(link({ project: e.target.value || null }))} className="h-8 rounded-full border border-border bg-surface px-3 text-ui">
               <option value="">{t("project")}</option>
               {projects.map((x) => (

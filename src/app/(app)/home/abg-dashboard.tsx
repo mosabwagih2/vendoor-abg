@@ -22,7 +22,7 @@ export async function AbgDashboard({ data, greeting, dateLine }: { data: Dashboa
   return (
     <div className="mx-auto max-w-[1180px] space-y-5 px-5 py-8 sm:px-8">
       <header className="flex flex-wrap items-start gap-3">
-        <div className="min-w-0 flex-1">
+        <div className="min-w-0 basis-full sm:flex-1 sm:basis-0">
           <h1 className="text-[26px] font-bold leading-[1.25] tracking-[-0.02em]">{greeting}</h1>
           <p className="mt-0.5 text-ui text-fg-secondary">{dateLine} · {t("waitingTriage", { count: data.triage })}</p>
         </div>

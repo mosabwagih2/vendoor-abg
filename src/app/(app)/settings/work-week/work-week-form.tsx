@@ -49,16 +49,16 @@ export function WorkWeekForm(props: { workingDays: number[]; startMin: number; e
             {WEEK_ORDER.map((d) => {
               const on = days.includes(d);
               return (
-                <li key={d} className={cn("flex items-center gap-4 px-4 py-2.5", !on && "bg-canvas")}>
+                <li key={d} className={cn("flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-2.5", !on && "bg-canvas")}>
                   <button type="button" role="switch" aria-checked={on} aria-label={t(`dayLong.${d}` as "dayLong.0")} onClick={() => toggle(d)} className={cn("relative h-6 w-10 shrink-0 rounded-full transition-colors", on ? "bg-accent" : "bg-border-strong")}>
                     <span className={cn("absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all", on ? "start-[18px]" : "start-0.5")} />
                   </button>
-                  <span className="w-28 text-ui font-medium">{t(`dayLong.${d}` as "dayLong.0")}</span>
+                  <span className="w-24 text-ui font-medium sm:w-28">{t(`dayLong.${d}` as "dayLong.0")}</span>
                   {on ? (
                     <span className="flex items-center gap-2 text-ui text-fg-secondary">
-                      <Input aria-label={`${t(`dayLong.${d}` as "dayLong.0")} ${t("from")}`} type="time" value={start} onChange={(e) => setStart(e.target.value)} className="w-28" />
+                      <Input aria-label={`${t(`dayLong.${d}` as "dayLong.0")} ${t("from")}`} type="time" value={start} onChange={(e) => setStart(e.target.value)} className="w-[7.5rem]" />
                       –
-                      <Input aria-label={`${t(`dayLong.${d}` as "dayLong.0")} ${t("to")}`} type="time" value={end} onChange={(e) => setEnd(e.target.value)} className="w-28" />
+                      <Input aria-label={`${t(`dayLong.${d}` as "dayLong.0")} ${t("to")}`} type="time" value={end} onChange={(e) => setEnd(e.target.value)} className="w-[7.5rem]" />
                     </span>
                   ) : (
                     <span className="text-meta text-fg-muted">{tw("dayOff")}</span>
