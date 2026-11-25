@@ -702,6 +702,97 @@
       "4": "Thu",
       "5": "Fri",
       "6": "Sat"
+    },
+    "nav": {
+      "general": "General",
+      "workflow": "Workflow",
+      "work-week": "Work week",
+      "priorities": "Priorities",
+      "projects": "Tags",
+      "members": "Members and roles",
+      "notifications": "Notifications",
+      "profile": "Profile"
+    },
+    "dayLong": {
+      "0": "Sunday",
+      "1": "Monday",
+      "2": "Tuesday",
+      "3": "Wednesday",
+      "4": "Thursday",
+      "5": "Friday",
+      "6": "Saturday"
+    },
+    "general": {
+      "title": "General",
+      "hint": "The workspace shared by Vendoor and ABG.",
+      "workspace": "Workspace",
+      "name": "Name",
+      "nameHint": "Shown in the sidebar and emails",
+      "language": "Language",
+      "languageHint": "Interface language",
+      "timezone": "Timezone",
+      "timezoneHint": "Used for dates and the service clock",
+      "requests": "Requests",
+      "verifyWindow": "Verify reminder (working days)",
+      "verifyWindowHint": "Remind Vendoor to test after Completed",
+      "unverified": "Unverified after (working days)",
+      "unverifiedHint": "Flag Completed tasks nobody has tested",
+      "save": "Save changes"
+    },
+    "workflow": {
+      "title": "Workflow",
+      "hint": "Five steps. Statuses are fixed so everyone reads the board the same way.",
+      "locked": "Locked",
+      "step": {
+        "request": "Request",
+        "processing": "Active",
+        "stuck": "Stuck",
+        "completed": "Completed",
+        "done": "Done"
+      },
+      "owner": {
+        "request": "ABG accepts",
+        "processing": "ABG works",
+        "stuck": "Waiting on Vendoor",
+        "completed": "Vendoor verifies",
+        "done": "Locked: only Vendoor can move a task here"
+      },
+      "who": "Who can move a task",
+      "side": {
+        "abg": "ABG only",
+        "vendoor": "Vendoor only"
+      },
+      "rule": {
+        "accept": "Needs priority and assignee",
+        "stuck": "Needs a reason",
+        "complete": "Needs release and note",
+        "verify": "Works",
+        "reopen": "Still broken, reopen count +1"
+      }
+    },
+    "workWeek": {
+      "title": "Work week and holidays",
+      "hint": "Used by the service clock, the weekly report, the calendar and the timeline.",
+      "dayOff": "Day off · not counted in reports or the service clock",
+      "sameHours": "Working hours are the same on every working day.",
+      "timezone": "Timezone",
+      "weekStarts": "Week starts on",
+      "weeklyReport": "Weekly report",
+      "weeklyReportValue": "Thursday, end of work day",
+      "holidaysHint": "Days that are off even though they fall on a work day"
+    },
+    "priorities": {
+      "title": "Priorities",
+      "hint": "Five levels. The service clock uses them to set the first reply time.",
+      "priority": "Priority",
+      "firstReply": "First reply",
+      "fixTarget": "Fix target",
+      "tasks": "Tasks",
+      "hours": "working hours",
+      "days": "working days",
+      "open": "{count} open",
+      "save": "Save changes",
+      "note": "Working hours only: Saturday to Thursday, Friday off. Change it in Work week."
     }
   },
   "time": {

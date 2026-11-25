@@ -100,10 +100,10 @@ export async function saveProjectAction(input: z.input<typeof projectSchema>) {
 }
 
 const slaSchema = z.object({
-  workingDays: z.array(z.number().int().min(0).max(6)).min(1),
-  workDayStartMin: z.number().int().min(0).max(1439),
-  workDayEndMin: z.number().int().min(1).max(1440),
-  targets: z.array(z.object({ priority: z.enum(PRIORITIES), firstResponseMinutes: z.number().int().min(1), resolutionMinutes: z.number().int().min(1).nullable() })),
+  workingDays: z.array(z.number().int().min(0).max(6)).min(1).optional(),
+  workDayStartMin: z.number().int().min(0).max(1439).optional(),
+  workDayEndMin: z.number().int().min(1).max(1440).optional(),
+  targets: z.array(z.object({ priority: z.enum(PRIORITIES), firstResponseMinutes: z.number().int().min(1), resolutionMinutes: z.number().int().min(1).nullable() })).optional(),
 });
 
 export async function saveSlaAction(input: z.input<typeof slaSchema>) {
@@ -111,11 +111,13 @@ export async function saveSlaAction(input: z.input<typeof slaSchema>) {
     const me = await requireMember();
     if (!can(me, "manage_sla")) throw new AppError("forbidden");
     const d = slaSchema.parse(input);
-    if (d.workDayEndMin <= d.workDayStartMin) throw new AppError("invalid_input", "hours");
     const ws = await db.workspace.findFirstOrThrow();
+    const start = d.workDayStartMin ?? ws.workDayStartMin;
+    const end = d.workDayEndMin ?? ws.workDayEndMin;
+    if (end <= start) throw new AppError("invalid_input", "hours");
     await db.$transaction(async (tx) => {
-      await tx.workspace.update({ where: { id: ws.id }, data: { workingDays: d.workingDays, workDayStartMin: d.workDayStartMin, workDayEndMin: d.workDayEndMin } });
-      for (const t of d.targets) await tx.slaTarget.update({ where: { workspaceId_priority: { workspaceId: ws.id, priority: t.priority } }, data: { firstResponseMinutes: t.firstResponseMinutes, resolutionMinutes: t.resolutionMinutes } });
+      await tx.workspace.update({ where: { id: ws.id }, data: { workingDays: d.workingDays ?? ws.workingDays, workDayStartMin: start, workDayEndMin: end } });
+      for (const t of d.targets ?? []) await tx.slaTarget.update({ where: { workspaceId_priority: { workspaceId: ws.id, priority: t.priority } }, data: { firstResponseMinutes: t.firstResponseMinutes, resolutionMinutes: t.resolutionMinutes } });
       await recordEvent(tx, { actorId: me.id, subjectType: "settings", subjectId: ws.id, verb: "sla_updated", to: d });
     });
     invalidateWorkspaceConfig();
@@ -143,6 +145,28 @@ export async function removeHolidayAction(id: string) {
     const me = await requireMember();
     if (!can(me, "manage_sla")) throw new AppError("forbidden");
     await db.holiday.delete({ where: { id } });
+    invalidateWorkspaceConfig();
+    refresh();
+  });
+}
+
+const generalSchema = z.object({
+  name: z.string().trim().min(1).max(80),
+  verifyReminderWorkingDays: z.number().int().min(1).max(30),
+  unverifiedWorkingDays: z.number().int().min(1).max(60),
+});
+
+/** General settings: workspace name and the verify window. Only people who manage the service clock can change them. */
+export async function saveGeneralAction(input: z.input<typeof generalSchema>) {
+  return runAction(async () => {
+    const me = await requireMember();
+    if (!can(me, "manage_sla")) throw new AppError("forbidden");
+    const d = generalSchema.parse(input);
+    const ws = await db.workspace.findFirstOrThrow();
+    await db.$transaction(async (tx) => {
+      await tx.workspace.update({ where: { id: ws.id }, data: d });
+      await recordEvent(tx, { actorId: me.id, subjectType: "settings", subjectId: ws.id, verb: "general_updated", to: d });
+    });
     invalidateWorkspaceConfig();
     refresh();
   });
