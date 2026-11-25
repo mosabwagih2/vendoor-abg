@@ -78,7 +78,8 @@
     "trouble": "Trouble",
     "create": "Create",
     "notifications": "Notifications",
-    "searchPlaceholder": "Search tasks, VEN-…"
+    "searchPlaceholder": "Search tasks, VEN-…",
+    "moreProjects": "{count} more projects"
   },
   "auth": {
     "title": "Sign in",

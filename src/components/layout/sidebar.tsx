@@ -42,6 +42,9 @@ function NavItem({ href, icon: Icon, label, active, badge, tone = "grey", danger
 
 const Section = ({ children }: { children: React.ReactNode }) => <div className="px-2.5 pb-1 pt-2.5 text-[10.5px] font-semibold uppercase tracking-[0.06em] text-fg-muted">{children}</div>;
 
+/** Figma shows six projects in the sidebar; the rest live on the Projects page. */
+const SIDEBAR_PROJECTS = 6;
+
 export function Sidebar({ me, counts, projects, hasIncident, roleLabel }: { me: CurrentMember; counts: { unread: number; waiting: number; triage: number }; projects: ProjectLite[]; hasIncident: boolean; roleLabel: string }) {
   const t = useTranslations("nav");
   const pathname = usePathname();
@@ -69,12 +72,17 @@ export function Sidebar({ me, counts, projects, hasIncident, roleLabel }: { me: 
       <div className="h-2.5" />
       <Section>{t("work")}</Section>
       <NavItem href="/projects" icon={FolderOpen} label={t("projects")} active={pathname === "/projects"} />
-      {projects.map((p, i) => (
+      {projects.slice(0, SIDEBAR_PROJECTS).map((p, i) => (
         <Link key={p.id} href={`/projects/${p.key}`} aria-current={on(`/projects/${p.key}`) ? "page" : undefined} className={cn("flex h-7 items-center gap-2.5 rounded-[7px] ps-7 pe-2.5 text-[13px] font-medium text-fg-secondary hover:bg-black/[0.04]", on(`/projects/${p.key}`) && "bg-info-subtle font-semibold text-[#1d4ed8]")}>
           <span aria-hidden className="h-2.5 w-2.5 shrink-0 rounded-[3px]" style={{ background: PROJECT_COLORS[i % PROJECT_COLORS.length] }} />
           <span className="truncate">{p.name}</span>
         </Link>
       ))}
+      {projects.length > SIDEBAR_PROJECTS && (
+        <Link href="/projects" className="flex h-7 items-center ps-[38px] text-[12.5px] text-fg-muted hover:text-fg">
+          {t("moreProjects", { count: projects.length - SIDEBAR_PROJECTS })}
+        </Link>
+      )}
       <NavItem href="/tasks" icon={List} label={t("allTasks")} active={on("/tasks")} />
       <NavItem href="/reports" icon={BarChart3} label={t("reports")} active={on("/reports")} />
       <NavItem href="/releases" icon={Rocket} label={t("releases")} active={on("/releases")} />
