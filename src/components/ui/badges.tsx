@@ -4,7 +4,7 @@ import { Clock, Pause, AlertTriangle } from "lucide-react";
 import { StatusIcon } from "@/components/icons/status-icon";
 import { PriorityIcon } from "@/components/icons/priority-icon";
 import { cn } from "@/lib/cn";
-import { formatDue, formatExact, relative } from "@/lib/format";
+import { formatDue, formatExact, relative, shortAge } from "@/lib/format";
 import type { Priority, TaskStatus } from "@/domain/types";
 import { Tooltip } from "./tooltip";
 
@@ -78,6 +78,17 @@ export function DueDate({ dueAt, overdue, className }: { dueAt: string | null; o
   return (
     <Tooltip content={formatExact(dueAt)}>
       <span className={cn("tabular whitespace-nowrap", overdue ? "font-medium text-danger" : "text-fg-secondary", className)}>{formatDue(dueAt)}</span>
+    </Tooltip>
+  );
+}
+
+/** Same tooltip as RelativeTime, but the compact "11h" form used in lists. */
+export function ShortAge({ at, className }: { at: string | Date; className?: string }) {
+  return (
+    <Tooltip content={formatExact(at)}>
+      <time suppressHydrationWarning dateTime={new Date(at).toISOString()} className={cn("tabular whitespace-nowrap text-fg-muted", className)}>
+        {shortAge(at)}
+      </time>
     </Tooltip>
   );
 }

@@ -565,6 +565,23 @@
       "task_verify_reminder": "Still waiting for your test",
       "task_cancel_proposed": "Cancel proposed",
       "release_recorded": "Release recorded"
+    },
+    "tabTurn": "Your turn",
+    "tabWaiting": "Waiting on {side}",
+    "tabAll": "All",
+    "groupTurn": "Your turn",
+    "groupWaiting": "Waiting on {side}",
+    "emptyTitle": "Nothing needs you right now",
+    "emptyBody": "We will tell you the moment a task needs a reply or a check.",
+    "emptyAction": "New request",
+    "selectTask": "Pick a task to read it here.",
+    "back": "Back to Inbox",
+    "hint": {
+      "verify": "Verify within {days} working days",
+      "asked": "ABG asked a question",
+      "overdue": "Late",
+      "replyDue": "Reply due {when}",
+      "reopened": "Came back, still broken"
     }
   },
   "projects": {
@@ -718,7 +735,8 @@
     "processing": "Processing",
     "stuck": "Stuck",
     "completed": "Completed",
-    "done": "Done"
+    "done": "Done",
+    "closed": "Closed"
   },
   "reports": {
     "title": "Reports",

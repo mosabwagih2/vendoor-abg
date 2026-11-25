@@ -33,6 +33,18 @@ export function relative(d: Date | string, now = new Date()): string {
   return diff < 0 ? `${v} ago` : `in ${v}`;
 }
 
+/** Compact age for dense lists: "now", "5m", "11h", "3d", "2w". Always the distance, never the direction. */
+export function shortAge(d: Date | string, now = new Date()): string {
+  const minutes = Math.floor(Math.abs(now.getTime() - new Date(d).getTime()) / 60_000);
+  if (minutes < 1) return "now";
+  if (minutes < 60) return `${minutes}m`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h`;
+  const days = Math.floor(hours / 24);
+  if (days < 14) return `${days}d`;
+  return `${Math.floor(days / 7)}w`;
+}
+
 /** YYYY-MM-DD in Cairo. */
 export function dateKey(d: Date | string): string {
   return format(toTz(d), "yyyy-MM-dd");
