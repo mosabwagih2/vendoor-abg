@@ -764,5 +764,15 @@
     "subtitle": "Where all tasks stand right now",
     "overall": "Overall progress",
     "tasks": "{count} tasks"
+  },
+  "releaseLine": {
+    "live": "Live on the server",
+    "rolledBack": "Rolled back",
+    "draft": "Planned for the next release",
+    "notReleased": "Not released yet",
+    "by": "by {name}",
+    "draftIn": "In draft release {number}",
+    "willGo": "It will go out in the next release",
+    "open": "Open release"
   }
 }

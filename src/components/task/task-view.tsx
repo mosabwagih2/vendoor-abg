@@ -22,6 +22,7 @@ import type { TaskDetail } from "@/server/task-detail";
 import { setFollowAction, updateFieldAction } from "@/server/actions/tasks";
 import { ActionButtons } from "./action-buttons";
 import { JourneyStepper } from "./journey-bar";
+import { ReleaseLine } from "./release-line";
 import { AttachmentsView } from "./attachments-view";
 import { CredentialsCard } from "./credentials-card";
 import { TaskActivity } from "./task-activity";
@@ -132,6 +133,8 @@ export function TaskView({ task, compact }: { task: TaskDetail; compact?: boolea
               </div>
             )}
           </div>
+
+          <ReleaseLine release={task.release} side={me.side} />
 
           <Decision task={task} canEdit={can(me, "edit_decision", ctx)} />
 

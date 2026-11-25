@@ -40,7 +40,7 @@ export async function loadTaskDetail(key: string, viewer: CurrentMember) {
       assignee: { select: { id: true, name: true, handle: true } },
       verifiedBy: { select: { id: true, name: true } },
       parent: { select: { id: true, key: true, title: true, status: true } },
-      currentRelease: { select: { id: true, number: true } },
+      currentRelease: { select: { id: true, number: true, state: true, releasedAt: true, rollbackReason: true, deployedBy: { select: { name: true } } } },
       attachments: { where: { archivedAt: null }, include: { uploadedBy: { select: { name: true } } }, orderBy: { createdAt: "asc" } },
       occurrences: {
         where: { archivedAt: null },
@@ -71,7 +71,7 @@ export async function loadTaskDetail(key: string, viewer: CurrentMember) {
     assignee: { id: string; name: string; handle: string } | null;
     verifiedBy: { id: string; name: string } | null;
     parent: { id: string; key: string; title: string; status: string } | null;
-    currentRelease: { id: string; number: string } | null;
+    currentRelease: { id: string; number: string; state: "upcoming" | "released" | "rolled_back"; releasedAt: Date | null; rollbackReason: string | null; deployedBy: { name: string } | null } | null;
   };
   const subtasks = await decorate(await db.task.findMany({ where: { parentId: base.id, archivedAt: null }, select: taskRowSelect, orderBy: { number: "asc" } }));
   const history = await activityFeed(viewer, { taskId: base.id }, 200);
@@ -142,7 +142,7 @@ export async function loadTaskDetail(key: string, viewer: CurrentMember) {
     assigneeId: base.assigneeId,
     verifiedBy: task.verifiedBy,
     parent: task.parent,
-    release: task.currentRelease,
+    release: task.currentRelease ? { id: task.currentRelease.id, number: task.currentRelease.number, state: task.currentRelease.state, releasedAt: task.currentRelease.releasedAt?.toISOString() ?? null, deployedBy: task.currentRelease.deployedBy?.name ?? null, rollbackReason: task.currentRelease.rollbackReason } : null,
     sla: {
       firstResponse: { ...firstResponse, dueAt: firstResponse.dueAt?.toISOString() ?? null },
       resolution: { ...resolution, dueAt: resolution.dueAt?.toISOString() ?? null },
