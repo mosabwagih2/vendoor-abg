@@ -11,6 +11,7 @@ import { useLiveRefresh } from "./live-refresh";
 import { WorkflowProvider } from "@/components/task/workflow-actions";
 import { Sidebar } from "./sidebar";
 import { Topbar } from "./topbar";
+import { CommandPalette } from "./command-palette";
 import { IncidentBanner } from "./incident-banner";
 import type { CurrentMember } from "@/server/session";
 
@@ -35,12 +36,25 @@ export function AppShell({ me, counts, projects, members, incident, upcoming, ch
   const [newOpen, setNewOpen] = useState(false);
   const [newOpts, setNewOpts] = useState<NewOpts>({});
   const [newKey, setNewKey] = useState(0);
+  const [paletteOpen, setPaletteOpen] = useState(false);
   useLiveRefresh();
 
   const openNewRequest = useCallback((opts: NewOpts = {}) => {
     setNewOpts(opts);
     setNewKey((k) => k + 1);
     setNewOpen(true);
+  }, []);
+
+  // ⌘K / Ctrl+K opens the search palette from anywhere, even while typing.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setPaletteOpen((o) => !o);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
   }, []);
 
   // Keyboard: C new request, G then H/I/M/R/T/P to navigate.
@@ -87,7 +101,7 @@ export function AppShell({ me, counts, projects, members, incident, upcoming, ch
       <div className="flex h-dvh bg-surface">
         <Sidebar me={me} counts={counts} projects={projects} hasIncident={!!incident} roleLabel={tr(me.role)} />
         <div className="flex min-w-0 flex-1 flex-col">
-          <Topbar onCreate={() => openNewRequest()} unread={counts.unread} />
+          <Topbar onCreate={() => openNewRequest()} onSearch={() => setPaletteOpen(true)} unread={counts.unread} />
           {incident && <IncidentBanner incident={incident} />}
           <main id="main" className="min-h-0 min-w-0 flex-1 overflow-y-auto pb-16 md:pb-0">
             <WorkflowProvider releases={upcoming}>{children}</WorkflowProvider>
@@ -113,6 +127,7 @@ export function AppShell({ me, counts, projects, members, incident, upcoming, ch
           )}
         </nav>
       </div>
+      <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} onAction={(a) => openNewRequest(a === "new_incident" ? { incident: true } : {})} />
       <NewRequestDialog key={newKey} open={newOpen} onOpenChange={setNewOpen} opts={newOpts} />
     </AppContext>
   );

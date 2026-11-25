@@ -10,6 +10,8 @@ import * as rel from "../services/releases";
 import * as inc from "../services/incidents";
 import { loadDrawer } from "../notifications";
 import { can } from "@/domain/policy";
+import { statusGroup } from "@/domain/status-display";
+import type { TaskStatus } from "@/domain/types";
 
 function refresh() {
   revalidatePath("/", "layout");
@@ -70,6 +72,34 @@ export async function markReadAction(ids: string[]) {
 /** Loads the bell drawer. Called each time the drawer opens so it is always current. */
 export async function loadDrawerAction() {
   return runAction(async () => loadDrawer(await requireMember()));
+}
+
+const statusLabel = (s: string) => {
+  const g = statusGroup(s as TaskStatus);
+  return g ? g[0].toUpperCase() + g.slice(1) : "Closed";
+};
+
+/** ⌘K palette search: tasks by key or title, projects, people. Titles only, so nothing internal leaks to Vendoor. */
+export async function searchPaletteAction(q: string, recent: string[] = []) {
+  return runAction(async () => {
+    await requireMember();
+    const needle = q.trim().slice(0, 80);
+    const taskSelect = { key: true, title: true, status: true, project: { select: { name: true } } } as const;
+    const [tasks, projects, people, recents] = await Promise.all([
+      needle ? db.task.findMany({ where: { archivedAt: null, OR: [{ key: { equals: needle.toUpperCase() } }, { title: { contains: needle, mode: "insensitive" } }] }, select: taskSelect, orderBy: { updatedAt: "desc" }, take: 6 }) : Promise.resolve([]),
+      needle ? db.project.findMany({ where: { archivedAt: null, OR: [{ name: { contains: needle, mode: "insensitive" } }, { key: { equals: needle.toUpperCase() } }] }, select: { key: true, name: true, _count: { select: { tasks: true } } }, take: 4 }) : Promise.resolve([]),
+      needle ? db.member.findMany({ where: { status: { not: "deactivated" }, name: { contains: needle, mode: "insensitive" } }, select: { id: true, name: true, role: true }, take: 4 }) : Promise.resolve([]),
+      !needle && recent.length ? db.task.findMany({ where: { key: { in: recent.slice(0, 5) } }, select: taskSelect }) : Promise.resolve([]),
+    ]);
+    const fromTask = (t: (typeof tasks)[number], kind: "task" | "recent") => ({ id: t.key, kind, title: t.title, subtitle: `${t.key} · ${t.project.name} · ${statusLabel(t.status)}`, href: `/tasks/${t.key}` });
+    const order = new Map(recent.map((k, i) => [k, i]));
+    return {
+      tasks: tasks.map((t) => fromTask(t, "task")),
+      recents: recents.sort((a, b) => (order.get(a.key) ?? 0) - (order.get(b.key) ?? 0)).map((t) => fromTask(t, "recent")),
+      projects: projects.map((p) => ({ id: p.key, kind: "project" as const, title: p.name, subtitle: `${p._count.tasks} tasks`, href: `/projects/${p.key}` })),
+      people: people.map((m) => ({ id: m.id, kind: "person" as const, title: m.name, subtitle: m.role, href: `/tasks?assignee=${m.id}&closed=1` })),
+    };
+  });
 }
 
 export async function markAllReadAction() {

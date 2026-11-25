@@ -79,7 +79,20 @@
     "create": "Create",
     "notifications": "Notifications",
     "searchPlaceholder": "Search tasks, VEN-…",
-    "moreProjects": "{count} more projects"
+    "moreProjects": "{count} more projects",
+    "yourProfile": "Your profile",
+    "notificationSettings": "Notification settings",
+    "languageTimezone": "Language and timezone",
+    "shortcuts": "Keyboard shortcuts",
+    "shortcut": {
+      "search": "Search",
+      "create": "Create a request",
+      "home": "Go to home",
+      "inbox": "Go to inbox",
+      "myTasks": "Go to my tasks",
+      "tasks": "Go to all tasks",
+      "projects": "Go to projects"
+    }
   },
   "auth": {
     "title": "Sign in",
@@ -1032,5 +1045,32 @@
     "late": "Late {days}d",
     "today": "Today",
     "tomorrow": "Tomorrow"
+  },
+  "palette": {
+    "title": "Search",
+    "hint": "Search tasks, projects, people and actions",
+    "placeholder": "Search tasks, projects, people…",
+    "all": "All",
+    "tasks": "Tasks",
+    "projects": "Projects",
+    "people": "People",
+    "actions": "Actions",
+    "none": "Nothing found.",
+    "group": {
+      "recent": "Recent",
+      "task": "Tasks",
+      "project": "Projects",
+      "person": "People",
+      "action": "Actions"
+    },
+    "createRequest": "Create a request",
+    "createRequestHint": "Vendoor",
+    "reportProblem": "Report a system problem",
+    "reportProblemHint": "Alerts ABG now",
+    "move": "move",
+    "open": "open",
+    "openTab": "open in new tab",
+    "close": "close",
+    "results": "{count, plural, one {# result} other {# results}}"
   }
 }

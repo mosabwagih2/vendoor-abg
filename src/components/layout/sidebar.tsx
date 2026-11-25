@@ -1,16 +1,29 @@
 "use client";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { BarChart3, ChevronDown, FolderOpen, Home, Inbox, List, ListTodo, MoreHorizontal, Rocket, Settings, TriangleAlert, UserRound, LogOut } from "lucide-react";
+import { BarChart3, Bell, ChevronDown, FolderOpen, Home, Inbox, Keyboard, List, ListTodo, MoreHorizontal, Rocket, Settings, SlidersHorizontal, TriangleAlert, UserRound, LogOut } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { Menu, MenuContent, MenuItem, MenuLabel, MenuSeparator, MenuTrigger } from "@/components/ui/menu";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { authClient } from "@/lib/auth-client";
 import type { CurrentMember } from "@/server/session";
 import type { ProjectLite } from "./app-context";
 
 /** Colours for the project dots in the sidebar (Figma: Bosta blue, Shopify green, EasyOrders amber, …). */
 export const PROJECT_COLORS = ["#2563eb", "#16a06a", "#f59e0b", "#8b5cf6", "#ec4899", "#7a8090"];
+
+/** Keys handled in app-shell.tsx. Keep this list in step with that file. */
+const SHORTCUTS = [
+  ["⌘ K", "search"],
+  ["C", "create"],
+  ["G H", "home"],
+  ["G I", "inbox"],
+  ["G M", "myTasks"],
+  ["G T", "tasks"],
+  ["G P", "projects"],
+] as const;
 
 function Badge({ n, tone, label }: { n: number; tone: "blue" | "grey" | "red"; label?: string }) {
   if (!n) return null;
@@ -49,6 +62,7 @@ export function Sidebar({ me, counts, projects, hasIncident, roleLabel }: { me: 
   const t = useTranslations("nav");
   const pathname = usePathname();
   const router = useRouter();
+  const [shortcuts, setShortcuts] = useState(false);
   const isAbg = me.side === "abg";
   const on = (href: string) => pathname === href || pathname.startsWith(href + "/");
   return (
@@ -99,19 +113,54 @@ export function Sidebar({ me, counts, projects, hasIncident, roleLabel }: { me: 
           </span>
           <MoreHorizontal size={15} aria-hidden className="ms-auto text-fg-muted" />
         </MenuTrigger>
-        <MenuContent side="top" align="start">
-          <MenuLabel>{me.email}</MenuLabel>
+        <MenuContent side="top" align="start" className="w-[240px]">
+          <div className="flex items-center gap-2.5 px-2 py-2">
+            <Avatar30 name={me.name} />
+            <span className="min-w-0">
+              <span className="block truncate text-ui font-semibold">{me.name}</span>
+              <span className="block truncate text-meta text-fg-muted">{me.email}</span>
+            </span>
+          </div>
           <MenuSeparator />
           <MenuItem onSelect={() => router.push("/settings/profile")}>
-            <Settings size={14} aria-hidden />
-            {t("settings")}
+            <UserRound size={14} aria-hidden />
+            {t("yourProfile")}
           </MenuItem>
-          <MenuItem onSelect={() => authClient.signOut().then(() => window.location.assign("/sign-in"))}>
+          <MenuItem onSelect={() => router.push("/settings/notifications")}>
+            <Bell size={14} aria-hidden />
+            {t("notificationSettings")}
+          </MenuItem>
+          <MenuItem onSelect={() => router.push("/settings/general")}>
+            <SlidersHorizontal size={14} aria-hidden />
+            {t("languageTimezone")}
+          </MenuItem>
+          <MenuItem onSelect={() => setShortcuts(true)}>
+            <Keyboard size={14} aria-hidden />
+            {t("shortcuts")}
+          </MenuItem>
+          <MenuSeparator />
+          <MenuItem className="text-danger-text" onSelect={() => authClient.signOut().then(() => window.location.assign("/sign-in"))}>
             <LogOut size={14} aria-hidden />
             {t("signOut")}
           </MenuItem>
         </MenuContent>
       </Menu>
+      <Dialog open={shortcuts} onOpenChange={setShortcuts}>
+        {shortcuts && (
+          <DialogContent title={t("shortcuts")}>
+            <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-ui">
+              {SHORTCUTS.map(([keys, label]) => (
+                <div key={keys} className="contents">
+                  <dt>
+                    <kbd className="rounded border border-border bg-canvas px-1.5 py-0.5 font-mono text-meta">{keys}</kbd>
+                  </dt>
+                  <dd className="text-fg-secondary">{t(`shortcut.${label}` as "shortcut.search")}</dd>
+                </div>
+              ))}
+            </dl>
+          </DialogContent>
+        )}
+      </Dialog>
     </nav>
   );
 }
