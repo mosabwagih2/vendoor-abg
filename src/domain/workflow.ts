@@ -1,4 +1,5 @@
 import type { CloseReason, Side, TaskStatus } from "./types";
+import { statusGroup, type StatusGroup } from "./status-display";
 
 /** PRD 4.2: who must act next for each status. */
 export function waitingOn(status: TaskStatus): Side | null {
@@ -96,4 +97,20 @@ export function actionForMove(from: TaskStatus, to: TaskStatus): WorkflowAction 
   );
   // Prefer the action without a fixed closeReason when the target is not Closed.
   return candidates[0] ?? null;
+}
+
+/**
+ * Board drop on the five-column board: which action moves a card from its current status into a column.
+ * Dropping inside the same column is not a move. Closing is never done by dragging.
+ */
+export function actionForGroupMove(from: TaskStatus, toGroup: StatusGroup): WorkflowAction | null {
+  if (statusGroup(from) === toGroup) return null;
+  const hit = (Object.keys(TRANSITIONS) as WorkflowAction[]).find((a) => {
+    const t = TRANSITIONS[a];
+    if (!t.from.includes(from) || t.closeReason) return false;
+    // "answer" returns to wherever the task was before it got stuck, which is always a Processing status or Request.
+    const target = t.to === "previous" ? "in_progress" : t.to;
+    return statusGroup(target) === toGroup;
+  });
+  return hit ?? null;
 }

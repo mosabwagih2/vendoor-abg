@@ -10,8 +10,9 @@ import { StatusIcon } from "@/components/icons/status-icon";
 import { PriorityIcon } from "@/components/icons/priority-icon";
 import { useApp } from "@/components/layout/app-context";
 import { cn } from "@/lib/cn";
-import { ALL_PROPS, DEFAULT_FILTERS, type TaskDisplay, type TaskFilters } from "@/lib/filters";
-import { PRIORITIES, TASK_STATUSES, TASK_TYPES } from "@/domain/types";
+import { ALL_PROPS, DEFAULT_FILTERS, QUICK_FILTERS, activeQuick, quickPatch, type TaskDisplay, type TaskFilters } from "@/lib/filters";
+import { GROUP_MEMBERS, GROUP_REPRESENTATIVE, STATUS_GROUPS, type StatusGroup } from "@/domain/status-display";
+import { PRIORITIES, TASK_TYPES } from "@/domain/types";
 
 type Opt = { value: string; label: string; icon?: React.ReactNode };
 
@@ -83,7 +84,8 @@ function SingleFilter({ label, value, options, onChange }: { label: string; valu
 
 export function FilterBar({ filters, onChange }: { filters: TaskFilters; onChange: (f: Partial<TaskFilters>) => void }) {
   const t = useTranslations();
-  const { projects, members } = useApp();
+  const { projects, members, me } = useApp();
+  const quick = activeQuick(filters, me.side);
   const any = JSON.stringify({ ...filters, q: "" }) !== JSON.stringify({ ...DEFAULT_FILTERS, q: "" }) || !!filters.q;
   const people = [{ value: "me", label: t("common.me") }, ...members.map((m) => ({ value: m.id, label: m.name }))];
   return (
@@ -92,12 +94,25 @@ export function FilterBar({ filters, onChange }: { filters: TaskFilters; onChang
         <Search size={14} className="pointer-events-none absolute start-2 top-1/2 -translate-y-1/2 text-fg-secondary" aria-hidden />
         <SearchBox key={filters.q} initial={filters.q} onSearch={(q) => onChange({ q })} placeholder={t("tasks.searchPlaceholder")} label={t("common.search")} />
       </div>
+      <div role="group" aria-label={t("tasks.quick.label")} className="me-1 flex items-center gap-1.5">
+        {QUICK_FILTERS.map((q) => (
+          <button
+            key={q}
+            type="button"
+            aria-pressed={quick === q}
+            onClick={() => onChange(quickPatch(q, me.side))}
+            className={cn("h-8 rounded-full border px-3 text-[13px] font-semibold", quick === q ? "border-fg bg-fg text-white" : "border-border bg-surface text-fg-secondary hover:bg-subtle")}
+          >
+            {t(`tasks.quick.${q}`)}
+          </button>
+        ))}
+      </div>
       <MultiFilter label={t("tasks.filters.project")} values={filters.project} options={projects.map((p) => ({ value: p.key, label: `${p.key} · ${p.name}` }))} onChange={(v) => onChange({ project: v })} />
       <MultiFilter
         label={t("tasks.filters.status")}
-        values={filters.status}
-        options={TASK_STATUSES.map((s) => ({ value: s, label: t(`status.${s}`), icon: <StatusIcon status={s} /> }))}
-        onChange={(v) => onChange({ status: v as TaskFilters["status"] })}
+        values={STATUS_GROUPS.filter((g) => GROUP_MEMBERS[g].every((m) => filters.status.includes(m)))}
+        options={STATUS_GROUPS.map((g) => ({ value: g, label: t(`statusGroup.${g}`), icon: <StatusIcon status={GROUP_REPRESENTATIVE[g]} /> }))}
+        onChange={(v) => onChange({ status: (v as StatusGroup[]).flatMap((g) => GROUP_MEMBERS[g]) })}
       />
       <MultiFilter label={t("tasks.filters.type")} values={filters.type} options={TASK_TYPES.map((s) => ({ value: s, label: t(`type.${s}`) }))} onChange={(v) => onChange({ type: v as TaskFilters["type"] })} />
       <MultiFilter

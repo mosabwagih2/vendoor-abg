@@ -298,6 +298,13 @@
       "bugs": "Bugs",
       "unverified": "Shipped, not verified",
       "done_week": "Done this week"
+    },
+    "quick": {
+      "label": "Quick filters",
+      "all": "All open",
+      "needs_me": "Needs me",
+      "due_week": "Due this week",
+      "overdue": "Overdue"
     }
   },
   "task": {

@@ -120,3 +120,32 @@ export const DEFAULT_VIEWS: Array<{ id: string; query: string }> = [
   { id: "unverified", query: "status=shipped&group=none&order=updated" },
   { id: "done_week", query: "status=done&closed=1&created=&order=updated" },
 ];
+
+// ───────────── quick filters (Figma 3.1: All open / Needs me / Due this week / Overdue) ─────────────
+
+export const QUICK_FILTERS = ["all", "needs_me", "due_week", "overdue"] as const;
+export type QuickFilter = (typeof QUICK_FILTERS)[number];
+
+/** The filter values a quick pill applies. Applying one replaces the other quick-filter fields, never the project or search. */
+export function quickPatch(id: QuickFilter, side: "abg" | "vendoor"): Partial<TaskFilters> {
+  const cleared: Partial<TaskFilters> = { waiting: [], due: "" };
+  switch (id) {
+    case "all":
+      return cleared;
+    case "needs_me":
+      return { ...cleared, waiting: [side] };
+    case "due_week":
+      return { ...cleared, due: "week" };
+    case "overdue":
+      return { ...cleared, due: "overdue" };
+  }
+}
+
+/** Which pill is lit for the current filters, or null when the filters are something custom. */
+export function activeQuick(f: Pick<TaskFilters, "waiting" | "due">, side: "abg" | "vendoor"): QuickFilter | null {
+  if (!f.waiting.length && !f.due) return "all";
+  if (f.waiting.length === 1 && f.waiting[0] === side && !f.due) return "needs_me";
+  if (!f.waiting.length && f.due === "week") return "due_week";
+  if (!f.waiting.length && f.due === "overdue") return "overdue";
+  return null;
+}

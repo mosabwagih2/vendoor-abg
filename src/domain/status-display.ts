@@ -26,3 +26,12 @@ export const GROUP_MEMBERS: Record<StatusGroup, TaskStatus[]> = {
   completed: ["shipped"],
   done: ["done"],
 };
+
+/** A representative internal status for a group, used for icons and for "where would this card land". */
+export const GROUP_REPRESENTATIVE: Record<StatusGroup, TaskStatus> = {
+  request: "triage",
+  processing: "in_progress",
+  stuck: "needs_info",
+  completed: "shipped",
+  done: "done",
+};

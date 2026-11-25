@@ -13,6 +13,7 @@ import { Input, Select } from "@/components/ui/input";
 import { Menu, MenuContent, MenuItem, MenuTrigger, MenuLabel } from "@/components/ui/menu";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { StatusIcon } from "@/components/icons/status-icon";
+import { GROUP_REPRESENTATIVE, STATUS_GROUPS, statusGroup, type StatusGroup } from "@/domain/status-display";
 import { PriorityIcon } from "@/components/icons/priority-icon";
 import { Avatar } from "@/components/ui/avatar";
 import { DueDate, Mono } from "@/components/ui/badges";
@@ -23,7 +24,7 @@ import { useApp } from "@/components/layout/app-context";
 import { cn } from "@/lib/cn";
 import { DEFAULT_VIEWS, serializeFilters, type TaskDisplay, type TaskFilters } from "@/lib/filters";
 import { TASK_STATUSES, PRIORITIES, type Priority, type TaskStatus } from "@/domain/types";
-import { actionForMove } from "@/domain/workflow";
+import { actionForGroupMove } from "@/domain/workflow";
 import type { TaskDetail } from "@/server/task-detail";
 import { bulkAction } from "@/server/actions/tasks";
 import { deleteViewAction, saveViewAction } from "@/server/actions/misc";
@@ -203,13 +204,13 @@ function SaveView({ query }: { query: string }) {
 function groupRows(rows: TaskRowData[], by: TaskDisplay["group"], labels: (g: string) => string) {
   if (by === "none") return [{ id: "all", label: "", icon: null as React.ReactNode, rows }];
   const keyOf = (r: TaskRowData) =>
-    by === "status" ? r.status : by === "project" ? r.project.key : by === "priority" ? (r.priority ?? r.suggestedPriority ?? "none") : by === "assignee" ? (r.assignee?.name ?? "") : (r.waitingOn ?? "nobody");
+    by === "status" ? (statusGroup(r.status as TaskStatus) ?? "closed") : by === "project" ? r.project.key : by === "priority" ? (r.priority ?? r.suggestedPriority ?? "none") : by === "assignee" ? (r.assignee?.name ?? "") : (r.waitingOn ?? "nobody");
   const order =
-    by === "status" ? [...TASK_STATUSES] : by === "priority" ? [...PRIORITIES, "none"] : by === "waiting" ? ["vendoor", "abg", "nobody"] : [...new Set(rows.map(keyOf))].sort((a, b) => (a === "" ? 1 : b === "" ? -1 : a.localeCompare(b)));
+    by === "status" ? [...STATUS_GROUPS, "closed"] : by === "priority" ? [...PRIORITIES, "none"] : by === "waiting" ? ["vendoor", "abg", "nobody"] : [...new Set(rows.map(keyOf))].sort((a, b) => (a === "" ? 1 : b === "" ? -1 : a.localeCompare(b)));
   const groups = order.map((k) => ({
     id: k,
     label: labels(k),
-    icon: by === "status" ? <StatusIcon status={k as TaskStatus} /> : by === "priority" ? <PriorityIcon priority={k === "none" ? null : (k as Priority)} /> : by === "assignee" ? <Avatar name={k || null} size={16} /> : null,
+    icon: by === "status" ? <StatusIcon status={k === "closed" ? "closed" : GROUP_REPRESENTATIVE[k as StatusGroup]} /> : by === "priority" ? <PriorityIcon priority={k === "none" ? null : (k as Priority)} /> : by === "assignee" ? <Avatar name={k || null} size={16} /> : null,
     rows: rows.filter((r) => keyOf(r) === k),
   }));
   return groups.filter((g) => g.rows.length);
@@ -219,7 +220,7 @@ function useGroupLabel(by: TaskDisplay["group"]) {
   const t = useTranslations();
   const { projects } = useApp();
   return (k: string) => {
-    if (by === "status") return t(`status.${k}` as "status.triage");
+    if (by === "status") return t(`statusGroup.${k}` as "statusGroup.request");
     if (by === "priority") return k === "none" ? t("priority.none") : t(`priority.${k}` as "priority.highest");
     if (by === "waiting") return k === "nobody" ? t("waiting.nobody") : t("waiting.label", { side: t(`waiting.${k}` as "waiting.abg") });
     if (by === "project") return projects.find((p) => p.key === k)?.name ?? k;
@@ -329,19 +330,23 @@ function ListView({
 
 // ───────────── board ─────────────
 
+/** The board shows the five Figma statuses; closed tasks only appear when "show closed" is on. */
+type BoardColumn = StatusGroup | "closed";
+const columnOf = (r: { status: string }): BoardColumn => statusGroup(r.status as TaskStatus) ?? "closed";
+
 function BoardView({ rows, display, peekHref }: { rows: TaskRowData[]; display: TaskDisplay; peekHref: (k: string) => string }) {
   const t = useTranslations();
   const { me } = useApp();
   const { run } = useWorkflow();
-  const columns = TASK_STATUSES.filter((s) => s !== "closed" || display.showClosed);
+  const columns: BoardColumn[] = [...STATUS_GROUPS, ...(display.showClosed ? (["closed"] as const) : [])];
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }), useSensor(KeyboardSensor));
 
-  const tryMove = (task: TaskRowData, to: TaskStatus) => {
-    if (task.status === to) return;
-    const action = actionForMove(task.status as TaskStatus, to);
+  const tryMove = (task: TaskRowData, to: BoardColumn) => {
+    if (columnOf(task) === to) return;
+    const action = to === "closed" ? null : actionForGroupMove(task.status as TaskStatus, to);
     const wf = toWorkflowTask(task);
     if (!action || !availableActions(me, wf).includes(action)) {
-      toast.error(t("tasks.dropNotAllowed", { key: task.key, status: t(`status.${to}`) }));
+      toast.error(t("tasks.dropNotAllowed", { key: task.key, status: t(`statusGroup.${to}`) }));
       return;
     }
     run(wf, action);
@@ -349,7 +354,7 @@ function BoardView({ rows, display, peekHref }: { rows: TaskRowData[]; display: 
 
   const onDragEnd = (e: DragEndEvent) => {
     const task = rows.find((r) => r.id === e.active.id);
-    const to = e.over?.id as TaskStatus | undefined;
+    const to = e.over?.id as BoardColumn | undefined;
     if (task && to) tryMove(task, to);
   };
 
@@ -360,17 +365,17 @@ function BoardView({ rows, display, peekHref }: { rows: TaskRowData[]; display: 
       accessibility={{
         announcements: {
           onDragStart: ({ active }) => `Picked up ${rows.find((r) => r.id === active.id)?.key}.`,
-          onDragOver: ({ over }) => (over ? `Over ${t(`status.${over.id as TaskStatus}`)}.` : "Not over a column."),
-          onDragEnd: ({ over }) => (over ? `Dropped on ${t(`status.${over.id as TaskStatus}`)}.` : "Dropped."),
+          onDragOver: ({ over }) => (over ? `Over ${t(`statusGroup.${over.id as BoardColumn}`)}.` : "Not over a column."),
+          onDragEnd: ({ over }) => (over ? `Dropped on ${t(`statusGroup.${over.id as BoardColumn}`)}.` : "Dropped."),
           onDragCancel: () => "Move cancelled.",
         },
       }}
     >
       <div className="flex h-full gap-3 overflow-x-auto p-3">
         {columns.map((s) => (
-          <Column key={s} status={s} rows={rows.filter((r) => r.status === s)}>
+          <Column key={s} column={s} rows={rows.filter((r) => columnOf(r) === s)}>
             {rows
-              .filter((r) => r.status === s)
+              .filter((r) => columnOf(r) === s)
               .map((r) => (
                 <Card key={r.id} task={r} href={peekHref(r.key)} onMove={(to) => tryMove(r, to)} columns={columns} />
               ))}
@@ -381,14 +386,14 @@ function BoardView({ rows, display, peekHref }: { rows: TaskRowData[]; display: 
   );
 }
 
-function Column({ status, rows, children }: { status: TaskStatus; rows: TaskRowData[]; children: React.ReactNode }) {
-  const t = useTranslations("status");
-  const { setNodeRef, isOver } = useDroppable({ id: status });
+function Column({ column, rows, children }: { column: BoardColumn; rows: TaskRowData[]; children: React.ReactNode }) {
+  const t = useTranslations("statusGroup");
+  const { setNodeRef, isOver } = useDroppable({ id: column });
   return (
-    <section ref={setNodeRef} aria-label={t(status)} className={cn("flex w-72 shrink-0 flex-col rounded-card bg-subtle", isOver && "outline-2 outline-accent outline-dashed")}>
+    <section ref={setNodeRef} aria-label={t(column)} className={cn("flex w-72 shrink-0 flex-col rounded-card bg-subtle", isOver && "outline-2 outline-accent outline-dashed")}>
       <h2 className="flex h-10 items-center gap-2 px-3 text-ui font-medium">
-        <StatusIcon status={status} />
-        {t(status)}
+        <StatusIcon status={column === "closed" ? "closed" : GROUP_REPRESENTATIVE[column]} />
+        {t(column)}
         <span className="tabular font-normal text-fg-secondary">{rows.length}</span>
       </h2>
       <div className="flex min-h-16 flex-1 flex-col gap-2 overflow-y-auto px-2 pb-2">{children}</div>
@@ -396,7 +401,7 @@ function Column({ status, rows, children }: { status: TaskStatus; rows: TaskRowD
   );
 }
 
-function Card({ task, href, onMove, columns }: { task: TaskRowData; href: string; onMove: (to: TaskStatus) => void; columns: readonly TaskStatus[] }) {
+function Card({ task, href, onMove, columns }: { task: TaskRowData; href: string; onMove: (to: BoardColumn) => void; columns: readonly BoardColumn[] }) {
   const t = useTranslations();
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: task.id });
   return (
@@ -424,11 +429,11 @@ function Card({ task, href, onMove, columns }: { task: TaskRowData; href: string
           <MenuContent align="end">
             <MenuLabel>{t("tasks.moveTo")}</MenuLabel>
             {columns
-              .filter((c) => c !== task.status)
+              .filter((c) => c !== columnOf(task))
               .map((c) => (
                 <MenuItem key={c} onSelect={() => onMove(c)}>
-                  <StatusIcon status={c} />
-                  {t(`status.${c}`)}
+                  <StatusIcon status={c === "closed" ? "closed" : GROUP_REPRESENTATIVE[c]} />
+                  {t(`statusGroup.${c}`)}
                 </MenuItem>
               ))}
           </MenuContent>

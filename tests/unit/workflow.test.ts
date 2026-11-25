@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { actionForMove, resolveTarget, waitingOn } from "@/domain/workflow";
+import { actionForGroupMove, actionForMove, resolveTarget, waitingOn } from "@/domain/workflow";
 
 describe("waiting on (PRD 4.2)", () => {
   it.each([
@@ -27,5 +27,32 @@ describe("transitions", () => {
     expect(actionForMove("shipped", "reopened")).toBe("reopen");
     expect(actionForMove("planned", "done")).toBeNull();
     expect(actionForMove("triage", "in_progress")).toBeNull();
+  });
+});
+
+describe("five-column board", () => {
+  it.each([
+    ["triage", "processing", "accept"],
+    ["planned", "completed", null], // must start first
+    ["in_progress", "completed", "ship"],
+    ["shipped", "done", "verify"],
+    ["shipped", "processing", "reopen"],
+    ["needs_info", "processing", "answer"],
+    ["in_progress", "stuck", "ask_info"],
+    ["triage", "stuck", "ask_info"],
+  ] as const)("%s → %s is %s", (from, to, action) => expect(actionForGroupMove(from, to)).toBe(action));
+
+  it("does nothing inside a column", () => {
+    expect(actionForGroupMove("planned", "processing")).toBeNull();
+    expect(actionForGroupMove("in_progress", "processing")).toBeNull();
+  });
+
+  it("never allows skipping the verification", () => {
+    expect(actionForGroupMove("in_progress", "done")).toBeNull();
+    expect(actionForGroupMove("triage", "done")).toBeNull();
+  });
+
+  it("never closes a task by dragging", () => {
+    for (const from of ["triage", "needs_info", "planned", "in_progress", "shipped", "reopened"] as const) expect(actionForGroupMove(from, "done") === "cancel").toBe(false);
   });
 });
