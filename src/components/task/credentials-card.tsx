@@ -2,115 +2,117 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
-import { Eye, EyeOff, ExternalLink, KeyRound, Pencil, Plus, Trash2 } from "lucide-react";
+import { ExternalLink, KeyRound, Pencil, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CopyButton } from "@/components/ui/copy-button";
 import { Input, Label } from "@/components/ui/input";
-import { PasswordInput } from "@/components/forms/credential-fields";
+
 import { useApp } from "@/components/layout/app-context";
-import { addCredentialAction, archiveCredentialAction, revealCredentialAction, updateCredentialAction } from "@/server/actions/tasks";
+import { addCredentialAction, archiveCredentialAction, updateCredentialAction } from "@/server/actions/tasks";
+import { credentialCopyText } from "@/domain/credential-format";
+import { cn } from "@/lib/cn";
 
 export interface CredentialView {
   id: string;
   label: string | null;
   username: string;
   hasPassword: boolean;
+  /** Shown as typed: accounts are shared between Vendoor and ABG. Null when there is none. */
+  password: string | null;
   url: string | null;
   note: string | null;
   createdById: string;
   createdBy: string;
 }
 
+const DOTS = ["#2563eb", "#16a06a", "#f59e0b", "#8b5cf6", "#ec4899"];
+
 /**
- * Account access: logins the team needs to reproduce or fix the task. The email/username is shown in clear with a copy button;
- * the password is encrypted, masked by default, and every reveal or copy is logged.
+ * Accounts (Figma "Accounts"): logins the team needs to reproduce or fix the task.
+ * Email and password are both visible, each with a Copy button, plus "Copy both".
+ * Add as many accounts as needed; "Add another account" opens the next editor below the last one.
  */
 export function CredentialsCard({ taskId, items, highlight }: { taskId: string; items: CredentialView[]; highlight?: boolean }) {
   const t = useTranslations("credentials");
   const [adding, setAdding] = useState(false);
   return (
-    <section aria-labelledby="cred-title" className={`rounded-card border bg-surface ${highlight ? "border-accent" : "border-border"}`}>
-      <div className="flex items-center gap-2 border-b border-border px-4 py-2.5">
-        <KeyRound size={15} aria-hidden className="text-fg-secondary" />
-        <h2 id="cred-title" className="text-ui font-semibold">
+    <section aria-labelledby="cred-title" className={cn("overflow-hidden rounded-card border bg-surface", highlight ? "border-accent" : "border-border")}>
+      <header className="flex items-center gap-2 border-b border-border px-3.5 py-2.5">
+        <KeyRound size={16} aria-hidden className="text-fg-secondary" />
+        <h2 id="cred-title" className="text-[13.5px] font-semibold">
           {t("title")}
         </h2>
-        <span className="tabular text-meta text-fg-secondary">{items.length || ""}</span>
-        <Button size="sm" variant="ghost" className="ms-auto" onClick={() => setAdding(true)}>
+        {items.length > 0 && <span className="tabular rounded-full bg-sunken px-1.5 text-[11.5px] font-semibold text-fg-secondary">{items.length}</span>}
+        <span className="hidden truncate text-[12.5px] text-fg-muted sm:inline">{t("shared")}</span>
+        <Button size="sm" variant="secondary" className="ms-auto" onClick={() => setAdding(true)}>
           <Plus size={14} aria-hidden />
           {t("add")}
         </Button>
-      </div>
-      <div className="space-y-2 p-3">
-        {!items.length && !adding && <p className="px-1 text-meta text-fg-secondary">{t("empty")}</p>}
-        {items.map((c) => (
-          <CredentialItem key={c.id} c={c} />
-        ))}
-        {adding && <CredentialEditor taskId={taskId} onDone={() => setAdding(false)} />}
-        <p className="px-1 text-meta text-fg-secondary">{t("hint")}</p>
-      </div>
+      </header>
+      {!items.length && !adding && <p className="px-3.5 py-3 text-ui text-fg-muted">{t("empty")}</p>}
+      {items.map((c, i) => (
+        <CredentialItem key={c.id} c={c} dot={DOTS[i % DOTS.length]} />
+      ))}
+      {adding && (
+        <div className="border-t border-border p-3">
+          <CredentialEditor taskId={taskId} onDone={() => setAdding(false)} />
+        </div>
+      )}
+      {!adding && (
+        <button type="button" onClick={() => setAdding(true)} className="flex h-[42px] w-full items-center justify-center gap-2 border-t border-border text-[13px] font-semibold text-[#1d4ed8] hover:bg-info-subtle">
+          <Plus size={15} aria-hidden />
+          {t("addAnother")}
+        </button>
+      )}
     </section>
   );
 }
 
-function CredentialItem({ c }: { c: CredentialView }) {
+function ValueRow({ label, value, copyLabel }: { label: string; value: string; copyLabel: string }) {
+  return (
+    <div className="flex items-center gap-2.5">
+      <span className="w-16 shrink-0 text-[12.5px] text-fg-muted">{label}</span>
+      <div className="flex h-[34px] min-w-0 flex-1 items-center gap-2 rounded-lg bg-canvas ps-3 pe-1.5">
+        <span className="min-w-0 flex-1 truncate font-mono text-[13.5px]" title={value}>
+          {value}
+        </span>
+        <CopyButton value={value} label={copyLabel} className="border border-border bg-surface" />
+      </div>
+    </div>
+  );
+}
+
+function CredentialItem({ c, dot }: { c: CredentialView; dot: string }) {
   const t = useTranslations("credentials");
   const tc = useTranslations("common");
   const { me } = useApp();
-  const [shown, setShown] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
   const canRemove = c.createdById === me.id || ["owner", "admin", "abg_lead"].includes(me.role);
-
-  const reveal = async (purpose: "view" | "copy") => {
-    const r = await revealCredentialAction(c.id, purpose);
-    if (!r.ok) {
-      toast.error(tc("error"));
-      throw new Error("reveal failed");
-    }
-    return r.data!.password;
-  };
-
-  if (editing) return <CredentialEditor taskId="" existing={c} onDone={() => setEditing(false)} />;
-
+  if (editing)
+    return (
+      <div className="border-b border-border p-3">
+        <CredentialEditor taskId="" existing={c} onDone={() => setEditing(false)} />
+      </div>
+    );
   return (
-    <div className="rounded-control border border-border bg-canvas p-2.5">
-      {(c.label || c.url) && (
-        <div className="mb-1.5 flex items-center gap-2">
-          {c.label && <span className="text-ui font-medium">{c.label}</span>}
-          {c.url && (
-            <a href={c.url} target="_blank" rel="noreferrer noopener" className="ms-auto inline-flex items-center gap-1 truncate text-meta text-accent hover:underline">
-              <ExternalLink size={12} aria-hidden />
-              <span className="max-w-[180px] truncate">{c.url.replace(/^https?:\/\//, "")}</span>
-            </a>
-          )}
-        </div>
-      )}
-      <dl className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-2 gap-y-1">
-        <dt className="text-meta text-fg-secondary">{t("username")}</dt>
-        <dd className="truncate font-mono text-[13px]" title={c.username}>
-          {c.username || "—"}
-        </dd>
-        <dd>{c.username && <CopyButton value={c.username} label={t("copyUsername")} />}</dd>
-        {c.hasPassword && (
-          <>
-            <dt className="text-meta text-fg-secondary">{t("password")}</dt>
-            <dd className="truncate font-mono text-[13px]">{shown ?? "••••••••••"}</dd>
-            <dd className="flex">
-              <button
-                type="button"
-                aria-label={shown ? t("hidePassword") : t("showPassword")}
-                className="inline-flex h-7 w-7 items-center justify-center rounded-control text-fg-secondary hover:bg-subtle hover:text-fg"
-                onClick={async () => (shown ? setShown(null) : setShown(await reveal("view")))}
-              >
-                {shown ? <EyeOff size={14} aria-hidden /> : <Eye size={14} aria-hidden />}
-              </button>
-              <CopyButton value={() => reveal("copy")} label={t("copyPassword")} />
-            </dd>
-          </>
+    <div className="space-y-2 border-b border-border px-3.5 py-3">
+      <div className="flex items-center gap-2">
+        <span aria-hidden className="h-2 w-2 rounded-full" style={{ background: dot }} />
+        <span className="text-[13.5px] font-semibold">{c.label || t("untitled")}</span>
+        {c.url && (
+          <a href={c.url} target="_blank" rel="noreferrer noopener" className="inline-flex min-w-0 items-center gap-1 text-meta text-accent hover:underline">
+            <ExternalLink size={12} aria-hidden />
+            <span className="max-w-[180px] truncate">{c.url.replace(/^https?:\/\//, "")}</span>
+          </a>
         )}
-      </dl>
-      {c.note && <p className="mt-1.5 text-meta text-fg-secondary">{c.note}</p>}
-      <div className="mt-1.5 flex items-center gap-1 text-meta text-fg-secondary">
+        <CopyButton value={credentialCopyText(c)} label={t("copyBoth")} className="ms-auto bg-canvas px-2 font-semibold text-fg">
+          <span className="text-[12.5px]">{t("copyBoth")}</span>
+        </CopyButton>
+      </div>
+      {c.username && <ValueRow label={t("emailShort")} value={c.username} copyLabel={t("copyUsername")} />}
+      {c.password && <ValueRow label={t("password")} value={c.password} copyLabel={t("copyPassword")} />}
+      {c.note && <p className="text-meta text-fg-secondary">{c.note}</p>}
+      <div className="flex items-center gap-1 text-meta text-fg-muted">
         {t("addedBy", { name: c.createdBy })}
         <button type="button" aria-label={tc("edit")} className="ms-auto rounded p-1 hover:bg-subtle hover:text-fg" onClick={() => setEditing(true)}>
           <Pencil size={12} aria-hidden />
@@ -139,7 +141,7 @@ function CredentialEditor({ taskId, existing, onDone }: { taskId: string; existi
   const tc = useTranslations("common");
   const [label, setLabel] = useState(existing?.label ?? "");
   const [username, setUsername] = useState(existing?.username ?? "");
-  const [password, setPassword] = useState("");
+  const [password, setPassword] = useState(existing?.password ?? "");
   const [url, setUrl] = useState(existing?.url ?? "");
   const [note, setNote] = useState(existing?.note ?? "");
   const [busy, setBusy] = useState(false);
@@ -168,7 +170,7 @@ function CredentialEditor({ taskId, existing, onDone }: { taskId: string; existi
       </div>
       <div>
         <Label htmlFor={`c-pass-${id}`}>{t("password")}</Label>
-        <PasswordInput id={`c-pass-${id}`} value={password} onChange={setPassword} placeholder={existing?.hasPassword ? t("keepPassword") : undefined} />
+        <Input id={`c-pass-${id}`} className="font-mono" autoComplete="off" value={password} onChange={(e) => setPassword(e.target.value)} placeholder={existing?.hasPassword ? t("keepPassword") : undefined} />
       </div>
       <div>
         <Label htmlFor={`c-url-${id}`}>{t("url")}</Label>

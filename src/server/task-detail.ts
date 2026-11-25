@@ -1,4 +1,5 @@
 import "server-only";
+import { decryptSecret } from "./crypto";
 import { db } from "./db";
 import { decorate, taskRowSelect } from "./queries";
 import { getWorkspaceConfig } from "./calendar";
@@ -164,10 +165,20 @@ export async function loadTaskDetail(key: string, viewer: CurrentMember) {
       ...r.relationsTo.map((x) => ({ id: x.id, kind: x.kind, direction: "to" as const, task: x.from })),
     ],
     followers: r.followers.map((f) => f.member),
-    credentials: r.credentials.map((c) => ({ id: c.id, label: c.label, username: c.username, hasPassword: !!c.passwordEncrypted, url: c.url, note: c.note, createdById: c.createdById, createdBy: c.createdBy.name, createdAt: c.createdAt.toISOString() })),
+    credentials: r.credentials.map((c) => ({ id: c.id, label: c.label, username: c.username, hasPassword: !!c.passwordEncrypted, password: readPassword(c.passwordEncrypted), url: c.url, note: c.note, createdById: c.createdById, createdBy: c.createdBy.name, createdAt: c.createdAt.toISOString() })),
     subtasks,
     history,
   };
 }
 
 export type TaskDetail = NonNullable<Awaited<ReturnType<typeof loadTaskDetail>>>;
+
+/** Accounts are shared between Vendoor and ABG, so the password is shown as typed. It stays encrypted at rest; a bad value shows as empty instead of breaking the page. */
+function readPassword(enc: string | null): string | null {
+  if (!enc) return null;
+  try {
+    return decryptSecret(enc);
+  } catch {
+    return null;
+  }
+}

@@ -35,7 +35,7 @@ export function CredentialFields({ value, onChange, idPrefix = "cred" }: { value
           </div>
           <div>
             <Label htmlFor={`${idPrefix}-pass-${i}`}>{t("password")}</Label>
-            <PasswordInput id={`${idPrefix}-pass-${i}`} value={c.password ?? ""} onChange={(v) => set(i, { password: v })} />
+            <Input id={`${idPrefix}-pass-${i}`} className="font-mono" autoComplete="off" value={c.password ?? ""} onChange={(e) => set(i, { password: e.target.value })} />
           </div>
           <div className="sm:col-span-2">
             <Label htmlFor={`${idPrefix}-url-${i}`}>

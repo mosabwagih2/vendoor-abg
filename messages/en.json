@@ -407,8 +407,8 @@
     "nothingForYou": "Nothing to do here for you right now."
   },
   "credentials": {
-    "title": "Account access",
-    "hint": "Logins the team needs to reproduce or fix this. Encrypted; every reveal and copy is logged.",
+    "title": "Accounts",
+    "hint": "Logins the team needs to reproduce or fix this. Shared between Vendoor and ABG.",
     "add": "Add account",
     "label": "Label",
     "labelPlaceholder": "e.g. Supplier account, Bosta dashboard",
@@ -424,11 +424,17 @@
     "empty": "No accounts added.",
     "removeConfirm": "Remove this account from the task?",
     "keepPassword": "Leave empty to keep the current password",
-    "addedBy": "Added by {name}"
+    "addedBy": "Added by {name}",
+    "shared": "Shared between Vendoor and ABG",
+    "addAnother": "Add another account",
+    "copyBoth": "Copy both",
+    "emailShort": "Email",
+    "untitled": "Account",
+    "copied": "Copied"
   },
   "guard": {
     "title": "This looks like a password",
-    "body": "Put logins in the Account access field: it is encrypted and has copy buttons. Text in comments and descriptions is not protected.",
+    "body": "Put logins in the Accounts card: they get copy buttons there. Text in comments and descriptions is easy to lose.",
     "move": "Move to Account access",
     "postAnyway": "Post anyway",
     "edit": "Edit text"

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/cn";
 
-export function CopyButton({ value, label, onCopied, className }: { value: string | (() => Promise<string>); label: string; onCopied?: () => void; className?: string }) {
+export function CopyButton({ value, label, onCopied, className, children }: { value: string | (() => Promise<string>); label: string; onCopied?: () => void; className?: string; children?: React.ReactNode }) {
   const t = useTranslations("common");
   const [done, setDone] = useState(false);
   return (
@@ -22,6 +22,7 @@ export function CopyButton({ value, label, onCopied, className }: { value: strin
       }}
     >
       {done ? <Check size={14} className="text-st-done" aria-hidden /> : <Copy size={14} aria-hidden />}
+      {children}
       <span aria-live="polite" className={done ? "" : "sr-only"}>
         {done ? t("copied") : ""}
       </span>

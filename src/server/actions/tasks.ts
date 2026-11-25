@@ -258,17 +258,3 @@ export async function archiveCredentialAction(id: string) {
     refresh();
   });
 }
-
-/** Returns the decrypted password and logs who revealed or copied it, and when. */
-export async function revealCredentialAction(id: string, purpose: "view" | "copy") {
-  return runAction(async () => {
-    const me = await requireMember();
-    if (!can(me, "view_credentials")) throw new AppError("forbidden");
-    const c = await db.accessCredential.findUnique({ where: { id: z.string().uuid().parse(id) } });
-    if (!c || c.archivedAt) throw new AppError("not_found");
-    await db.$transaction((tx) =>
-      recordEvent(tx, { actorId: me.id, subjectType: "credential", subjectId: c.id, taskId: c.taskId, verb: purpose === "copy" ? "credential_copied" : "credential_viewed", isInternal: true }),
-    );
-    return { password: c.passwordEncrypted ? decryptSecret(c.passwordEncrypted) : "" };
-  });
-}
