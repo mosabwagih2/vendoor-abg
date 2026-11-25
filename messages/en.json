@@ -902,5 +902,28 @@
         "recorded": "A release was recorded."
       }
     }
+  },
+  "dashboard": {
+    "thisWeek": "This week",
+    "openTriage": "Open triage",
+    "waitingTriage": "{count, plural, =0 {nothing is waiting for triage} one {# request is waiting for triage} other {# requests are waiting for triage}}",
+    "hint": {
+      "request": "new, needs you",
+      "processing": "ABG is working",
+      "stuck": "waiting on Vendoor",
+      "completed": "waiting on Vendoor",
+      "done": "verified"
+    },
+    "overall": "Overall progress",
+    "overallLine": "{total} tasks · {done} verified by Vendoor",
+    "dueSoon": "Due soon",
+    "whoHasWhat": "Who has what",
+    "people": "{count} people",
+    "noAssignee": "{count, plural, one {# task has no assignee} other {# tasks have no assignee}}",
+    "assign": "Assign",
+    "waitingVendoor": "Waiting on Vendoor",
+    "late": "Late {days}d",
+    "today": "Today",
+    "tomorrow": "Tomorrow"
   }
 }

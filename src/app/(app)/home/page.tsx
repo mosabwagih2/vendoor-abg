@@ -5,6 +5,8 @@ import { decorate, taskRowSelect, waitingOnMe } from "@/server/queries";
 import { activityFeed } from "@/server/activity-feed";
 import { greetingKey } from "@/lib/format";
 import { HomeView } from "./home-view";
+import { AbgDashboard } from "./abg-dashboard";
+import { loadDashboard } from "@/server/dashboard";
 
 export const metadata = { title: "Home" };
 
@@ -12,6 +14,10 @@ export default async function HomePage() {
   const me = await requireMember();
   const t = await getTranslations("home");
   const now = new Date();
+  if (me.side === "abg") {
+    const dateLine = new Intl.DateTimeFormat("en", { weekday: "short", month: "short", day: "numeric", timeZone: "Africa/Cairo" }).format(now);
+    return <AbgDashboard data={await loadDashboard()} greeting={t(greetingKey(), { name: me.name.replace(/^Eng\.\s*/, "").split(" ")[0] })} dateLine={dateLine} />;
+  }
   const [waiting, overdueRaw, inProgress, lastRelease, upcoming, feed] = await Promise.all([
     waitingOnMe(me),
     db.task.findMany({
