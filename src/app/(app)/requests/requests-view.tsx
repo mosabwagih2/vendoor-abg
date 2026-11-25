@@ -35,7 +35,7 @@ export function RequestsView({ rows, selected, title }: { rows: TaskRowData[]; s
   });
 
   return (
-    <div className="flex h-dvh flex-col max-md:h-auto">
+    <div className="flex h-full flex-col max-md:h-auto">
       <PageHeader title={title} subtitle={me.side === "vendoor" ? t("readOnly") : t("subtitle")}>
         <span className="tabular rounded-full bg-subtle px-2 text-meta font-medium">{rows.length}</span>
       </PageHeader>

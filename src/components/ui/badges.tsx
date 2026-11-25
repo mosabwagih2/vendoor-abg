@@ -32,19 +32,20 @@ export function PriorityBadge({ priority, suggested, iconOnly, className }: { pr
   );
 }
 
-/** "Waiting on" is a first-class badge, with text, never colour alone. */
-export function WaitingBadge({ side, viewerSide, className }: { side: "abg" | "vendoor" | null; viewerSide?: "abg" | "vendoor"; className?: string }) {
+/** "Waiting on" is a first-class badge: your turn is solid cobalt, the other side's turn is quiet. Text always says whose turn it is. */
+export function WaitingBadge({ side, viewerSide, className, quiet }: { side: "abg" | "vendoor" | null; viewerSide?: "abg" | "vendoor"; className?: string; quiet?: boolean }) {
   const t = useTranslations("waiting");
   if (!side) return <span className={cn("text-meta text-fg-secondary", className)}>{t("nobody")}</span>;
   const mine = viewerSide === side;
   return (
     <span
       className={cn(
-        "inline-flex h-5 items-center gap-1 whitespace-nowrap rounded-full border px-2 text-meta font-medium",
-        mine ? "border-transparent bg-waiting-strong text-white" : side === "vendoor" ? "border-waiting/40 bg-info-subtle text-[#0a5cc2]" : "border-border bg-subtle text-fg-secondary",
+        "inline-flex h-[22px] items-center gap-1.5 whitespace-nowrap rounded-full ps-2 pe-2.5 text-[11.5px] font-semibold leading-none",
+        mine ? (quiet ? "bg-info-subtle text-waiting-strong" : "bg-waiting-strong text-white") : "bg-sunken font-medium text-fg-secondary",
         className,
       )}
     >
+      <span aria-hidden className={cn("h-1.5 w-1.5 rounded-full", mine ? (quiet ? "bg-waiting-strong" : "bg-white") : "bg-fg-secondary")} />
       {mine ? t("you") : t(side)}
     </span>
   );

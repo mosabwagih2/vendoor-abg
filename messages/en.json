@@ -73,7 +73,7 @@
   },
   "auth": {
     "title": "Sign in",
-    "subtitle": "Vendoor × ABG work tracker",
+    "subtitle": "Use your work email",
     "email": "Email",
     "password": "Password",
     "signIn": "Sign in",
@@ -82,7 +82,10 @@
     "magicSent": "Check your email for a sign-in link. It works once, for 15 minutes.",
     "invalid": "Email or password is not correct.",
     "or": "or",
-    "devHint": "Local demo: any seeded email, password {password}"
+    "devHint": "Local demo: any seeded email, password {password}",
+    "headline": "Every request, one owner of the next step.",
+    "pitch": "File it once, see whose turn it is, and confirm the fix yourself. WhatsApp stays for urgent pings only.",
+    "footer": "Vendoor × ABG work tracker"
   },
   "status": {
     "triage": "Triage",
@@ -111,11 +114,11 @@
     "incident": "Incident"
   },
   "waiting": {
-    "abg": "ABG",
-    "vendoor": "Vendoor",
+    "abg": "ABG's turn",
+    "vendoor": "Vendoor's turn",
     "nobody": "Nobody",
     "label": "Waiting on {side}",
-    "you": "Waiting on you"
+    "you": "Your turn"
   },
   "closeReason": {
     "duplicate": "Duplicate",
@@ -161,7 +164,14 @@
     "ask": "Ask",
     "decline": "Decline",
     "start": "Start",
-    "openIncident": "System incident open: {title} · started {age}"
+    "openIncident": "System incident open: {title} · started {age}",
+    "abgWorking": "ABG is working on",
+    "lastRelease": "Last release",
+    "nextReleaseLabel": "Next release",
+    "summaryWaiting": "{count, plural, =0 {Nothing waits on you} one {# item waits on you} other {# items wait on you}}",
+    "summaryProgress": "ABG has {count} in progress",
+    "summaryOverdue": "{count} overdue",
+    "tasksCount": "{count, plural, one {# task} other {# tasks}}"
   },
   "myWork": {
     "title": "My work",
@@ -658,5 +668,8 @@
       "suggestedPriority": "suggested priority",
       "status": "status"
     }
+  },
+  "journey": {
+    "label": "Progress: {step} of 5, {status}"
   }
 }

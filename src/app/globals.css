@@ -1,47 +1,49 @@
 @import "tailwindcss";
 
 /* PRD section 9 design tokens. Light theme ships first; dark values are defined from the same tokens (phase 3 switch). */
+/* "Warm Ink": warm canvas, white floating panel, one cobalt "your turn" signal. See docs/REDESIGN.md. */
 :root {
-  --bg-canvas: #fafafb;
+  --bg-canvas: #f3f2ee;
   --bg-surface: #ffffff;
-  --bg-subtle: #f3f4f6;
-  --border-default: #e5e7eb;
-  --text-primary: #111318;
-  --text-secondary: #5b6170;
-  --text-muted: #8b909b;
-  --action-primary: #111318;
+  --bg-subtle: #f7f7f4;
+  --bg-sunken: #efeee9;
+  --border-default: #e7e6e0;
+  --border-strong: #d5d4cc;
+  --text-primary: #15161a;
+  --text-secondary: #4a4d59;
+  --text-muted: #6b6e7a;
+  --action-primary: #15161a;
   --action-primary-fg: #ffffff;
-  --accent: #4f5bd5;
-  --waiting-you: #0a84ff;
-  /* Darker shades for white text on filled badges and buttons (WCAG AA 4.5:1); the PRD colours stay for icons, dots and borders. */
-  --waiting-strong: #0062d6;
-  --success-strong: #1e7a4c;
+  --accent: #2563eb;
+  --waiting-you: #2563eb;
+  --waiting-strong: #1d4ed8;
+  --success-strong: #0f7a50;
   --danger-text: #b42318;
   --warning-text: #7a5000;
 
-  --status-triage: #8e4ec6;
-  --status-needs-info: #0a84ff;
+  --status-triage: #8b5cf6;
+  --status-needs-info: #2563eb;
   --status-planned: #8b8d98;
-  --status-in-progress: #e5a000;
-  --status-shipped: #0a84ff;
-  --status-reopened: #e5484d;
-  --status-done: #30a46c;
-  --status-closed: #b9bbc6;
+  --status-in-progress: #f59e0b;
+  --status-shipped: #2563eb;
+  --status-reopened: #ef4444;
+  --status-done: #16a06a;
+  --status-closed: #b4b6c0;
 
-  --priority-urgent: #e5484d;
-  --priority-high: #f76b15;
-  --priority-medium: #e5a000;
+  --priority-urgent: #ef4444;
+  --priority-high: #f97316;
+  --priority-medium: #f59e0b;
   --priority-low: #8b8d98;
 
-  --health-on-track: #30a46c;
-  --health-at-risk: #e5a000;
-  --health-off-track: #e5484d;
+  --health-on-track: #16a06a;
+  --health-at-risk: #f59e0b;
+  --health-off-track: #ef4444;
 
   --danger: #d92d33;
   --danger-subtle: #fdecec;
-  --warning-subtle: #fff6e0;
-  --success-subtle: #e8f6ee;
-  --info-subtle: #e7f2ff;
+  --warning-subtle: #fff4d6;
+  --success-subtle: #e4f6ec;
+  --info-subtle: #eaf0ff;
   --internal-subtle: #fff8e6;
 }
 
@@ -66,11 +68,13 @@
 
 @theme inline {
   --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Instrument Serif", ui-serif, Georgia, serif;
   --font-mono: "JetBrains Mono Variable", ui-monospace, monospace;
 
   --color-canvas: var(--bg-canvas);
   --color-surface: var(--bg-surface);
   --color-subtle: var(--bg-subtle);
+  --color-sunken: var(--bg-sunken);
   --color-border: var(--border-default);
   --color-fg: var(--text-primary);
   --color-fg-secondary: var(--text-secondary);
@@ -123,11 +127,13 @@
   --text-kpi--line-height: 32px;
 
   /* Radius (9.3) */
-  --radius-control: 6px;
-  --radius-card: 8px;
-  --radius-modal: 12px;
+  --radius-control: 10px;
+  --radius-card: 14px;
+  --radius-modal: 22px;
+  --radius-panel: 18px;
 
-  --shadow-pop: 0 8px 24px rgba(0, 0, 0, 0.12);
+  --shadow-pop: 0 12px 32px rgba(21, 22, 26, 0.14), 0 2px 6px rgba(21, 22, 26, 0.06);
+  --shadow-panel: 0 2px 12px rgba(21, 22, 26, 0.05);
 }
 
 html {

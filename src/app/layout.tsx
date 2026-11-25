@@ -4,6 +4,7 @@ import { getLocale, getMessages } from "next-intl/server";
 import { Toaster } from "sonner";
 import "@fontsource-variable/inter";
 import "@fontsource-variable/jetbrains-mono";
+import "@fontsource/instrument-serif";
 import "./globals.css";
 import { TooltipProvider } from "@/components/ui/tooltip";
 

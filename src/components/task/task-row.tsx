@@ -7,6 +7,7 @@ import { PriorityBadge, WaitingBadge, SlaBadge, DueDate, Mono, RelativeTime } fr
 import { Avatar } from "@/components/ui/avatar";
 import { useApp } from "@/components/layout/app-context";
 import { cn } from "@/lib/cn";
+import { JourneyBar } from "./journey-bar";
 import type { TaskStatus, Priority } from "@/domain/types";
 
 export interface TaskRowData {
@@ -61,7 +62,7 @@ export function TaskRow({
   return (
     <div
       className={cn(
-        "group relative flex min-h-9 items-center gap-2 border-b border-border px-3 text-ui hover:bg-subtle sm:gap-3 sm:px-4",
+        "group relative flex min-h-11 items-center gap-2 border-b border-border/80 px-3 text-[13.5px] hover:bg-subtle sm:gap-3 sm:px-5",
         active && "bg-info-subtle hover:bg-info-subtle",
         selected && "bg-info-subtle",
       )}
@@ -80,7 +81,7 @@ export function TaskRow({
           <PriorityBadge priority={task.priority as Priority | null} suggested={task.suggestedPriority as Priority | null} iconOnly />
         </span>
       )}
-      <Mono className="hidden w-[68px] shrink-0 text-fg-secondary sm:inline">{task.key}</Mono>
+      <Mono className="hidden w-[72px] shrink-0 text-fg-secondary sm:inline">{task.key}</Mono>
       <span className="shrink-0">
         <StatusIcon status={status} label={t(`status.${status}`)} />
       </span>
@@ -110,7 +111,10 @@ export function TaskRow({
         <SlaBadge sla={task.sla} />
       </span>
       {task.unverified && <span className="hidden shrink-0 rounded-full bg-warning-subtle px-1.5 text-meta font-medium text-warning-text sm:inline">{t("sla.unverified")}</span>}
-      {p.has("waiting") && <WaitingBadge side={task.waitingOn} viewerSide={me.side} className="relative z-10 shrink-0" />}
+      <span className="relative z-10 hidden shrink-0 xl:inline-flex">
+        <JourneyBar status={status} width={84} />
+      </span>
+      {p.has("waiting") && <WaitingBadge side={task.waitingOn} viewerSide={me.side} quiet className="relative z-10 shrink-0" />}
       {p.has("requester") && (
         <span className="relative z-10 hidden shrink-0 lg:inline" title={task.requester.name}>
           <Avatar name={task.requester.name} size={20} />

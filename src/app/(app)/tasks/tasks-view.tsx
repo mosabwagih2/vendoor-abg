@@ -52,7 +52,7 @@ export function TasksView({ rows, filters, display, query, savedViews, peek }: P
   const peekHref = (key: string) => `${pathname}?${query ? query + "&" : ""}peek=${key}`;
 
   return (
-    <div className="flex h-dvh flex-col max-md:h-[calc(100dvh-56px)]">
+    <div className="flex h-full flex-col max-md:h-[calc(100dvh-56px)]">
       <PageHeader title={t("tasks.title")}>
         <div role="group" aria-label={t("tasks.title")} className="inline-flex rounded-control border border-border bg-surface p-0.5">
           {(["list", "board"] as const).map((v) => (

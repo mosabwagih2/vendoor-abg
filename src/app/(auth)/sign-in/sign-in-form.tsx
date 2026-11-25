@@ -15,7 +15,7 @@ export function SignInForm({ next }: { next: string }) {
 
   return (
     <form
-      className="space-y-3 rounded-card border border-border bg-surface p-5"
+      className="space-y-3.5"
       onSubmit={async (e) => {
         e.preventDefault();
         setPending(true);
@@ -28,14 +28,14 @@ export function SignInForm({ next }: { next: string }) {
     >
       <div>
         <Label htmlFor="email">{t("email")}</Label>
-        <Input id="email" type="email" autoComplete="username" required value={email} onChange={(e) => setEmail(e.target.value)} />
+        <Input id="email" type="email" className="h-10" autoComplete="username" required value={email} onChange={(e) => setEmail(e.target.value)} />
       </div>
       <div>
         <Label htmlFor="password">{t("password")}</Label>
-        <Input id="password" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} />
+        <Input id="password" type="password" className="h-10" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} />
       </div>
       <FieldError>{error}</FieldError>
-      <Button type="submit" variant="primary" className="w-full" disabled={pending}>
+      <Button type="submit" variant="primary" size="lg" className="w-full" disabled={pending}>
         {pending ? t("signingIn") : t("signIn")}
       </Button>
       <div className="flex items-center gap-2 text-meta text-fg-secondary">
@@ -45,6 +45,7 @@ export function SignInForm({ next }: { next: string }) {
       </div>
       <Button
         variant="secondary"
+        size="lg"
         className="w-full"
         disabled={!email || pending}
         onClick={async () => {

@@ -141,11 +141,11 @@ export function AppShell({ me, counts, projects, members, incident, upcoming, ch
       <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:start-2 focus:top-2 focus:z-50 focus:rounded-control focus:bg-surface focus:px-3 focus:py-2">
         Skip to content
       </a>
-      <div className="flex min-h-dvh">
+      <div className="flex min-h-dvh bg-canvas">
         {/* Sidebar (desktop) */}
         <nav
           aria-label={t("mainNav")}
-          className={cn("sticky top-0 hidden h-dvh shrink-0 flex-col border-e border-border bg-subtle md:flex", collapsed ? "w-14" : "w-60")}
+          className={cn("sticky top-0 hidden h-dvh shrink-0 flex-col md:flex", collapsed ? "w-14" : "w-60")}
         >
           <div className={cn("flex h-12 items-center gap-2 px-3", collapsed && "justify-center px-0")}>
             <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-control bg-primary font-mono text-[10px] font-semibold text-primary-fg">V×A</div>
@@ -180,7 +180,7 @@ export function AppShell({ me, counts, projects, members, incident, upcoming, ch
                   ref={searchRef}
                   aria-label={t("search")}
                   placeholder={t("search")}
-                  className="h-8 w-full rounded-control border border-border bg-surface ps-7 pe-8 text-ui placeholder:text-fg-muted"
+                  className="h-9 w-full rounded-control border border-border bg-surface ps-8 pe-9 text-ui placeholder:text-fg-secondary"
                 />
                 <kbd className="pointer-events-none absolute end-2 top-1/2 -translate-y-1/2 font-mono text-[10px] text-fg-secondary">/</kbd>
               </form>
@@ -188,7 +188,7 @@ export function AppShell({ me, counts, projects, members, incident, upcoming, ch
             <button
               type="button"
               onClick={() => openNewRequest()}
-              className={cn("flex h-8 w-full items-center gap-2 rounded-control bg-primary px-2.5 text-ui font-medium text-primary-fg hover:opacity-90", collapsed && "justify-center px-0")}
+              className={cn("flex h-9 w-full items-center gap-2 rounded-control bg-primary px-3 text-ui font-semibold text-primary-fg shadow-[0_1px_2px_rgba(0,0,0,0.18)] hover:opacity-90", collapsed && "justify-center px-0")}
               aria-label={t("newRequest")}
             >
               <Plus size={16} aria-hidden />
@@ -208,8 +208,8 @@ export function AppShell({ me, counts, projects, members, incident, upcoming, ch
                         aria-current={isActive(it.href) ? "page" : undefined}
                         title={collapsed ? it.label : it.hint}
                         className={cn(
-                          "flex h-8 items-center gap-2 rounded-control px-2 text-ui text-fg-secondary hover:bg-border/50 hover:text-fg",
-                          isActive(it.href) && "bg-surface font-medium text-fg shadow-[0_0_0_1px_var(--border-default)]",
+                          "flex h-9 items-center gap-2.5 rounded-control px-2.5 text-ui text-fg-secondary hover:bg-black/[0.04] hover:text-fg",
+                          isActive(it.href) && "bg-surface font-semibold text-fg shadow-[0_0_0_1px_var(--border-default),0_1px_3px_rgba(21,22,26,0.06)]",
                           collapsed && "justify-center px-0",
                         )}
                       >
@@ -243,16 +243,18 @@ export function AppShell({ me, counts, projects, members, incident, upcoming, ch
           </div>
         </nav>
 
-        <div className="flex min-w-0 flex-1 flex-col">
+        <div className="flex min-w-0 flex-1 flex-col md:p-2 md:ps-0">
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-surface md:h-[calc(100dvh-16px)] md:rounded-panel md:border md:border-border md:shadow-panel">
           {incident && (
             <div role="alert" suppressHydrationWarning className="flex items-center gap-2 bg-danger px-4 py-2 text-ui font-medium text-white">
               <AlertOctagon size={16} aria-hidden />
               {th("openIncident", { title: `INC-${incident.number} ${incident.title}`, age: relative(incident.startedAt) })}
             </div>
           )}
-          <main id="main" className="min-w-0 flex-1 pb-16 md:pb-0">
+          <main id="main" className="min-h-0 min-w-0 flex-1 overflow-y-auto pb-16 md:pb-0">
             <WorkflowProvider releases={upcoming}>{children}</WorkflowProvider>
           </main>
+          </div>
         </div>
 
         {/* Mobile bottom bar: Home, Inbox, New, Tasks, More (PRD 5.1) */}

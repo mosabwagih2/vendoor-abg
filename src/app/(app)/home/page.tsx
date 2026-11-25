@@ -24,7 +24,7 @@ export default async function HomePage() {
       select: taskRowSelect,
       take: 50,
     }),
-    db.task.count({ where: { archivedAt: null, status: "in_progress" } }),
+    db.task.count({ where: { archivedAt: null, status: { in: ["in_progress", "reopened", "planned"] } } }),
     db.release.findFirst({
       where: { state: "released", archivedAt: null },
       orderBy: { releasedAt: "desc" },
@@ -33,6 +33,9 @@ export default async function HomePage() {
     db.release.findFirst({ where: { state: "upcoming", archivedAt: null, targetDate: { gte: now } }, orderBy: { targetDate: "asc" }, include: { _count: { select: { tasks: true } } } }),
     activityFeed(me, {}, 15),
   ]);
+  const abgWork = await decorate(
+    await db.task.findMany({ where: { archivedAt: null, status: { in: ["in_progress", "reopened", "planned"] } }, select: taskRowSelect, orderBy: [{ updatedAt: "desc" }], take: 5 }),
+  );
   const overdue = (await decorate(overdueRaw))
     .filter((r) => r.isOverdue || r.sla?.state === "breached")
     .sort((a, b) => (a.dueAt ?? a.sla?.dueAt ?? "").localeCompare(b.dueAt ?? b.sla?.dueAt ?? ""));
@@ -48,7 +51,8 @@ export default async function HomePage() {
   return (
     <HomeView
       greeting={t(greetingKey(), { name: me.name.replace(/^Eng\.\s*/, "").split(" ")[0] })}
-      summary={t("summary", { waiting: waiting.length, progress: inProgress, overdue: overdue.length })}
+      summary={{ waiting: waiting.length, progress: inProgress, overdue: overdue.length }}
+      abgWork={abgWork}
       waiting={waiting}
       overdue={overdue}
       lastRelease={lastRelease && counts ? { number: lastRelease.number, releasedAt: lastRelease.releasedAt!.toISOString(), ...counts } : null}

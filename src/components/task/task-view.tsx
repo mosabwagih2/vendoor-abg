@@ -21,6 +21,7 @@ import { PRIORITIES, TASK_TYPES, type Priority, type TaskStatus } from "@/domain
 import type { TaskDetail } from "@/server/task-detail";
 import { setFollowAction, updateFieldAction } from "@/server/actions/tasks";
 import { ActionButtons } from "./action-buttons";
+import { JourneyStepper } from "./journey-bar";
 import { AttachmentsView } from "./attachments-view";
 import { CredentialsCard } from "./credentials-card";
 import { TaskActivity } from "./task-activity";
@@ -74,7 +75,7 @@ export function TaskView({ task, compact }: { task: TaskDetail; compact?: boolea
           <EditableTitle task={task} canEdit={canEdit} />
 
           {/* Action bar (FR-6.1) */}
-          <div className={cn("rounded-card border p-3", mine && acts.length ? "border-waiting/40 bg-info-subtle" : "border-border bg-surface")}>
+          <div className={cn("rounded-card border p-4", mine && acts.length ? "border-[#c9d8fb] bg-info-subtle shadow-[0_2px_12px_rgba(37,99,235,0.08)]" : "border-border bg-subtle")}>
             <div className="flex flex-wrap items-center gap-2">
               <StatusBadge status={task.status} className="font-medium" />
               <WaitingBadge side={task.waitingOn} viewerSide={me.side} />
@@ -111,7 +112,12 @@ export function TaskView({ task, compact }: { task: TaskDetail; compact?: boolea
                 )}
               </div>
             </div>
-            {prompt && <p className="mt-2 text-ui text-fg">{prompt}</p>}
+            {task.status !== "closed" && (
+              <div className="mt-4">
+                <JourneyStepper status={task.status} />
+              </div>
+            )}
+            {prompt && <p className="mt-4 text-[14px] font-medium text-fg">{prompt}</p>}
             {acts.length > 0 ? (
               <ActionButtons task={wf} size="md" className="mt-3 flex flex-wrap gap-2 max-sm:sticky max-sm:bottom-16 max-sm:z-20 max-sm:-mx-3 max-sm:-mb-3 max-sm:rounded-b-card max-sm:border-t max-sm:border-border max-sm:bg-surface max-sm:p-3 [&>button]:max-sm:flex-1" />
             ) : null}

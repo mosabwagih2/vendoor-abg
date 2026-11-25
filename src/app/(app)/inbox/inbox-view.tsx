@@ -24,7 +24,7 @@ interface Item {
 export function InboxView({ filter, items, selectedId, detail }: { filter: string; items: Item[]; selectedId: string | null; detail: TaskDetail | null }) {
   const t = useTranslations("inbox");
   return (
-    <div className="flex h-dvh flex-col max-md:h-auto">
+    <div className="flex h-full flex-col max-md:h-auto">
       <PageHeader title={t("title")}>
         <Button size="sm" variant="ghost" onClick={() => markAllReadAction()}>
           <CheckCheck size={14} aria-hidden />
