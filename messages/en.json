@@ -858,5 +858,11 @@
     "releases": "Releases this week",
     "noReleases": "Nothing was released this week.",
     "tasksShipped": "{count, plural, one {# task} other {# tasks}}"
+  },
+  "errorPage": {
+    "title": "Something went wrong on our side",
+    "body": "Nothing you did. Try again, and if it keeps happening tell ABG with the reference below.",
+    "reference": "Reference {id}",
+    "retry": "Try again"
   }
 }
