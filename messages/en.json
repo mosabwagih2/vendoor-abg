@@ -793,6 +793,22 @@
       "open": "{count} open",
       "save": "Save changes",
       "note": "Working hours only: Saturday to Thursday, Friday off. Change it in Work week."
+    },
+    "membersPage": {
+      "title": "Members and roles",
+      "hint": "Who can use the tracker and what they can do."
+    },
+    "notificationsPage": {
+      "title": "Notifications",
+      "hint": "Choose what reaches you in the app and by email."
+    },
+    "tags": {
+      "title": "Tags",
+      "hint": "Projects and the quick-pick categories people choose when they file a request."
+    },
+    "profilePage": {
+      "title": "Profile",
+      "hint": "Your account."
     }
   },
   "time": {

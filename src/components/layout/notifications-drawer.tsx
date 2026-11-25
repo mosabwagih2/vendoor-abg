@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import * as D from "@radix-ui/react-dialog";
 import { useTranslations } from "next-intl";
 import { Bell, TriangleAlert, X } from "lucide-react";
@@ -25,16 +25,18 @@ export function NotificationsDrawer({ unread }: { unread: number }) {
     const r = await loadDrawerAction();
     if (r.ok) setItems(r.data as DrawerItem[]);
   }, []);
-  useEffect(() => {
-    if (open) void load();
-  }, [open, load]);
+  // Load when the drawer opens (from the open handler, so there is no state update inside an effect).
+  const onOpenChange = (next: boolean) => {
+    setOpen(next);
+    if (next) void load();
+  };
 
   const incoming = (items ?? []).filter((i) => !i.read);
   const archive = (items ?? []).filter((i) => i.read);
   const shown = tab === "incoming" ? incoming : archive;
 
   return (
-    <D.Root open={open} onOpenChange={setOpen}>
+    <D.Root open={open} onOpenChange={onOpenChange}>
       <D.Trigger aria-label={tn("notifications")} className="relative grid h-8 w-8 place-items-center rounded-lg text-fg-secondary hover:bg-black/[0.04]">
         <Bell size={18} aria-hidden />
         {unread > 0 && <span aria-hidden className="absolute end-1.5 top-1.5 h-2 w-2 rounded-full border-2 border-surface bg-danger" />}
