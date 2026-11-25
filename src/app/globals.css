@@ -1,23 +1,23 @@
 @import "tailwindcss";
 
 /* PRD section 9 design tokens. Light theme ships first; dark values are defined from the same tokens (phase 3 switch). */
-/* "Warm Ink": warm canvas, white floating panel, one cobalt "your turn" signal. See docs/REDESIGN.md. */
+/* Figma design (Vendoor × ABG tracker): cool grey canvas, white surfaces, blue actions. */
 :root {
-  --bg-canvas: #f3f2ee;
+  --bg-canvas: #f4f5f7;
   --bg-surface: #ffffff;
-  --bg-subtle: #f7f7f4;
-  --bg-sunken: #efeee9;
-  --border-default: #e7e6e0;
-  --border-strong: #d5d4cc;
-  --text-primary: #15161a;
-  --text-secondary: #4a4d59;
-  --text-muted: #6b6e7a;
-  --action-primary: #15161a;
+  --bg-subtle: #f7f8fa;
+  --bg-sunken: #eef0f3;
+  --border-default: #e4e6eb;
+  --border-strong: #cbd0d9;
+  --text-primary: #14161a;
+  --text-secondary: #4b5160;
+  --text-muted: #7a8090;
+  --action-primary: #2563eb;
   --action-primary-fg: #ffffff;
   --accent: #2563eb;
   --waiting-you: #2563eb;
-  --waiting-strong: #1d4ed8;
-  --success-strong: #0f7a50;
+  --waiting-strong: #2563eb;
+  --success-strong: #16a06a;
   --danger-text: #b42318;
   --warning-text: #7a5000;
 
@@ -40,11 +40,11 @@
   --health-at-risk: #f59e0b;
   --health-off-track: #ef4444;
 
-  --danger: #d92d33;
+  --danger: #e5484d;
   --danger-subtle: #fdecec;
   --warning-subtle: #fff4d6;
   --success-subtle: #e4f6ec;
-  --info-subtle: #eaf0ff;
+  --info-subtle: #eaf1ff;
   --internal-subtle: #fff8e6;
 }
 
@@ -129,8 +129,8 @@
   --text-kpi--line-height: 32px;
 
   /* Radius (9.3) */
-  --radius-control: 10px;
-  --radius-card: 14px;
+  --radius-control: 8px;
+  --radius-card: 12px;
   --radius-modal: 22px;
   --radius-panel: 18px;
 

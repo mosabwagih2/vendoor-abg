@@ -9,13 +9,14 @@ export const buttonVariants = cva(
   {
     variants: {
       variant: {
-        primary: "bg-primary text-primary-fg shadow-[0_1px_2px_rgba(0,0,0,0.18)] hover:opacity-90",
-        secondary: "border border-border-strong bg-surface text-fg hover:bg-subtle",
+        primary: "bg-primary text-primary-fg hover:opacity-90",
+        dark: "bg-fg text-white hover:opacity-90",
+        secondary: "border border-border bg-surface text-fg hover:bg-subtle",
         ghost: "text-fg-secondary hover:bg-subtle hover:text-fg",
         danger: "bg-danger text-white hover:opacity-90",
-        dangerOutline: "border border-[#f3c3bf] bg-surface text-danger-text hover:bg-danger-subtle",
-        success: "bg-success-strong text-white shadow-[0_1px_2px_rgba(0,0,0,0.18)] hover:opacity-90",
-        waiting: "bg-waiting-strong text-white shadow-[0_1px_2px_rgba(0,0,0,0.18)] hover:opacity-90",
+        dangerOutline: "border border-[#f3c5c4] bg-surface text-danger-text hover:bg-danger-subtle",
+        success: "bg-success-strong text-white hover:opacity-90",
+        waiting: "bg-waiting-strong text-white hover:opacity-90",
       },
       size: {
         sm: "h-8 px-3",

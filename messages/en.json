@@ -69,7 +69,16 @@
     "unread": "{count} unread",
     "waitingOnMe": "{count} waiting on you",
     "triageCount": "{count} in triage",
-    "mainNav": "Main navigation"
+    "mainNav": "Main navigation",
+    "dashboard": "Dashboard",
+    "triage": "Triage",
+    "myTasks": "My tasks",
+    "allTasks": "All tasks",
+    "reports": "Reports",
+    "trouble": "Trouble",
+    "create": "Create",
+    "notifications": "Notifications",
+    "searchPlaceholder": "Search tasks, VEN-…"
   },
   "auth": {
     "title": "Sign in",
@@ -685,5 +694,36 @@
     "backToInbox": "Back to Inbox",
     "openAllTasks": "Open All tasks",
     "hint": "Lost? Press ⌘K and search. It works better than guessing URLs."
+  },
+  "trouble": {
+    "bannerTitle": "System problem: {title}",
+    "bannerSince": "Started {age}. ABG has been alerted.",
+    "alertAbg": "Alert ABG",
+    "viewTrouble": "View trouble",
+    "title": "Trouble",
+    "subtitle": "System down or slow. Kept apart from bugs.",
+    "none": "No system problems in the last 60 days.",
+    "ongoing": "Ongoing",
+    "impact": "Impact",
+    "resolution": "Resolution",
+    "state": {
+      "investigating": "Investigating",
+      "identified": "Cause found",
+      "monitoring": "Monitoring",
+      "resolved": "Fixed"
+    }
+  },
+  "statusGroup": {
+    "request": "Request",
+    "processing": "Processing",
+    "stuck": "Stuck",
+    "completed": "Completed",
+    "done": "Done"
+  },
+  "reports": {
+    "title": "Reports",
+    "subtitle": "Where all tasks stand right now",
+    "overall": "Overall progress",
+    "tasks": "{count} tasks"
   }
 }
