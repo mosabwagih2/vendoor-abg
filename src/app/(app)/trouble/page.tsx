@@ -6,6 +6,8 @@ import { formatExact, relative } from "@/lib/format";
 
 export const metadata = { title: "Trouble" };
 
+const daysAgo = (n: number) => new Date(Date.now() - n * 24 * 3600 * 1000);
+
 const STATE_TONE: Record<string, string> = {
   investigating: "bg-danger-subtle text-danger-text",
   identified: "bg-warning-subtle text-warning-text",
@@ -17,7 +19,7 @@ const STATE_TONE: Record<string, string> = {
 export default async function TroublePage() {
   await requireMember();
   const t = await getTranslations("trouble");
-  const since = new Date(Date.now() - 60 * 24 * 3600 * 1000);
+  const since = daysAgo(60);
   const incidents = await db.incident.findMany({ where: { archivedAt: null, startedAt: { gte: since } }, orderBy: { startedAt: "desc" } });
   const open = incidents.filter((i) => i.state !== "resolved");
   return (
