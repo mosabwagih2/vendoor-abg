@@ -22,18 +22,19 @@
   --warning-text: #7a5000;
 
   --status-triage: #8b5cf6;
-  --status-needs-info: #2563eb;
-  --status-planned: #8b8d98;
+  --status-needs-info: #e5484d;
+  --status-planned: #f59e0b;
   --status-in-progress: #f59e0b;
   --status-shipped: #2563eb;
-  --status-reopened: #ef4444;
+  --status-reopened: #f59e0b;
   --status-done: #16a06a;
   --status-closed: #b4b6c0;
 
-  --priority-urgent: #ef4444;
+  --priority-highest: #e5484d;
   --priority-high: #f97316;
   --priority-medium: #f59e0b;
-  --priority-low: #8b8d98;
+  --priority-low: #2563eb;
+  --priority-lowest: #7a8090;
 
   --health-on-track: #16a06a;
   --health-at-risk: #f59e0b;
@@ -102,10 +103,11 @@
   --color-st-reopened: var(--status-reopened);
   --color-st-done: var(--status-done);
   --color-st-closed: var(--status-closed);
-  --color-pr-urgent: var(--priority-urgent);
+  --color-pr-highest: var(--priority-highest);
   --color-pr-high: var(--priority-high);
   --color-pr-medium: var(--priority-medium);
   --color-pr-low: var(--priority-low);
+  --color-pr-lowest: var(--priority-lowest);
   --color-on-track: var(--health-on-track);
   --color-at-risk: var(--health-at-risk);
   --color-off-track: var(--health-off-track);

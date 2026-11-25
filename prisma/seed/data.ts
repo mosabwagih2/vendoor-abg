@@ -27,10 +27,11 @@ export const PROJECTS: Array<{ key: string; name: string; description: string; c
 
 // PRD 4.3 defaults, in working minutes (1 working day = 480).
 export const SLA = [
-  { priority: "urgent", firstResponseMinutes: 60, resolutionMinutes: 480 },
-  { priority: "high", firstResponseMinutes: 240, resolutionMinutes: 3 * 480 },
-  { priority: "medium", firstResponseMinutes: 480, resolutionMinutes: 7 * 480 },
-  { priority: "low", firstResponseMinutes: 2 * 480, resolutionMinutes: null },
+  { priority: "highest", firstResponseMinutes: 60, resolutionMinutes: 240 },
+  { priority: "high", firstResponseMinutes: 120, resolutionMinutes: 480 },
+  { priority: "medium", firstResponseMinutes: 240, resolutionMinutes: 3 * 480 },
+  { priority: "low", firstResponseMinutes: 480, resolutionMinutes: 5 * 480 },
+  { priority: "lowest", firstResponseMinutes: 2 * 480, resolutionMinutes: 10 * 480 },
 ] as const;
 
 // Egypt public holidays. 2026 confirmed by decree where noted in the research; 2027 Islamic dates are estimates.
@@ -76,7 +77,7 @@ export interface BacklogItem {
   firstReported: string; // YYYY-MM-DD
   lastMentioned: string;
   start: Start;
-  priority?: "urgent" | "high" | "medium" | "low";
+  priority?: "highest" | "high" | "medium" | "low" | "lowest";
   accounts?: string[];
   orderCodes?: string[];
   occurrences?: Array<{ date: string; accounts?: string[]; orderCodes?: string[]; note: string }>;
@@ -109,7 +110,7 @@ export const BACKLOG: BacklogItem[] = [
   { project: "BOS", title: "Order marked Delivered but Bosta shows cancelled (tb2147)", type: "bug", firstReported: "2026-10-20", lastMentioned: "2026-10-21", start: "triage", priority: "medium", orderCodes: ["tb2147"] },
   { project: "ORD", title: "Outside exchange orders show as New (Zd8781)", type: "bug", firstReported: "2026-10-31", lastMentioned: "2026-11-01", start: "triage", priority: "medium", orderCodes: ["Zd8781"] },
   { project: "DEP", title: "Deposit orders: edits blocked, deposit cannot be reduced, status stuck in processing (CR M-03)", type: "bug", firstReported: "2026-11-15", lastMentioned: "2026-11-22", start: "triage", priority: "high" },
-  { project: "PRF", title: "Order entry takes 2 to 3 minutes; all pages slow", type: "bug", firstReported: "2026-11-22", lastMentioned: "2026-11-23", start: "triage", priority: "urgent" },
+  { project: "PRF", title: "Order entry takes 2 to 3 minutes; all pages slow", type: "bug", firstReported: "2026-11-22", lastMentioned: "2026-11-23", start: "triage", priority: "highest" },
   { project: "PRF", title: "Search filter slow; show more than 5 filters; best-products page heavy", type: "change", firstReported: "2026-11-18", lastMentioned: "2026-11-18", start: "triage", priority: "medium" },
   { project: "PRF", title: "Dashboard numbers visible without the eye icon for suppliers and staff", type: "change", firstReported: "2026-11-18", lastMentioned: "2026-11-19", start: "needs_info", priority: "medium", needsInfoQuestion: "Should the numbers be visible by default for suppliers and staff, or only for admins? Yara to decide." },
   { project: "SUP", title: "Stock history in supplier account lacks quantity added or removed and time", type: "bug", firstReported: "2026-11-19", lastMentioned: "2026-11-19", start: "triage", priority: "medium" },

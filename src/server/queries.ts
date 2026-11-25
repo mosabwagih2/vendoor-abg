@@ -51,7 +51,7 @@ export interface TaskRow extends Omit<TaskRowRaw, "dueAt" | "createdAt" | "updat
   unverified: boolean;
 }
 
-const PRIORITY_RANK: Record<Priority, number> = { urgent: 0, high: 1, medium: 2, low: 3 };
+const PRIORITY_RANK: Record<Priority, number> = { highest: 0, high: 1, medium: 2, low: 3, lowest: 4 };
 
 /** Add derived fields (PRD 8: waiting_on, is_overdue, sla_state). */
 export async function decorate(rows: TaskRowRaw[]): Promise<TaskRow[]> {

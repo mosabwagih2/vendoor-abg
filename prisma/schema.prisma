@@ -51,10 +51,11 @@ enum TaskStatus {
 }
 
 enum Priority {
-  urgent
+  highest
   high
   medium
   low
+  lowest
 }
 
 enum CloseReason {
@@ -81,8 +82,9 @@ enum ReleaseType {
 }
 
 enum ReleaseState {
-  upcoming
-  released
+  upcoming // Draft
+  released // Live
+  rolled_back
 }
 
 enum Health {
@@ -148,7 +150,7 @@ model Workspace {
 }
 
 model SlaTarget {
-  id                   String   @id @default(uuid())
+  id                   String    @id @default(uuid())
   workspaceId          String
   priority             Priority
   firstResponseMinutes Int // working minutes
@@ -217,22 +219,23 @@ model Member {
   accounts          Account[]
   notificationPrefs NotificationPref[]
 
-  requestedTasks Task[]         @relation("TaskRequester")
-  createdTasks   Task[]         @relation("TaskCreator")
-  assignedTasks  Task[]         @relation("TaskAssignee")
-  verifiedTasks  Task[]         @relation("TaskVerifier")
-  comments       Comment[]
-  notifications  Notification[]
-  followers      Follower[]
-  savedViews     SavedView[]
-  occurrences    Occurrence[]
-  attachments    Attachment[]
-  activity       ActivityEvent[]
-  credentials    AccessCredential[]
-  releases       Release[]
-  reactions      Reaction[]
-  vendoorLeadOf  Project[]      @relation("VendoorLead")
-  abgLeadOf      Project[]      @relation("AbgLead")
+  requestedTasks   Task[]             @relation("TaskRequester")
+  createdTasks     Task[]             @relation("TaskCreator")
+  assignedTasks    Task[]             @relation("TaskAssignee")
+  verifiedTasks    Task[]             @relation("TaskVerifier")
+  comments         Comment[]
+  notifications    Notification[]
+  followers        Follower[]
+  savedViews       SavedView[]
+  occurrences      Occurrence[]
+  attachments      Attachment[]
+  activity         ActivityEvent[]
+  credentials      AccessCredential[]
+  releases         Release[]          @relation("ReleaseCreator")
+  deployedReleases Release[]          @relation("ReleaseDeployer")
+  reactions        Reaction[]
+  vendoorLeadOf    Project[]          @relation("VendoorLead")
+  abgLeadOf        Project[]          @relation("AbgLead")
 
   @@map("member")
 }
@@ -386,45 +389,45 @@ model Task {
   decisionUpdatedAt   DateTime? @db.Timestamptz
   decisionUpdatedById String?
 
-  dueAt                 DateTime? @db.Timestamptz
-  slaClockStartedAt     DateTime  @default(now()) @db.Timestamptz
-  slaFirstResponseDueAt DateTime? @db.Timestamptz
-  slaResolutionDueAt    DateTime? @db.Timestamptz
-  firstResponseAt       DateTime? @db.Timestamptz
-  shippedAt             DateTime? @db.Timestamptz
-  verifyReminderSentAt  DateTime? @db.Timestamptz
-  verifiedAt            DateTime? @db.Timestamptz
+  dueAt                 DateTime?    @db.Timestamptz
+  slaClockStartedAt     DateTime     @default(now()) @db.Timestamptz
+  slaFirstResponseDueAt DateTime?    @db.Timestamptz
+  slaResolutionDueAt    DateTime?    @db.Timestamptz
+  firstResponseAt       DateTime?    @db.Timestamptz
+  shippedAt             DateTime?    @db.Timestamptz
+  verifyReminderSentAt  DateTime?    @db.Timestamptz
+  verifiedAt            DateTime?    @db.Timestamptz
   verifiedById          String?
-  reopenCount           Int       @default(0)
+  reopenCount           Int          @default(0)
   closeReason           CloseReason?
   closeNote             String?
-  closedAt              DateTime? @db.Timestamptz
+  closedAt              DateTime?    @db.Timestamptz
   cancelProposedById    String?
   cancelProposedReason  String?
-  occurrenceCount       Int       @default(0)
-  attachmentCount       Int       @default(0)
-  createdAt             DateTime  @default(now()) @db.Timestamptz
-  updatedAt             DateTime  @updatedAt @db.Timestamptz
-  archivedAt            DateTime? @db.Timestamptz
+  occurrenceCount       Int          @default(0)
+  attachmentCount       Int          @default(0)
+  createdAt             DateTime     @default(now()) @db.Timestamptz
+  updatedAt             DateTime     @updatedAt @db.Timestamptz
+  archivedAt            DateTime?    @db.Timestamptz
 
-  project        Project            @relation(fields: [projectId], references: [id])
-  category       ProjectCategory?   @relation(fields: [categoryId], references: [id])
-  requester      Member             @relation("TaskRequester", fields: [requesterId], references: [id])
-  createdBy      Member             @relation("TaskCreator", fields: [createdById], references: [id])
-  assignee       Member?            @relation("TaskAssignee", fields: [assigneeId], references: [id])
-  verifiedBy     Member?            @relation("TaskVerifier", fields: [verifiedById], references: [id])
-  parent         Task?              @relation("Subtasks", fields: [parentId], references: [id])
-  subtasks       Task[]             @relation("Subtasks")
-  currentRelease Release?           @relation(fields: [currentReleaseId], references: [id])
-  comments       Comment[]
-  occurrences    Occurrence[]
-  attachments    Attachment[]
-  followers      Follower[]
-  statusSpans    TaskStatusSpan[]
-  releaseTasks   ReleaseTask[]
-  relationsFrom  TaskRelation[]     @relation("RelFrom")
-  relationsTo    TaskRelation[]     @relation("RelTo")
-  credentials    AccessCredential[]
+  project             Project              @relation(fields: [projectId], references: [id])
+  category            ProjectCategory?     @relation(fields: [categoryId], references: [id])
+  requester           Member               @relation("TaskRequester", fields: [requesterId], references: [id])
+  createdBy           Member               @relation("TaskCreator", fields: [createdById], references: [id])
+  assignee            Member?              @relation("TaskAssignee", fields: [assigneeId], references: [id])
+  verifiedBy          Member?              @relation("TaskVerifier", fields: [verifiedById], references: [id])
+  parent              Task?                @relation("Subtasks", fields: [parentId], references: [id])
+  subtasks            Task[]               @relation("Subtasks")
+  currentRelease      Release?             @relation(fields: [currentReleaseId], references: [id])
+  comments            Comment[]
+  occurrences         Occurrence[]
+  attachments         Attachment[]
+  followers           Follower[]
+  statusSpans         TaskStatusSpan[]
+  releaseTasks        ReleaseTask[]
+  relationsFrom       TaskRelation[]       @relation("RelFrom")
+  relationsTo         TaskRelation[]       @relation("RelTo")
+  credentials         AccessCredential[]
   descriptionVersions DescriptionVersion[]
 
   @@unique([projectId, number])
@@ -497,38 +500,38 @@ model AccessCredential {
 }
 
 model Occurrence {
-  id               String    @id @default(uuid())
+  id               String       @id @default(uuid())
   taskId           String
   reportedById     String
   accounts         String[]
   orderCodes       String[]
-  happenedAt       DateTime  @db.Timestamptz
+  happenedAt       DateTime     @db.Timestamptz
   note             String?
   mergedFromTaskId String?
-  createdAt        DateTime  @default(now()) @db.Timestamptz
-  updatedAt        DateTime  @updatedAt @db.Timestamptz
-  archivedAt       DateTime? @db.Timestamptz
-  task             Task      @relation(fields: [taskId], references: [id])
-  reportedBy       Member    @relation(fields: [reportedById], references: [id])
+  createdAt        DateTime     @default(now()) @db.Timestamptz
+  updatedAt        DateTime     @updatedAt @db.Timestamptz
+  archivedAt       DateTime?    @db.Timestamptz
+  task             Task         @relation(fields: [taskId], references: [id])
+  reportedBy       Member       @relation(fields: [reportedById], references: [id])
   attachments      Attachment[]
 
   @@index([taskId, happenedAt])
 }
 
 model Comment {
-  id         String      @id @default(uuid())
-  taskId     String
-  authorId   String
-  kind       CommentKind @default(comment)
-  body       String
-  isInternal Boolean     @default(false)
-  editedAt   DateTime?   @db.Timestamptz
-  createdAt  DateTime    @default(now()) @db.Timestamptz
-  updatedAt  DateTime    @updatedAt @db.Timestamptz
-  archivedAt DateTime?   @db.Timestamptz
-  task       Task        @relation(fields: [taskId], references: [id])
-  author     Member      @relation(fields: [authorId], references: [id])
-  reactions  Reaction[]
+  id          String       @id @default(uuid())
+  taskId      String
+  authorId    String
+  kind        CommentKind  @default(comment)
+  body        String
+  isInternal  Boolean      @default(false)
+  editedAt    DateTime?    @db.Timestamptz
+  createdAt   DateTime     @default(now()) @db.Timestamptz
+  updatedAt   DateTime     @updatedAt @db.Timestamptz
+  archivedAt  DateTime?    @db.Timestamptz
+  task        Task         @relation(fields: [taskId], references: [id])
+  author      Member       @relation(fields: [authorId], references: [id])
+  reactions   Reaction[]
   attachments Attachment[]
 
   @@index([taskId, createdAt])
@@ -593,20 +596,25 @@ model TaskRelation {
 // ───────────────────────────── releases ─────────────────────────────
 
 model Release {
-  id          String       @id @default(uuid())
-  number      String       @unique
-  state       ReleaseState
-  type        ReleaseType
-  targetDate  DateTime?    @db.Timestamptz
-  releasedAt  DateTime?    @db.Timestamptz
-  notes       String       @default("")
-  createdById String
-  createdAt   DateTime     @default(now()) @db.Timestamptz
-  updatedAt   DateTime     @updatedAt @db.Timestamptz
-  archivedAt  DateTime?    @db.Timestamptz
-  createdBy   Member       @relation(fields: [createdById], references: [id])
-  tasks       ReleaseTask[]
-  currentFor  Task[]
+  id             String        @id @default(uuid())
+  number         String        @unique
+  state          ReleaseState
+  type           ReleaseType
+  targetDate     DateTime?     @db.Timestamptz
+  releasedAt     DateTime?     @db.Timestamptz
+  notes          String        @default("")
+  deployedById   String?
+  deployNote     String?
+  rolledBackAt   DateTime?     @db.Timestamptz
+  rollbackReason String?
+  createdById    String
+  createdAt      DateTime      @default(now()) @db.Timestamptz
+  updatedAt      DateTime      @updatedAt @db.Timestamptz
+  archivedAt     DateTime?     @db.Timestamptz
+  createdBy      Member        @relation("ReleaseCreator", fields: [createdById], references: [id])
+  deployedBy     Member?       @relation("ReleaseDeployer", fields: [deployedById], references: [id])
+  tasks          ReleaseTask[]
+  currentFor     Task[]
 }
 
 model ReleaseTask {
@@ -622,22 +630,24 @@ model ReleaseTask {
 // ───────────────────────────── phase 2 tables (UI later) ─────────────────────────────
 
 model Incident {
-  id                 String        @id @default(uuid())
-  number             Int           @unique
+  id                 String                  @id @default(uuid())
+  number             Int                     @unique
   title              String
   scope              String
   state              IncidentState
-  startedAt          DateTime      @db.Timestamptz
-  resolvedAt         DateTime?     @db.Timestamptz
+  startedAt          DateTime                @db.Timestamptz
+  resolvedAt         DateTime?               @db.Timestamptz
   impact             String?
   rootCause          String?
+  summary            String?
+  resolution         String?
   followUpTaskId     String?
   followUpNoneReason String?
   openedById         String
-  closedAt           DateTime?     @db.Timestamptz
-  createdAt          DateTime      @default(now()) @db.Timestamptz
-  updatedAt          DateTime      @updatedAt @db.Timestamptz
-  archivedAt         DateTime?     @db.Timestamptz
+  closedAt           DateTime?               @db.Timestamptz
+  createdAt          DateTime                @default(now()) @db.Timestamptz
+  updatedAt          DateTime                @updatedAt @db.Timestamptz
+  archivedAt         DateTime?               @db.Timestamptz
   timeline           IncidentTimelineEntry[]
   attachments        Attachment[]
 }
@@ -648,6 +658,7 @@ model IncidentTimelineEntry {
   authorId   String
   state      IncidentState?
   body       String
+  kind       String         @default("update") // reported | alert_sent | acknowledged | status | update | silence | resolved
   at         DateTime       @default(now()) @db.Timestamptz
   incident   Incident       @relation(fields: [incidentId], references: [id])
 }
@@ -668,19 +679,19 @@ model ProjectUpdate {
 // ───────────────────────────── activity, notifications, views ─────────────────────────────
 
 model ActivityEvent {
-  id          String   @id @default(uuid())
-  actorId     String?
-  subjectType String
-  subjectId   String
-  taskId      String?
-  verb        String
-  field       String?
-  fromValue   Json?
-  toValue     Json?
-  isInternal  Boolean  @default(false)
-  meta        Json?
-  at          DateTime @default(now()) @db.Timestamptz
-  actor       Member?  @relation(fields: [actorId], references: [id])
+  id            String         @id @default(uuid())
+  actorId       String?
+  subjectType   String
+  subjectId     String
+  taskId        String?
+  verb          String
+  field         String?
+  fromValue     Json?
+  toValue       Json?
+  isInternal    Boolean        @default(false)
+  meta          Json?
+  at            DateTime       @default(now()) @db.Timestamptz
+  actor         Member?        @relation(fields: [actorId], references: [id])
   notifications Notification[]
 
   @@index([taskId, at])

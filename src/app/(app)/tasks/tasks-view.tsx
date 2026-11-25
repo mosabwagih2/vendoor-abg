@@ -220,7 +220,7 @@ function useGroupLabel(by: TaskDisplay["group"]) {
   const { projects } = useApp();
   return (k: string) => {
     if (by === "status") return t(`status.${k}` as "status.triage");
-    if (by === "priority") return k === "none" ? t("priority.none") : t(`priority.${k}` as "priority.urgent");
+    if (by === "priority") return k === "none" ? t("priority.none") : t(`priority.${k}` as "priority.highest");
     if (by === "waiting") return k === "nobody" ? t("waiting.nobody") : t("waiting.label", { side: t(`waiting.${k}` as "waiting.abg") });
     if (by === "project") return projects.find((p) => p.key === k)?.name ?? k;
     if (by === "assignee") return k || t("common.unassigned");

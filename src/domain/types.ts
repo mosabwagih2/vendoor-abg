@@ -15,7 +15,7 @@ export const TASK_STATUSES = [
 ] as const;
 export type TaskStatus = (typeof TASK_STATUSES)[number];
 
-export const PRIORITIES = ["urgent", "high", "medium", "low"] as const;
+export const PRIORITIES = ["highest", "high", "medium", "low", "lowest"] as const;
 export type Priority = (typeof PRIORITIES)[number];
 
 export const TASK_TYPES = ["bug", "change", "feature", "question", "ops"] as const;

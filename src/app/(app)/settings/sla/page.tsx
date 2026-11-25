@@ -12,7 +12,7 @@ export default async function SlaPage() {
       workingDays={ws.workingDays}
       startMin={ws.workDayStartMin}
       endMin={ws.workDayEndMin}
-      targets={(["urgent", "high", "medium", "low"] as const).map((p) => {
+      targets={(["highest", "high", "medium", "low", "lowest"] as const).map((p) => {
         const x = ws.slaTargets.find((s) => s.priority === p)!;
         return { priority: p, firstResponseMinutes: x.firstResponseMinutes, resolutionMinutes: x.resolutionMinutes };
       })}

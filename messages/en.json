@@ -88,20 +88,21 @@
     "footer": "Vendoor × ABG work tracker"
   },
   "status": {
-    "triage": "Triage",
-    "needs_info": "Needs info",
-    "planned": "Planned",
-    "in_progress": "In progress",
-    "shipped": "Shipped",
-    "reopened": "Reopened",
+    "triage": "Request",
+    "needs_info": "Stuck",
+    "planned": "Processing",
+    "in_progress": "Processing",
+    "shipped": "Completed",
+    "reopened": "Processing",
     "done": "Done",
     "closed": "Closed"
   },
   "priority": {
-    "urgent": "Urgent",
+    "highest": "Highest",
     "high": "High",
     "medium": "Medium",
     "low": "Low",
+    "lowest": "Lowest",
     "none": "No priority",
     "suggested": "Suggested: {priority}"
   },
@@ -284,7 +285,7 @@
       "waiting_vendoor": "Waiting on Vendoor",
       "waiting_abg": "Waiting on ABG",
       "overdue": "Overdue",
-      "urgent_high": "Urgent and High",
+      "highest_high": "Highest and High",
       "bugs": "Bugs",
       "unverified": "Shipped, not verified",
       "done_week": "Done this week"

@@ -115,7 +115,7 @@ export const DEFAULT_VIEWS: Array<{ id: string; query: string }> = [
   { id: "waiting_vendoor", query: "waiting=vendoor" },
   { id: "waiting_abg", query: "waiting=abg" },
   { id: "overdue", query: "due=overdue" },
-  { id: "urgent_high", query: "priority=urgent,high" },
+  { id: "highest_high", query: "priority=highest,high" },
   { id: "bugs", query: "type=bug" },
   { id: "unverified", query: "status=shipped&group=none&order=updated" },
   { id: "done_week", query: "status=done&closed=1&created=&order=updated" },
