@@ -8,11 +8,10 @@ import { cn } from "@/lib/cn";
 import { Menu, MenuContent, MenuItem, MenuLabel, MenuSeparator, MenuTrigger } from "@/components/ui/menu";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { authClient } from "@/lib/auth-client";
+import { PROJECT_COLORS } from "@/lib/project-colors";
 import type { CurrentMember } from "@/server/session";
 import type { ProjectLite } from "./app-context";
 
-/** Colours for the project dots in the sidebar (Figma: Bosta blue, Shopify green, EasyOrders amber, …). */
-export const PROJECT_COLORS = ["#2563eb", "#16a06a", "#f59e0b", "#8b5cf6", "#ec4899", "#7a8090"];
 
 /** Keys handled in app-shell.tsx. Keep this list in step with that file. */
 const SHORTCUTS = [

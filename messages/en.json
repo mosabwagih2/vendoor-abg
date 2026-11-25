@@ -662,7 +662,28 @@
     "health": "Health",
     "on_track": "On track",
     "at_risk": "At risk",
-    "off_track": "Off track"
+    "off_track": "Off track",
+    "filters": "Filter projects",
+    "filterAll": "All",
+    "filterAtRisk": "At risk",
+    "filterMine": "Mine",
+    "filterArchived": "Archived",
+    "sortDeadline": "Sort: Next due",
+    "kpiOpen": "Open tasks",
+    "kpiDueWeek": "Due this week",
+    "kpiLate": "Late",
+    "kpiDoneMonth": "Done this month",
+    "none": "No projects here.",
+    "openDone": "{open} open · {done} done",
+    "col": {
+      "project": "Project",
+      "health": "Health",
+      "progress": "Progress",
+      "byStatus": "Tasks by status",
+      "owner": "Owner",
+      "nextDue": "Next due",
+      "tags": "Tags"
+    }
   },
   "settings": {
     "title": "Settings",
