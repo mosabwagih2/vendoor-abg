@@ -11,10 +11,11 @@ import { getWorkspaceConfig } from "../src/server/calendar";
 import { addWorkingMinutes } from "../src/domain/sla";
 import { recordEvent } from "../src/server/activity";
 import { notify } from "../src/server/notify";
+import { autoSendWeeklyReport } from "../src/server/weekly-send";
 
 /**
  * Background worker: sends emails, makes attachments playable everywhere (ffmpeg), and sends the
- * "Shipped, not verified for 3 working days" reminder. Run with `pnpm worker` (started by `pnpm dev`).
+ * "Shipped, not verified for 3 working days" reminder, and the weekly report on Thursday evening. Run with `pnpm worker` (started by `pnpm dev`).
  */
 const run = promisify(execFile);
 const POLL_MS = 2000;
@@ -109,6 +110,8 @@ async function loop() {
       if (Date.now() - lastReminderScan > 10 * 60_000) {
         lastReminderScan = Date.now();
         await verifyReminders();
+        const sent = await autoSendWeeklyReport();
+        if (sent) console.log(`[worker] weekly report sent for week starting ${sent}`);
       }
     } catch (e) {
       console.error("[worker]", e);

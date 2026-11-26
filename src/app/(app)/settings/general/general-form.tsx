@@ -10,7 +10,7 @@ import { can } from "@/domain/policy";
 import { saveGeneralAction } from "@/server/actions/settings";
 
 /** Figma 5.8. Language and timezone are fixed for now, so they are shown but not editable. */
-export function GeneralForm(props: { name: string; timezone: string; verifyDays: number; unverifiedDays: number }) {
+export function GeneralForm(props: { name: string; timezone: string; verifyDays: number; unverifiedDays: number; weeklyAuto: boolean; sendTime: string }) {
   const t = useTranslations("settings.general");
   const tc = useTranslations("common");
   const { me } = useApp();
@@ -18,13 +18,14 @@ export function GeneralForm(props: { name: string; timezone: string; verifyDays:
   const [name, setName] = useState(props.name);
   const [verify, setVerify] = useState(props.verifyDays);
   const [unverified, setUnverified] = useState(props.unverifiedDays);
+  const [auto, setAuto] = useState(props.weeklyAuto);
   const [busy, setBusy] = useState(false);
   return (
     <form
       onSubmit={async (e) => {
         e.preventDefault();
         setBusy(true);
-        const r = await saveGeneralAction({ name, verifyReminderWorkingDays: verify, unverifiedWorkingDays: unverified });
+        const r = await saveGeneralAction({ name, verifyReminderWorkingDays: verify, unverifiedWorkingDays: unverified, weeklyReportAuto: auto });
         setBusy(false);
         r.ok ? toast.success(tc("saved")) : toast.error(tc("error"));
       }}
@@ -47,6 +48,14 @@ export function GeneralForm(props: { name: string; timezone: string; verifyDays:
           </SettingsRow>
           <SettingsRow label={t("unverified")} hint={t("unverifiedHint")}>
             <Input type="number" min={1} max={60} value={unverified} onChange={(e) => setUnverified(Number(e.target.value))} aria-label={t("unverified")} />
+          </SettingsRow>
+        </SettingsCard>
+        <SettingsCard title={t("reports")}>
+          <SettingsRow label={t("weeklyAuto")} hint={t("weeklyAutoHint", { time: props.sendTime })}>
+            <label className="flex items-center gap-2 text-ui">
+              <input type="checkbox" role="switch" checked={auto} onChange={(e) => setAuto(e.target.checked)} className="h-4 w-4 accent-[#2563eb]" />
+              {auto ? t("on") : t("off")}
+            </label>
           </SettingsRow>
         </SettingsCard>
         {editable && (

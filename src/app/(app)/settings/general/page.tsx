@@ -2,6 +2,7 @@ import { getTranslations } from "next-intl/server";
 import { requireMember } from "@/server/session";
 import { db } from "@/server/db";
 import { SettingsHeader } from "@/components/layout/settings-header";
+import { clockLabel } from "@/domain/weekly-schedule";
 import { GeneralForm } from "./general-form";
 
 export const metadata = { title: "General settings" };
@@ -13,7 +14,7 @@ export default async function GeneralPage() {
   return (
     <>
       <SettingsHeader title={t("title")} hint={t("hint")} />
-      <GeneralForm name={ws.name} timezone={ws.timezone} verifyDays={ws.verifyReminderWorkingDays} unverifiedDays={ws.unverifiedWorkingDays} />
+      <GeneralForm name={ws.name} timezone={ws.timezone} verifyDays={ws.verifyReminderWorkingDays} unverifiedDays={ws.unverifiedWorkingDays} weeklyAuto={ws.weeklyReportAuto} sendTime={clockLabel(ws.workDayEndMin)} />
     </>
   );
 }

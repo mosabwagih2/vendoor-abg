@@ -138,6 +138,8 @@ model Workspace {
   workDayEndMin             Int      @default(1020) // 17:00
   verifyReminderWorkingDays Int      @default(3)
   unverifiedWorkingDays     Int      @default(7)
+  weeklyReportAuto          Boolean  @default(true)
+  weeklyReportSentWeek      String? // start key of the last work week that was sent automatically
   slaAtRiskPercentLeft      Int      @default(25)
   createdAt                 DateTime @default(now()) @db.Timestamptz
   updatedAt                 DateTime @updatedAt @db.Timestamptz

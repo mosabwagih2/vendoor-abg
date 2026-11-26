@@ -2,6 +2,8 @@ import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight, Minus } from "lucide-react";
 import { requireMember } from "@/server/session";
+import { db } from "@/server/db";
+import { clockLabel } from "@/domain/weekly-schedule";
 import { SendReportDialog } from "./send-report-dialog";
 import { weekRangeLabel, weekTitle } from "@/domain/weekly-text";
 import { PageHeader } from "@/components/layout/page-header";
@@ -24,6 +26,7 @@ export default async function WeeklyReportPage({ searchParams }: { searchParams:
   const t = await getTranslations("weekly");
   const { week } = await searchParams;
   const cfg = await getWorkspaceConfig();
+  const auto = (await db.workspace.findFirstOrThrow({ select: { weeklyReportAuto: true } })).weeklyReportAuto;
   const today = localDateKey(new Date(), cfg.calendar.tz);
   const start = weekStart(/^\d{4}-\d{2}-\d{2}$/.test(week ?? "") ? week! : today);
   const r = await weeklyReport(start);
@@ -52,7 +55,7 @@ export default async function WeeklyReportPage({ searchParams }: { searchParams:
             <ChevronRight size={16} aria-hidden />
           </Link>
         </nav>
-        <SendReportDialog week={start} title={weekTitle(start)} range={weekRangeLabel(r.week.start, r.week.end)} />
+        <SendReportDialog week={start} title={weekTitle(start)} range={weekRangeLabel(r.week.start, r.week.end)} autoTime={auto ? clockLabel(cfg.calendar.endMin) : null} />
       </PageHeader>
       <div className="mx-auto max-w-5xl space-y-4 p-4 md:p-6">
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">

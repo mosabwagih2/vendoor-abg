@@ -11,10 +11,10 @@ import * as inc from "../services/incidents";
 import { loadDrawer } from "../notifications";
 import { can } from "@/domain/policy";
 import { weekStart } from "@/domain/week";
-import { weeklyText, weekTitle } from "@/domain/weekly-text";
+import { weeklyText } from "@/domain/weekly-text";
 import { weeklySummary } from "../weekly-report";
 import { createShareToken } from "../report-share";
-import { sendEmail } from "../email";
+import { sendWeeklyReportEmails } from "../weekly-send";
 import { statusGroup } from "@/domain/status-display";
 import type { TaskStatus } from "@/domain/types";
 
@@ -131,14 +131,7 @@ export async function weeklyEmailAction(week: string) {
   return runAction(async () => {
     const me = await requireMember();
     if (me.side !== "abg" && !["owner", "admin"].includes(me.role)) throw new AppError("forbidden");
-    const start = weekStart(weekKey.parse(week));
-    const [text, leads] = await Promise.all([
-      weeklyText(await weeklySummary(start)),
-      db.member.findMany({ where: { status: "active", role: "abg_lead" }, select: { email: true } }),
-    ]);
-    const url = `${process.env.APP_URL ?? "http://localhost:3000"}/shared/weekly/${createShareToken(start)}`;
-    for (const l of leads) await sendEmail({ to: l.email, subject: `Weekly report · ${weekTitle(start)}`, line: text, actionLabel: "Open the full report", actionUrl: url });
-    return { count: leads.length };
+    return { count: await sendWeeklyReportEmails(weekStart(weekKey.parse(week))) };
   });
 }
 

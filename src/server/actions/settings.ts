@@ -154,6 +154,7 @@ const generalSchema = z.object({
   name: z.string().trim().min(1).max(80),
   verifyReminderWorkingDays: z.number().int().min(1).max(30),
   unverifiedWorkingDays: z.number().int().min(1).max(60),
+  weeklyReportAuto: z.boolean(),
 });
 
 /** General settings: workspace name and the verify window. Only people who manage the service clock can change them. */

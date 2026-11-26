@@ -17,7 +17,7 @@ const WAYS: Array<{ id: Way; icon: typeof Copy }> = [
 ];
 
 /** Figma 8.2: one dialog, four ways to send the same report. The text is built from task activity, so nothing is typed here. */
-export function SendReportDialog({ week, title, range }: { week: string; title: string; range: string }) {
+export function SendReportDialog({ week, title, range, autoTime }: { week: string; title: string; range: string; autoTime: string | null }) {
   const t = useTranslations("weekly.send");
   const tc = useTranslations("common");
   const [open, setOpen] = useState(false);
@@ -95,7 +95,7 @@ export function SendReportDialog({ week, title, range }: { week: string; title: 
                 </div>
                 <p className="mt-3 flex items-start gap-2 rounded-lg bg-subtle p-3 text-meta text-fg-secondary">
                   <Clock size={14} className="mt-0.5 shrink-0" aria-hidden />
-                  {t("auto")}
+                  {autoTime ? t("autoOn", { time: autoTime }) : t("autoOff")}
                 </p>
               </div>
             </div>

@@ -822,7 +822,12 @@
       "verifyWindowHint": "Remind Vendoor to test after Completed",
       "unverified": "Unverified after (working days)",
       "unverifiedHint": "Flag Completed tasks nobody has tested",
-      "save": "Save changes"
+      "save": "Save changes",
+      "reports": "Reports",
+      "weeklyAuto": "Send the weekly report automatically",
+      "weeklyAutoHint": "Every Thursday at {time} to the ABG leads, with a link to the full report",
+      "on": "On",
+      "off": "Off"
     },
     "workflow": {
       "title": "Workflow",
@@ -1107,7 +1112,6 @@
         "pdf": "One page, same layout as the screen",
         "link": "Anyone with the link can open it for 7 days"
       },
-      "auto": "Reports are not sent automatically. Pick a way when you are ready.",
       "note": "The report is built from task activity, nothing to type",
       "copyText": "Copy text",
       "sendEmail": "Send email",
@@ -1115,7 +1119,9 @@
       "copyLink": "Copy link",
       "copied": "Copied. Paste it in the group.",
       "linkCopied": "Link copied. It works for 7 days.",
-      "emailSent": "{count, plural, one {Sent to # person} other {Sent to # people}}"
+      "emailSent": "{count, plural, one {Sent to # person} other {Sent to # people}}",
+      "autoOn": "Also sent automatically every Thursday at {time} to the ABG leads. Change it in Settings.",
+      "autoOff": "Automatic sending is off. Turn it on in Settings > General."
     },
     "shared": {
       "cameBack": "Came back broken",
