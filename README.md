@@ -46,6 +46,10 @@ set `STORAGE_DRIVER=s3` and the `S3_*` variables for an S3/R2 bucket.
 
 `pnpm db:reset` wipes the database and seeds it again.
 
+## Background worker
+
+`pnpm dev` also starts `scripts/worker.ts`. It sends emails, converts media, sends the verify reminder, and sends the weekly report by email to the ABG leads every Thursday when the work day ends (switch it off in Settings > General). On a server, run `pnpm worker` as its own process.
+
 ## Checks
 
 ```bash
