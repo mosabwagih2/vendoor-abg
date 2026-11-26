@@ -31,11 +31,13 @@ import { TaskActivity } from "./task-activity";
 import { Occurrences, Relations, Section, Subtasks } from "./task-sections";
 import { availableActions, useWorkflow, type WorkflowTask } from "./workflow-actions";
 
-export function TaskView({ task, compact }: { task: TaskDetail; compact?: boolean }) {
+/** `compact` is the narrow side panel. `lean` (Inbox) also hides the long sections and links to the full task instead (Figma 1.2). */
+export function TaskView({ task, compact, lean }: { task: TaskDetail; compact?: boolean; lean?: boolean }) {
   const t = useTranslations("task");
   const ta = useTranslations("actions");
   const tcr = useTranslations("closeReason");
   const tc = useTranslations("common");
+  const tcm = tc;
   const { me } = useApp();
   const { run } = useWorkflow();
   const ctx = { status: task.status, requesterId: task.requesterId, assigneeId: task.assigneeId };
@@ -71,6 +73,11 @@ export function TaskView({ task, compact }: { task: TaskDetail; compact?: boolea
           </>
         )}
         <Mono className="text-fg">{task.key}</Mono>
+        {lean && (
+          <Link href={`/tasks/${task.key}`} className="ms-auto font-medium text-accent hover:underline">
+            {tcm("openFull")}
+          </Link>
+        )}
       </nav>
 
       <div className={cn("grid gap-6", !compact && "lg:grid-cols-[minmax(0,1fr)_300px]")}>
@@ -142,7 +149,7 @@ export function TaskView({ task, compact }: { task: TaskDetail; compact?: boolea
 
           <Description task={task} canEdit={canEdit} />
 
-          {(task.currentBehaviour || task.expectedBehaviour || task.whyItMatters || task.howOften) && (
+          {!lean && (task.currentBehaviour || task.expectedBehaviour || task.whyItMatters || task.howOften) && (
             <Section id="det-title" title={t("details")}>
               <dl className="space-y-3">
                 {task.currentBehaviour && <Detail label={t("currentBehaviour")} value={task.currentBehaviour} />}
@@ -153,19 +160,23 @@ export function TaskView({ task, compact }: { task: TaskDetail; compact?: boolea
             </Section>
           )}
 
-          {task.attachments.length > 0 && (
+          {!lean && task.attachments.length > 0 && (
             <Section id="att-title" title={t("attachments")} count={task.attachments.length}>
               <AttachmentsView items={task.attachments} />
             </Section>
           )}
 
-          <CredentialsCard taskId={task.id} items={task.credentials} />
+          {!lean && (
+            <>
+              <CredentialsCard taskId={task.id} items={task.credentials} />
 
-          {!task.parent && <Subtasks task={task} canEdit={can(me, "manage_subtasks", ctx)} />}
-          <Occurrences task={task} />
-          <Relations task={task} canEdit={can(me, "manage_relations", ctx)} />
+              {!task.parent && <Subtasks task={task} canEdit={can(me, "manage_subtasks", ctx)} />}
+              <Occurrences task={task} />
+              <Relations task={task} canEdit={can(me, "manage_relations", ctx)} />
 
-          {compact && <Properties task={task} />}
+              {compact && <Properties task={task} />}
+            </>
+          )}
 
           <TaskActivity task={task} wf={wf} />
         </div>

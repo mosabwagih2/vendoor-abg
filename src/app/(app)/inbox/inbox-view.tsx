@@ -37,7 +37,7 @@ export function InboxView({ tab, counts, rows, selectedKey, explicit, detail, vi
             {t("back")}
           </Link>
         )}
-        {detail ? <TaskView task={detail} compact /> : <EmptyState title={t("selectTask")} />}
+        {detail ? <TaskView task={detail} compact lean /> : <EmptyState title={t("selectTask")} />}
       </div>
     </div>
   );

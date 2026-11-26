@@ -1,48 +1,88 @@
 import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
+import { Check, Clock, KeyRound, Lock } from "lucide-react";
 import { SignInForm } from "./sign-in-form";
 import { getCurrentMember } from "@/server/session";
 
 export const metadata = { title: "Sign in" };
 
-const STEPS = ["Triage", "Planned", "In progress", "Shipped", "Done"];
-
+/** Figma 1.1: form on the left, a small preview of the product on the right. */
 export default async function SignInPage({ searchParams }: { searchParams: Promise<{ next?: string }> }) {
   const sp = await searchParams;
   if (await getCurrentMember()) redirect(sp.next?.startsWith("/") ? sp.next : "/home");
   const t = await getTranslations("auth");
+  const ts = await getTranslations("statusGroup");
   const devPassword = process.env.NODE_ENV !== "production" ? (process.env.SEED_PASSWORD ?? "Vendoor!2026") : null;
+  const steps = [
+    { label: ts("request"), tone: "#111318" },
+    { label: ts("processing"), tone: "#111318" },
+    { label: ts("completed"), tone: "#2563eb", current: true },
+    { label: ts("done"), tone: "#d9deea" },
+  ];
+  const points = [
+    { icon: Check, text: t("point1") },
+    { icon: Clock, text: t("point2") },
+    { icon: KeyRound, text: t("point3") },
+  ];
   return (
-    <main className="grid min-h-dvh bg-canvas lg:grid-cols-[1.05fr_1fr]">
-      <section className="relative hidden flex-col justify-between overflow-hidden bg-primary p-12 text-primary-fg lg:flex">
+    <main className="grid min-h-dvh lg:grid-cols-2">
+      <section className="flex flex-col bg-surface px-6 py-6 sm:px-10">
         <div className="flex items-center gap-2.5">
-          <span className="flex h-8 w-8 items-center justify-center rounded-[9px] bg-white font-mono text-[11px] font-semibold text-primary">V×A</span>
+          <span className="grid h-8 w-8 place-items-center rounded-[9px] bg-primary font-mono text-[11px] font-semibold text-primary-fg">V×A</span>
           <span className="text-[15px] font-semibold">Vendoor × ABG</span>
         </div>
-        <div>
-          <h2 className="font-serif text-[64px] leading-[0.98] tracking-[-0.02em]">{t("headline")}</h2>
-          <p className="mt-5 max-w-md text-[15px] leading-relaxed text-white/85">{t("pitch")}</p>
-          <ol className="mt-10 grid max-w-lg grid-cols-5 gap-2" aria-hidden>
-            {STEPS.map((s, i) => (
-              <li key={s}>
-                <span className="block h-1.5 rounded-full" style={{ background: i < 3 ? "#fff" : i === 3 ? "#60a5fa" : "rgba(255,255,255,0.18)" }} />
-                <span className={`mt-2 block text-[11.5px] ${i === 3 ? "font-semibold text-white" : "text-white/85"}`}>{s}</span>
+        <div className="mx-auto flex w-full max-w-[380px] flex-1 flex-col justify-center py-10">
+          <h1 className="text-[28px] font-bold tracking-[-0.02em]">{t("welcome")}</h1>
+          <p className="mb-6 mt-2 text-body text-fg-secondary">{t("welcomeHint")}</p>
+          <SignInForm next={sp.next?.startsWith("/") ? sp.next : "/home"} />
+          <p className="mt-5 flex items-start gap-2 rounded-lg bg-canvas px-3 py-2.5 text-meta text-fg-secondary">
+            <Lock size={13} className="mt-0.5 shrink-0" aria-hidden />
+            {t("inviteOnly")}
+          </p>
+          {devPassword && <p className="mt-3 text-center text-meta text-fg-secondary">{t("devHint", { password: devPassword })}</p>}
+        </div>
+      </section>
+
+      <section className="hidden flex-col justify-center bg-[#e8f0fe] px-14 lg:flex">
+        <div className="max-w-[460px]">
+          <h2 className="text-[40px] font-bold leading-[1.1] tracking-[-0.03em]">{t("headline")}</h2>
+          <p className="mt-4 text-[16px] leading-6 text-fg-secondary">{t("pitch")}</p>
+          <div aria-hidden className="mt-8 rounded-card border border-[#c9d8fb] bg-surface p-4 shadow-[0_4px_18px_rgba(37,99,235,0.10)]">
+            <div className="flex items-center gap-2">
+              <span className="font-mono text-meta text-fg-secondary">VEN-30</span>
+              <span className="inline-flex h-[22px] items-center gap-1.5 rounded-md bg-[#eaf1ff] px-2 text-[12px] font-medium text-[#1d4ed8]">
+                <span className="h-[7px] w-[7px] rounded-full bg-[#2563eb]" />
+                {ts("completed")}
+              </span>
+              <span className="inline-flex h-[22px] items-center rounded-full bg-accent px-2.5 text-[12px] font-semibold text-white">{t("yourTurn")}</span>
+            </div>
+            <div className="mt-2 text-[15px] font-semibold">{t("previewTitle")}</div>
+            <div className="mt-3 grid grid-cols-4 gap-1.5">
+              {steps.map((s) => (
+                <div key={s.label}>
+                  <span className="block h-1 rounded-full" style={{ background: s.tone }} />
+                  <span className={`mt-1 block text-[11px] ${s.current ? "font-semibold text-[#2563eb]" : "text-fg-secondary"}`}>{s.label}</span>
+                </div>
+              ))}
+            </div>
+            <div className="mt-3 flex gap-2">
+              <span className="inline-flex h-8 items-center gap-1.5 rounded-control bg-success-strong px-3 text-ui font-medium text-white">
+                <Check size={14} />
+                {t("works")}
+              </span>
+              <span className="inline-flex h-8 items-center rounded-control border border-[#f3c5c4] px-3 text-ui font-medium text-danger-text">{t("stillBroken")}</span>
+            </div>
+          </div>
+          <ul className="mt-6 space-y-3">
+            {points.map(({ icon: Icon, text }) => (
+              <li key={text} className="flex items-center gap-3 text-ui">
+                <span className="grid h-6 w-6 place-items-center rounded-full bg-surface text-accent">
+                  <Icon size={13} aria-hidden />
+                </span>
+                {text}
               </li>
             ))}
-          </ol>
-        </div>
-        <p className="text-[12px] text-white/75">{t("footer")}</p>
-        <div aria-hidden className="pointer-events-none absolute -end-24 -top-24 h-72 w-72 rounded-full bg-[#2563eb]/30 blur-3xl" />
-      </section>
-      <section className="flex items-center justify-center px-5 py-10">
-        <div className="w-full max-w-[380px]">
-          <div className="mb-7 lg:hidden">
-            <span className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-primary font-mono text-[11px] font-semibold text-primary-fg">V×A</span>
-          </div>
-          <h1 className="font-serif text-[40px] leading-none tracking-[-0.02em]">{t("title")}</h1>
-          <p className="mb-6 mt-2 text-body text-fg-secondary">{t("subtitle")}</p>
-          <SignInForm next={sp.next?.startsWith("/") ? sp.next : "/home"} />
-          {devPassword && <p className="mt-4 text-center text-meta text-fg-secondary">{t("devHint", { password: devPassword })}</p>}
+          </ul>
         </div>
       </section>
     </main>
