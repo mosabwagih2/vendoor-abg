@@ -151,8 +151,11 @@ test.describe("Phase 1 main flows", () => {
     const lead = await signIn(browser, ZA8LOUL);
     await lead.goto("/tasks/BOS-2"); // seeded task that is in Processing
     await lead.getByLabel("Status", { exact: true }).selectOption({ label: name });
-    await lead.reload();
-    await expect(lead.getByLabel("Status", { exact: true })).toHaveValue(/.+/);
+    // The change is saved by a server action; reload until it shows (it is not instant).
+    await expect(async () => {
+      await lead.reload();
+      await expect(lead.getByLabel("Status", { exact: true })).toHaveValue(/.+/, { timeout: 1500 });
+    }).toPass({ timeout: 15_000 });
 
     await admin.reload();
     await admin.getByRole("button", { name: `Edit ${name}` }).click();
