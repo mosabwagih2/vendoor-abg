@@ -20,6 +20,8 @@ export interface TaskRowData {
   type: string;
   dueAt: string | null;
   updatedAt: string;
+  statusChangedAt: string;
+  customStatus?: { name: string; color: string } | null;
   createdAt: string;
   occurrenceCount: number;
   attachmentCount: number;

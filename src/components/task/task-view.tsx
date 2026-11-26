@@ -22,6 +22,7 @@ import type { TaskDetail } from "@/server/task-detail";
 import { setFollowAction, updateFieldAction } from "@/server/actions/tasks";
 import { setTaskCustomStatusAction } from "@/server/actions/custom-status";
 import { statusGroup } from "@/domain/status-display";
+import { MoveToSheet } from "./move-to-sheet";
 import { ActionButtons } from "./action-buttons";
 import { JourneyStepper } from "./journey-bar";
 import { ReleaseLine } from "./release-line";
@@ -125,6 +126,11 @@ export function TaskView({ task, compact, lean }: { task: TaskDetail; compact?: 
             {task.status !== "closed" && (
               <div className="mt-4">
                 <JourneyStepper status={task.status} />
+              </div>
+            )}
+            {!lean && task.status !== "closed" && (
+              <div className="mt-3">
+                <MoveToSheet task={wf} custom={task.customStatus} />
               </div>
             )}
             {prompt && <p className="mt-4 text-[14px] font-medium text-fg">{prompt}</p>}

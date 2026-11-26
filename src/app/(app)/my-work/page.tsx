@@ -5,7 +5,7 @@ import { db } from "@/server/db";
 import { decorate, taskRowSelect, waitingOnMe } from "@/server/queries";
 import { MyWorkView } from "./my-work-view";
 
-export const metadata = { title: "My work" };
+export const metadata = { title: "My tasks" };
 
 const daysAgo = (n: number) => new Date(Date.now() - n * 86400_000);
 
@@ -22,11 +22,12 @@ export default async function MyWorkPage({ searchParams }: { searchParams: Promi
     done: { archivedAt: null, OR: [mineWhere, { verifiedById: me.id }], status: "done", verifiedAt: { gte: since } },
   };
   const rows = tab === "waiting" ? await waitingOnMe(me) : await decorate(await db.task.findMany({ where: where[tab] ?? where.mine, select: taskRowSelect, orderBy: { updatedAt: "desc" }, take: 500 }));
+  const needsMe = tab === "waiting" ? rows : await waitingOnMe(me);
   const tabs = [
-    { id: "waiting", label: t("waitingOnMe") },
+    { id: "waiting", label: t("needsMe"), count: needsMe.length },
     { id: "mine", label: me.side === "vendoor" ? t("requestedByMe") : t("assignedToMe") },
     { id: "following", label: t("following") },
-    { id: "done", label: t("done30") },
+    { id: "done", label: t("done") },
   ];
-  return <MyWorkView title={t("title")} tabs={tabs} tab={tab} rows={rows} />;
+  return <MyWorkView title={t("title")} subtitle={t("subtitle", { count: needsMe.length })} tabs={tabs} tab={tab} rows={rows} />;
 }

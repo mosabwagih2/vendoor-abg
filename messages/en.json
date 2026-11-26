@@ -53,7 +53,7 @@
     "newRequest": "New request",
     "home": "Home",
     "inbox": "Inbox",
-    "myWork": "My work",
+    "myWork": "My tasks",
     "requests": "Requests",
     "tasks": "Tasks",
     "projects": "Projects",
@@ -211,13 +211,18 @@
     "tasksCount": "{count, plural, one {# task} other {# tasks}}"
   },
   "myWork": {
-    "title": "My work",
+    "title": "My tasks",
     "waitingOnMe": "Waiting on me",
-    "requestedByMe": "Requested by me",
+    "requestedByMe": "Filed by me",
     "assignedToMe": "Assigned to me",
     "following": "Following",
     "done30": "Done (last 30 days)",
-    "empty": "Nothing here."
+    "empty": "Nothing here.",
+    "needsMe": "Needs me",
+    "done": "Done",
+    "subtitle": "{count, plural, =0 {Nothing needs you} one {# task needs you} other {# tasks need you}}",
+    "yourTurn": "Your turn · {count}",
+    "tasksCount": "{count, plural, one {# task} other {# tasks}}"
   },
   "requests": {
     "title": "Requests",
@@ -750,7 +755,10 @@
       "owner": "Owner",
       "nextDue": "Next due",
       "tags": "Tags"
-    }
+    },
+    "needsYou": "{count} needs you",
+    "stuckCount": "{count} stuck",
+    "tasksDone": "{total, plural, one {# task} other {# tasks}} · {done} done"
   },
   "settings": {
     "title": "Settings",
@@ -1252,5 +1260,18 @@
     "openTab": "open in new tab",
     "close": "close",
     "results": "{count, plural, one {# result} other {# results}}"
+  },
+  "moveTo": {
+    "status": "Status",
+    "title": "Move task to",
+    "close": "Close",
+    "doneLock": "Only Vendoor can move a task to Done.",
+    "hint": {
+      "request": "A new request waiting for ABG.",
+      "processing": "You are working on it now.",
+      "stuck": "Needs a reason. Vendoor gets asked.",
+      "completed": "Needs a release and a note. Vendoor will test it.",
+      "done": "Vendoor confirms it works."
+    }
   }
 }

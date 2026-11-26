@@ -10,6 +10,8 @@ import { STATUS_GROUPS } from "@/domain/status-display";
 import { OPEN_STATUSES } from "@/domain/workflow";
 import type { TaskStatus } from "@/domain/types";
 import { PROJECT_COLORS } from "@/lib/project-colors";
+import { waitingOnMe } from "@/server/queries";
+import { ChevronRight } from "lucide-react";
 
 export const metadata = { title: "Projects" };
 
@@ -43,6 +45,8 @@ export default async function ProjectsPage({ searchParams }: { searchParams: Pro
     db.task.groupBy({ by: ["projectId"], where: { archivedAt: null, status: { in: OPEN_STATUSES }, dueAt: { not: null } }, _min: { dueAt: true } }),
     db.task.count({ where: { archivedAt: null, status: "done", verifiedAt: { gte: monthStart } } }),
   ]);
+  const needsYou = new Map<string, number>();
+  for (const r of await waitingOnMe(me)) needsYou.set(r.project.key, (needsYou.get(r.project.key) ?? 0) + 1);
   const [openTotal, dueWeek, late] = await Promise.all([
     db.task.count({ where: { archivedAt: null, status: { in: OPEN_STATUSES } } }),
     db.task.count({ where: { archivedAt: null, status: { in: OPEN_STATUSES }, dueAt: { gte: now, lte: weekEnd } } }),
@@ -78,14 +82,14 @@ export default async function ProjectsPage({ searchParams }: { searchParams: Pro
           <span className="ms-auto text-meta text-fg-muted">{t("sortDeadline")}</span>
         </nav>
 
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <div className="hidden gap-3 md:grid md:grid-cols-2 lg:grid-cols-4">
           <Kpi label={t("kpiOpen")} value={openTotal} />
           <Kpi label={t("kpiDueWeek")} value={dueWeek} tone="text-warning-text" />
           <Kpi label={t("kpiLate")} value={late} tone="text-danger-text" />
           <Kpi label={t("kpiDoneMonth")} value={doneMonth} tone="text-success-strong" />
         </div>
 
-        <div className="overflow-x-auto rounded-card border border-border bg-surface">
+        <div className="hidden overflow-x-auto rounded-card border border-border bg-surface md:block">
           <table className="w-full min-w-[860px] text-ui">
             <thead className="bg-canvas text-[10.5px] uppercase tracking-[0.06em] text-fg-muted">
               <tr className="border-b border-border">
@@ -154,6 +158,31 @@ export default async function ProjectsPage({ searchParams }: { searchParams: Pro
             </tbody>
           </table>
         </div>
+
+        <ul className="space-y-3 md:hidden" aria-label={t("title")}>
+          {shown.map(({ p, color, stats }) => (
+            <li key={p.id}>
+              <Link href={`/projects/${p.key.toLowerCase()}`} className="block rounded-card border border-border bg-surface p-4">
+                <span className="flex items-center gap-3">
+                  <span aria-hidden className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-[15px] font-bold text-white" style={{ background: color }}>
+                    {p.name.charAt(0)}
+                  </span>
+                  <span className="min-w-0 flex-1 truncate text-[17px] font-semibold">{p.name}</span>
+                  {(needsYou.get(p.key) ?? 0) > 0 && <span className="whitespace-nowrap rounded-full bg-[#e8f0fe] px-2.5 py-0.5 text-meta font-semibold text-[#1d4ed8]">{t("needsYou", { count: needsYou.get(p.key) ?? 0 })}</span>}
+                  {stats.byGroup.stuck > 0 && !(needsYou.get(p.key) ?? 0) && <span className="whitespace-nowrap rounded-full bg-danger-subtle px-2.5 py-0.5 text-meta font-semibold text-danger-text">{t("stuckCount", { count: stats.byGroup.stuck })}</span>}
+                  <ChevronRight size={16} className="shrink-0 text-fg-muted rtl:rotate-180" aria-hidden />
+                </span>
+                <span className="mt-3 flex h-1.5 gap-1 overflow-hidden rounded-full" aria-hidden>
+                  {STATUS_GROUPS.map((g) => (stats.byGroup[g] ? <span key={g} style={{ background: GROUP_COLOR[g], flexGrow: stats.byGroup[g] }} className="min-w-px rounded-full" /> : null))}
+                </span>
+                <span className="mt-2 flex items-center justify-between text-ui text-fg-secondary">
+                  <span>{t("tasksDone", { total: stats.total, done: stats.done })}</span>
+                  {p.abgLead && <Avatar name={p.abgLead.name} size={24} />}
+                </span>
+              </Link>
+            </li>
+          ))}
+        </ul>
       </div>
     </>
   );
