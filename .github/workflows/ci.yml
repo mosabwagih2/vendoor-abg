@@ -2,8 +2,11 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, "claude/**"]
   pull_request:
+
+permissions:
+  contents: write
 
 jobs:
   check:
@@ -44,10 +47,22 @@ jobs:
       - name: Database tests (MySQL behaviour)
         run: pnpm db:seed && pnpm test:db
       - run: pnpm build
-      - name: Pack the build for cPanel
-        run: tar -czf build.tar.gz .next
+      - name: Pack the deploy bundle for cPanel (standalone server, worker, migrator)
+        run: bash scripts/pack-deploy.sh
       - uses: actions/upload-artifact@v4
         with:
-          name: next-build
-          path: build.tar.gz
+          name: deploy-bundle
+          path: deploy.tar.gz
           retention-days: 14
+      - name: Publish the bundle as release deploy-<branch> (read by scripts/cpanel/deploy.sh)
+        if: github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="deploy-${GITHUB_REF_NAME//\//-}"
+          notes="Prebuilt bundle for scripts/cpanel/deploy.sh. Branch $GITHUB_REF_NAME, commit $GITHUB_SHA."
+          if ! gh release view "$tag" >/dev/null 2>&1; then
+            gh release create "$tag" --prerelease --target "$GITHUB_SHA" --title "Deploy bundle ($GITHUB_REF_NAME)" --notes "$notes"
+          fi
+          gh release upload "$tag" deploy.tar.gz --clobber
+          gh release edit "$tag" --notes "$notes"

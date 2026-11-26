@@ -2,29 +2,59 @@
 
 Flow: you push to GitHub, cPanel pulls the repo, and one click (or a webhook) rebuilds the app.
 
+## How it works
+
+Shared cPanel plans cap an account at about 1 GB of memory, and both `pnpm install` and `next build` go over it
+and get killed. So the server never installs or builds anything:
+
+1. On every push, GitHub Actions (`.github/workflows/ci.yml`) builds the app and packs `deploy.tar.gz`
+   (`scripts/pack-deploy.sh`): the Next.js **standalone** server with only the node_modules it needs, the static
+   files, the worker and a small migrator bundled into plain JS (`worker.mjs`, `migrate.mjs`), and the migrations.
+2. It publishes the file as the GitHub release **`deploy-<branch>`** (for `main`: `deploy-main`).
+3. On the server, `scripts/cpanel/deploy.sh` (run by `.cpanel.yml`) downloads that release, runs the migrations,
+   swaps the files in `~/tracker` and restarts the app. `.env`, `storage/` and the logs are kept.
+
+The server needs outbound HTTPS to github.com (port 443), which cPanel hosts allow.
+
 ## What the host must have
 
 | Need | Why | How to check |
 |---|---|---|
-| **Node.js 20.9 or newer** (22 recommended) | Next.js 16 | cPanel > Setup Node.js App > Node.js version |
-| **MySQL 8.0.16+** (or MariaDB 10.4+) | The app uses MySQL | cPanel > MySQL Databases. The version is on the cPanel home page (Server Information) or in phpMyAdmin. Older versions refuse the first migration (it uses expression defaults and a CHECK). |
-| **Enough memory to build** | `next build` needs about 1 GB | If the build is killed, build on your computer or in GitHub Actions and upload `.next` (see "If the build runs out of memory"). |
+| **Node.js 20.12 or newer** (22 recommended) | Next.js 16, `process.loadEnvFile` | cPanel > Setup Node.js App > Node.js version |
+| **MySQL 8.0.16+** (or MariaDB 10.4+) | The app uses MySQL | cPanel > Manage My Databases. Older versions refuse the first migration (it uses expression defaults and a CHECK). |
+| **About 600 MB of memory** | The web server peaks near 300 MB, a worker run near 250 MB | cPanel > Resource Usage |
 | **Cron** | Sends emails, the verify reminder and the Thursday weekly report | cPanel > Cron Jobs |
-| **Git Version Control** | Pulls from GitHub | cPanel > Git Version Control |
+| **Git Version Control** and **SSH access** | Pulls the repo and runs `.cpanel.yml` | cPanel > Git Version Control, Manage Shell |
 
 `ffmpeg` (voice notes and video playback) is optional. Without it, uploads still work; audio and video just stay in their original format.
 
 ## One-time setup
 
-1. **Database.** cPanel > MySQL Databases: create a database and a user, and add the user to the database with ALL PRIVILEGES. cPanel puts your account name in front of both (for example `cpuser_tracker`). Your `DATABASE_URL` looks like `mysql://cpuser_USER:PASSWORD@localhost:3306/cpuser_DBNAME`. If the password has symbols such as `@`, `#` or `/`, URL-encode them (`@` becomes `%40`).
-2. **Clone.** cPanel > Git Version Control > Create: paste the GitHub clone URL. For a private repo, add the cPanel server's SSH key as a deploy key on GitHub (read-only). Set the repository path to `~/repositories/tracker`.
+1. **Database.** cPanel > Manage My Databases: create a database and a user, and add the user to the database with
+   ALL PRIVILEGES. cPanel puts your account name in front of both (for example `cpuser_tracker`). Or from the
+   Terminal, with a generated password that is never shown:
+
+   ```bash
+   P=$(openssl rand -hex 24)
+   uapi Mysql create_database name=cpuser_tracker
+   uapi Mysql create_user name=cpuser_tracker password="$P"
+   uapi Mysql set_privileges_on_database user=cpuser_tracker database=cpuser_tracker privileges=ALL
+   ```
+
+   Your `DATABASE_URL` looks like `mysql://cpuser_tracker:PASSWORD@localhost:3306/cpuser_tracker`. If the password
+   has symbols such as `@`, `#` or `/`, URL-encode them (`@` becomes `%40`).
+2. **Clone.** cPanel > Git Version Control > Create: paste the GitHub clone URL. Set the repository path to
+   `~/repositories/tracker`.
 3. **Node app.** cPanel > Setup Node.js App > Create Application:
    - Node.js version: 22
    - Application mode: Production
-   - Application root: `tracker`  (this is `~/tracker`, the folder `.cpanel.yml` deploys into)
+   - Application root: `tracker`  (this is `~/tracker`, the folder the deploy script fills)
    - Application URL: your domain or sub-domain
-   - Application startup file: `server.js`
-4. **Environment variables.** In the same screen add these (generate secrets with `openssl rand -base64 32`):
+   - Application startup file: **`app.js`**  (it loads `~/tracker/.env`, then starts the standalone server)
+
+   Do not press "Run NPM Install": the bundle already contains its node_modules.
+4. **Secrets in `~/tracker/.env`** (not in the Node app screen: the worker cron and the migrator read the same
+   file). Make it readable only by you (`chmod 600`). Generate secrets with `openssl rand -base64 32`:
 
    | Variable | Value |
    |---|---|
@@ -34,39 +64,33 @@ Flow: you push to GitHub, cPanel pulls the repo, and one click (or a webhook) re
    | `CREDENTIALS_KEY` | random, 32 bytes base64. **Never change or lose it**: it decrypts saved account passwords. |
    | `FILE_URL_SECRET` | random |
    | `STORAGE_DRIVER` | `local` (files under `~/tracker/storage`) or `s3` |
-   | `EMAIL_DRIVER` | `resend` |
+   | `EMAIL_DRIVER` | `resend` (or `console` to print emails to `worker.log`) |
    | `RESEND_API_KEY`, `EMAIL_FROM` | from Resend |
-   | `NODE_ENV` | `production` |
 
-5. **First deploy.** Git Version Control > Manage > Deploy HEAD Commit. This runs `.cpanel.yml`: copies the code, installs, runs migrations, builds, and restarts the app.
-6. **First data.** Do not run the demo seed on production. Create your real members and projects by running, once, in the cPanel Terminal inside `~/tracker`: `npx pnpm@10.28.0 run db:seed` **only** if you want the demo people, otherwise add members from Settings after creating the first admin by hand in the database.
+5. **First deploy.** Wait until the GitHub Actions run of your branch is green, then Git Version Control > Manage >
+   Pull or Deploy > Update from Remote > **Deploy HEAD Commit**. Or in the Terminal:
+   `bash ~/repositories/tracker/scripts/cpanel/deploy.sh`.
+6. **First data.** Do not run the demo seed on production. Add members from Settings after creating the first
+   admin by hand in the database.
 7. **Cron for the worker.** cPanel > Cron Jobs, every minute:
 
    ```
-   * * * * * cd $HOME/tracker && source $HOME/nodevenv/tracker/22/bin/activate && /usr/bin/flock -n /tmp/tracker-worker.lock npx pnpm@10.28.0 run worker:once >> $HOME/tracker/worker.log 2>&1
+   * * * * * cd $HOME/tracker && /usr/bin/flock -n /tmp/tracker-worker.lock $HOME/nodevenv/tracker/22/bin/node worker.mjs --once >> $HOME/tracker/worker.log 2>&1
    ```
 
    `flock -n` skips a run if the previous one is still going. Each run works for about 55 seconds, so emails go out within a minute.
 
 ## Every update
 
-```bash
-git push origin main        # on your computer
-```
+1. `git push` to GitHub.
+2. Wait for the GitHub Actions run to finish (about 3 minutes). It updates the release `deploy-<branch>`.
+3. cPanel > Git Version Control > Manage > Pull or Deploy > **Update from Remote**, then **Deploy HEAD Commit**.
 
-Then in cPanel: Git Version Control > Manage > **Pull or Deploy** > Update from Remote > Deploy HEAD Commit. Migrations run automatically, so new tables and columns arrive with the code.
+Migrations run automatically. If you deploy before CI has finished, the script says the bundle is older than your
+checkout; deploy again when the run is green.
 
-To skip the click, GitHub can call a deploy script on the server after each push (webhook), but that needs a small endpoint on your host. Ask if you want it.
-
-## If the build runs out of memory
-
-Shared plans often kill `next build`. Build somewhere else and ship the result:
-
-1. On your computer: `pnpm install && pnpm build`.
-2. Upload the `.next` folder to `~/tracker/.next` (cPanel File Manager or SFTP).
-3. In `.cpanel.yml`, delete the line that runs `run build`.
-
-The GitHub Actions workflow (`.github/workflows/ci.yml`) already does step 1 on every push to `main`: open the run, download the artifact **next-build** (`build.tar.gz`), and extract it into `~/tracker` so `.next` lands next to `server.js`. The build uses the Node 22 and the same lockfile as production.
+The migrator (`migrate.mjs`) writes Prisma's own `_prisma_migrations` table with the same checksums, so
+`prisma migrate status` from your computer still works against the same database.
 
 ## Checks after a deploy
 
