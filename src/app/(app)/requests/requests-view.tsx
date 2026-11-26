@@ -89,7 +89,7 @@ export function RequestsView({ rows, selected, title }: { rows: TaskRowData[]; s
                     </Link>
                   </Button>
                 </div>
-                <TaskView task={selected} compact />
+                <TaskView task={selected} compact lean />
               </>
             ) : (
               <EmptyState title={t("noSelection")} />

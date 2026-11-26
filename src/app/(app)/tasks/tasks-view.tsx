@@ -13,6 +13,7 @@ import { Input, Select } from "@/components/ui/input";
 import { Menu, MenuContent, MenuItem, MenuTrigger, MenuLabel } from "@/components/ui/menu";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { StatusIcon } from "@/components/icons/status-icon";
+import { StatusLozenge } from "@/components/ui/lozenge";
 import { GROUP_REPRESENTATIVE, STATUS_GROUPS, statusGroup, type StatusGroup } from "@/domain/status-display";
 import { PriorityIcon } from "@/components/icons/priority-icon";
 import { Avatar } from "@/components/ui/avatar";
@@ -305,9 +306,14 @@ function ListView({
                   className="flex h-9 w-full items-center gap-2 border-b border-border bg-subtle px-4 text-ui font-medium"
                 >
                   <ChevronRight size={14} aria-hidden className={cn("transition-transform rtl:rotate-180", !collapsed.has(item.g.id) && "rotate-90 rtl:rotate-90")} />
-                  {item.g.icon}
-                  {item.g.label}
+                  {display.group === "status" && item.g.id !== "closed" ? <StatusLozenge status={GROUP_REPRESENTATIVE[item.g.id as StatusGroup]} /> : (
+                    <>
+                      {item.g.icon}
+                      {item.g.label}
+                    </>
+                  )}
                   <span className="tabular font-normal text-fg-secondary">{item.g.rows.length}</span>
+                  {display.group === "status" && me.side === "vendoor" && (item.g.id === "stuck" || item.g.id === "completed") && <span className="text-meta font-normal text-accent">{t(item.g.id === "stuck" ? "hintStuck" : "hintCompleted")}</span>}
                 </button>
               ) : (
                 <TaskRow

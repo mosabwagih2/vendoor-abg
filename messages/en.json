@@ -361,7 +361,9 @@
       "board": "Board",
       "calendar": "Calendar",
       "timeline": "Timeline"
-    }
+    },
+    "hintStuck": "ABG is asking you",
+    "hintCompleted": "Needs your verification"
   },
   "task": {
     "breadcrumb": "Breadcrumb",
