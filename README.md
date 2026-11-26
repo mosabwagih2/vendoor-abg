@@ -61,6 +61,10 @@ pnpm e2e
 
 `pnpm e2e` needs `pnpm dev:web` running and `npx playwright install chromium` once. If the browser is installed somewhere else, point `PW_CHROMIUM_PATH` at it.
 
+## Deploying
+
+`docs/deploy-cpanel.md`: GitHub to cPanel, step by step (Node app, PostgreSQL, cron worker).
+
 ## Design to code
 
 `docs/components.md` maps each Figma component to the file that implements it.

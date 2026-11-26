@@ -1,0 +1,13 @@
+---
+# Runs when cPanel > Git Version Control > "Deploy HEAD Commit" is used.
+# Copy this folder's contents to the app root, then install, migrate and build there.
+# Change DEPLOYPATH to the "Application root" you gave in Setup Node.js App.
+deployment:
+  tasks:
+    - export DEPLOYPATH=$HOME/tracker
+    - /bin/mkdir -p $DEPLOYPATH
+    - /bin/cp -R . $DEPLOYPATH
+    - cd $DEPLOYPATH && source $HOME/nodevenv/tracker/22/bin/activate && npx --yes pnpm@10.28.0 install --frozen-lockfile
+    - cd $DEPLOYPATH && source $HOME/nodevenv/tracker/22/bin/activate && npx --yes pnpm@10.28.0 run db:migrate
+    - cd $DEPLOYPATH && source $HOME/nodevenv/tracker/22/bin/activate && npx --yes pnpm@10.28.0 run build
+    - /bin/mkdir -p $DEPLOYPATH/tmp && /bin/touch $DEPLOYPATH/tmp/restart.txt

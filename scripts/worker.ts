@@ -102,21 +102,40 @@ async function tick() {
 }
 
 let lastReminderScan = 0;
+
+/** The slow jobs (verify reminders, automatic weekly report) run at most every 10 minutes. */
+async function periodic(force = false) {
+  if (!force && Date.now() - lastReminderScan < 10 * 60_000) return;
+  lastReminderScan = Date.now();
+  await verifyReminders();
+  const sent = await autoSendWeeklyReport();
+  if (sent) console.log(`[worker] weekly report sent for week starting ${sent}`);
+}
+
+/**
+ * Two ways to run:
+ *  - `pnpm worker`: stays alive and polls every 2 seconds (VPS, Docker, local dev).
+ *  - `pnpm worker:once`: works for about 55 seconds and exits. For hosts that cannot keep a background process alive
+ *    (cPanel): run it from cron every minute. Overlapping runs are skipped by the lock in docs/deploy-cpanel.md.
+ */
 async function loop() {
-  console.log("[worker] started");
+  const once = process.argv.includes("--once");
+  const deadline = Date.now() + 55_000;
+  console.log(`[worker] started${once ? " (one shot)" : ""}`);
+  if (once) await periodic(true).catch((e) => console.error("[worker]", e));
   for (;;) {
     try {
       await tick();
-      if (Date.now() - lastReminderScan > 10 * 60_000) {
-        lastReminderScan = Date.now();
-        await verifyReminders();
-        const sent = await autoSendWeeklyReport();
-        if (sent) console.log(`[worker] weekly report sent for week starting ${sent}`);
-      }
+      if (!once) await periodic();
     } catch (e) {
       console.error("[worker]", e);
     }
+    if (once && Date.now() > deadline) break;
     await new Promise((r) => setTimeout(r, POLL_MS));
+  }
+  if (once) {
+    await db.$disconnect();
+    process.exit(0);
   }
 }
 

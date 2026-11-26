@@ -2,6 +2,7 @@
   "name": "vendoor-tracker",
   "version": "0.1.0",
   "private": true,
+  "engines": { "node": ">=20.9" },
   "scripts": {
     "dev": "concurrently -k -n web,worker -c blue,magenta \"next dev\" \"tsx watch --conditions=react-server scripts/worker.ts\"",
     "build": "next build",
@@ -9,6 +10,7 @@
     "lint": "eslint",
     "dev:web": "next dev",
     "worker": "tsx --conditions=react-server scripts/worker.ts",
+    "worker:once": "tsx --conditions=react-server scripts/worker.ts --once",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "e2e": "playwright test --trace off",

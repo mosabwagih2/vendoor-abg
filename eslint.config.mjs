@@ -14,6 +14,7 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     "src/generated/**",
     "test-results/**",
+    "server.js", // Passenger entry point, plain CommonJS
   ]),
   {
     rules: {
