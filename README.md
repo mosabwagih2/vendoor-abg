@@ -8,7 +8,7 @@ Plan: `docs/PLAN.md` · Design references: `docs/DESIGN-REFERENCES.md` · Resear
 
 ## Run it on your computer
 
-You need: **Node.js 22**, **pnpm** (`npm i -g pnpm`), **Docker Desktop** (for PostgreSQL) and, for voice notes and
+You need: **Node.js 22**, **pnpm** (`npm i -g pnpm`), **Docker Desktop** (for MySQL) and, for voice notes and
 videos to be converted for every browser, **ffmpeg** on the PATH (`winget install ffmpeg` on Windows).
 
 ```bash

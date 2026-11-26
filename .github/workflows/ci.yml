@@ -9,17 +9,18 @@ jobs:
   check:
     runs-on: ubuntu-latest
     services:
-      postgres:
-        image: postgres:16
+      mysql:
+        image: mysql:8.0
         env:
-          POSTGRES_USER: tracker
-          POSTGRES_PASSWORD: tracker
-          POSTGRES_DB: tracker
-        ports: ["5432:5432"]
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_USER: tracker
+          MYSQL_PASSWORD: tracker
+          MYSQL_DATABASE: tracker
+        ports: ["3306:3306"]
         options: >-
-          --health-cmd "pg_isready -U tracker" --health-interval 5s --health-timeout 5s --health-retries 10
+          --health-cmd "mysqladmin ping -h 127.0.0.1 -uroot -proot" --health-interval 5s --health-timeout 5s --health-retries 20
     env:
-      DATABASE_URL: postgresql://tracker:tracker@localhost:5432/tracker
+      DATABASE_URL: mysql://tracker:tracker@127.0.0.1:3306/tracker
       BETTER_AUTH_SECRET: ci-secret-not-used-in-production-0123456789
       CREDENTIALS_KEY: MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=
       FILE_URL_SECRET: ci-file-secret

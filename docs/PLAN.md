@@ -30,7 +30,7 @@ SLA **calculation** is Phase 1 (triage countdown FR-4.1, due-date prefill on Acc
 | Concern | Choice | Note |
 |---|---|---|
 | Framework | Next.js (App Router, latest stable) + TypeScript strict | Server Components for reads, Server Actions for writes |
-| DB | PostgreSQL 16 + Prisma | Full-text search with a generated `tsvector` column (raw SQL migration) + `pg_trgm` for duplicate hints |
+| DB | PostgreSQL 16 + Prisma (since moved to **MySQL 8**: see `prisma/migrations/*_init_mysql`; duplicate hints use a TypeScript trigram match, `src/domain/trigram.ts`) | Full-text search with a generated `tsvector` column (raw SQL migration) + `pg_trgm` for duplicate hints |
 | UI | Tailwind CSS v4 (tokens in `@theme` from section 9) + shadcn/ui (Radix) + Lucide | Inter + JetBrains Mono via `next/font` |
 | Auth | **Proposed: Better Auth** (email + password with Argon2id, magic-link plugin via Resend, admin plugin, DB sessions 30 days). Needs your OK; see section 10 | Lucia was deprecated in 2024. Auth.js joined Better Auth in Sept 2025, is security-fixes-only, and v5 never left beta |
 | Validation | Zod, shared by forms and server actions | |

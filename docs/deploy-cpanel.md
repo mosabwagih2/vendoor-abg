@@ -7,18 +7,16 @@ Flow: you push to GitHub, cPanel pulls the repo, and one click (or a webhook) re
 | Need | Why | How to check |
 |---|---|---|
 | **Node.js 20.9 or newer** (22 recommended) | Next.js 16 | cPanel > Setup Node.js App > Node.js version |
-| **PostgreSQL** | The app uses PostgreSQL (not MySQL) | cPanel > PostgreSQL Databases. If your plan only has MySQL, ask the host for PostgreSQL, or use a small external one (Neon, Supabase) and put its URL in `DATABASE_URL`. |
+| **MySQL 8.0.16+** (or MariaDB 10.4+) | The app uses MySQL | cPanel > MySQL Databases. The version is on the cPanel home page (Server Information) or in phpMyAdmin. Older versions refuse the first migration (it uses expression defaults and a CHECK). |
 | **Enough memory to build** | `next build` needs about 1 GB | If the build is killed, build on your computer or in GitHub Actions and upload `.next` (see "If the build runs out of memory"). |
 | **Cron** | Sends emails, the verify reminder and the Thursday weekly report | cPanel > Cron Jobs |
 | **Git Version Control** | Pulls from GitHub | cPanel > Git Version Control |
-
-`pg_trgm` (used by "possible duplicates") is created by the first migration. If the database user is not allowed to create extensions, ask the host to run `CREATE EXTENSION pg_trgm;` once on the database.
 
 `ffmpeg` (voice notes and video playback) is optional. Without it, uploads still work; audio and video just stay in their original format.
 
 ## One-time setup
 
-1. **Database.** cPanel > PostgreSQL Databases: create a database and a user, give the user all privileges. Your `DATABASE_URL` looks like `postgresql://USER:PASSWORD@localhost:5432/DBNAME`.
+1. **Database.** cPanel > MySQL Databases: create a database and a user, and add the user to the database with ALL PRIVILEGES. cPanel puts your account name in front of both (for example `cpuser_tracker`). Your `DATABASE_URL` looks like `mysql://cpuser_USER:PASSWORD@localhost:3306/cpuser_DBNAME`. If the password has symbols such as `@`, `#` or `/`, URL-encode them (`@` becomes `%40`).
 2. **Clone.** cPanel > Git Version Control > Create: paste the GitHub clone URL. For a private repo, add the cPanel server's SSH key as a deploy key on GitHub (read-only). Set the repository path to `~/repositories/tracker`.
 3. **Node app.** cPanel > Setup Node.js App > Create Application:
    - Node.js version: 22
