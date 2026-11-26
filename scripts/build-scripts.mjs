@@ -1,4 +1,4 @@
-// Bundles the background worker and the migrator into plain ESM files (dist-scripts/*.mjs) so the server
+// Bundles the background worker, the migrator, the seed and the admin tool into plain ESM files (dist-scripts/*.mjs) so the server
 // runs them with `node`, without tsx, TypeScript or the Prisma CLI. Used by scripts/pack-deploy.sh.
 import { build } from "esbuild";
 
@@ -12,7 +12,7 @@ const emptyServerOnly = {
 };
 
 await build({
-  entryPoints: { worker: "scripts/worker.ts", migrate: "scripts/migrate.ts" },
+  entryPoints: { worker: "scripts/worker.ts", migrate: "scripts/migrate.ts", seed: "prisma/seed/index.ts", admin: "scripts/admin.ts" },
   outdir: "dist-scripts",
   outExtension: { ".js": ".mjs" },
   bundle: true,
@@ -27,4 +27,4 @@ await build({
   banner: { js: "import { createRequire as __cr } from 'node:module'; const require = __cr(import.meta.url);" },
   logLevel: "warning",
 });
-console.log("built dist-scripts/worker.mjs and dist-scripts/migrate.mjs");
+console.log("built dist-scripts/{worker,migrate,seed,admin}.mjs");

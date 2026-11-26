@@ -53,7 +53,7 @@ echo "[deploy] migrating"
 (cd "$APP_DIR" && node "$new/migrate.mjs" "$new/prisma/migrations")
 
 echo "[deploy] switching files"
-for item in .next node_modules public prisma server.js app.js worker.mjs migrate.mjs package.json VERSION; do
+for item in .next node_modules public prisma server.js app.js worker.mjs migrate.mjs seed.mjs admin.mjs package.json VERSION; do
   rm -rf "${APP_DIR:?}/$item"
   if [ -e "$new/$item" ]; then mv "$new/$item" "$APP_DIR/$item"; fi
 done

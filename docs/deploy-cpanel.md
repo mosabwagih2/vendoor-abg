@@ -70,8 +70,17 @@ The server needs outbound HTTPS to github.com (port 443), which cPanel hosts all
 5. **First deploy.** Wait until the GitHub Actions run of your branch is green, then Git Version Control > Manage >
    Pull or Deploy > Update from Remote > **Deploy HEAD Commit**. Or in the Terminal:
    `bash ~/repositories/tracker/scripts/cpanel/deploy.sh`.
-6. **First data.** Do not run the demo seed on production. Add members from Settings after creating the first
-   admin by hand in the database.
+6. **First data and the first owner.** In the Terminal, inside `~/tracker`:
+
+   ```bash
+   cd ~/tracker && export PATH=$HOME/nodevenv/tracker/22/bin:$PATH
+   SEED_PASSWORD=$(openssl rand -hex 24) node seed.mjs > /dev/null   # workspace, teams, people, projects, backlog
+   node admin.mjs you@example.com --rename-from mosab@vendoor.test    # asks for your password, never shows it
+   ```
+
+   The seed gives every seeded person a random password nobody knows; they get in through "Forgot password" once
+   their real email is set in Settings > Members. `admin.mjs` makes you the owner (super admin); without
+   `--rename-from` it creates a new member instead of taking over a seeded one.
 7. **Cron for the worker.** cPanel > Cron Jobs, every minute:
 
    ```
