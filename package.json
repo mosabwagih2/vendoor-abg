@@ -2,7 +2,9 @@
   "name": "vendoor-tracker",
   "version": "0.1.0",
   "private": true,
-  "engines": { "node": ">=20.9" },
+  "engines": {
+    "node": ">=20.9"
+  },
   "scripts": {
     "dev": "concurrently -k -n web,worker -c blue,magenta \"next dev\" \"tsx watch --conditions=react-server scripts/worker.ts\"",
     "build": "next build",
@@ -17,7 +19,9 @@
     "db:migrate": "prisma migrate deploy",
     "db:seed": "tsx prisma/seed/index.ts",
     "db:reset": "tsx prisma/seed/index.ts --reset",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "figma:check": "tsc -p src/figma/tsconfig.json",
+    "figma:publish": "figma connect publish"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1176.0",
@@ -63,6 +67,7 @@
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.14.0",
+    "@figma/code-connect": "^2.1.1",
     "@playwright/test": "^1.65.1",
     "@tailwindcss/turbopack": "4.3.3",
     "@types/node": "^20",

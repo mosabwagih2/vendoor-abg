@@ -38,6 +38,22 @@ These are drawn directly in the screen frames. Search for the screen number (in 
 
 Colours, radii and shadows are CSS variables in `src/app/globals.css` and used through Tailwind names (`bg-accent`, `text-fg-secondary`, `border-border`, `rounded-card`). Project dot colours are in `src/lib/project-colors.ts`.
 
-## When Code Connect becomes possible
+## Code Connect (ready, not active yet)
 
-It needs an Organization or Enterprise Figma plan and components published to a team library. Then each row above becomes one `ComponentName.figma.ts` file: the "Code" column is the `source`, the "Props" column is the property mapping.
+The templates are written: one file per component in `src/figma/*.figma.ts` (Button, WaitingBadge, JourneyBar, StatusIcon, PriorityIcon, StatusLozenge, SlaPill, Avatar), with `figma.config.json` at the root. `pnpm figma:check` type-checks them and `npx figma connect parse` confirms Figma's CLI reads all of them.
+
+They do nothing in Figma until two things are true:
+
+1. The Figma plan is **Organization or Enterprise** (Code Connect is not available on Free, Professional or Education).
+2. The components on the Design system page are **published** to a team library (Assets > Publish).
+
+Then, with a Figma personal access token that has the Code Connect scope:
+
+```bash
+export FIGMA_ACCESS_TOKEN=...   # never commit it
+pnpm figma:publish
+```
+
+The `url=` line at the top of each template holds the Figma node. If a component is rebuilt in Figma, update that node id.
+
+Not connected on purpose: the custom-status chip (a runtime colour, not a variant), and the screens (they are layouts, not components).
