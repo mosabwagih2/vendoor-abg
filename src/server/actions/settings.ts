@@ -53,6 +53,8 @@ export async function changeRoleAction(memberId: string, role: string) {
   return runAction(async () => {
     const me = await requireMember();
     if (!can(me, "manage_members")) throw new AppError("forbidden");
+    // Nobody changes their own role: it is how the last admin would lock everyone out.
+    if (memberId === me.id) throw new AppError("forbidden");
     const r = z.enum(ROLES).parse(role);
     const target = await db.member.findUniqueOrThrow({ where: { id: memberId } });
     const team = await db.team.findFirstOrThrow({ where: { side: r === "abg_lead" || r === "abg_member" ? "delivery" : "requester" } });

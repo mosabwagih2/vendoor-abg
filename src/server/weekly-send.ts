@@ -29,6 +29,12 @@ export async function autoSendWeeklyReport(now = new Date()): Promise<string | n
   // Claim the week first so two workers (or a restart) cannot both send it.
   const claimed = await db.workspace.updateMany({ where: { id: ws.id, OR: [{ weeklyReportSentWeek: null }, { weeklyReportSentWeek: { not: week } }] }, data: { weeklyReportSentWeek: week } });
   if (claimed.count === 0) return null;
-  await sendWeeklyReportEmails(week);
+  try {
+    await sendWeeklyReportEmails(week);
+  } catch (e) {
+    // Give the week back so the next run tries again instead of silently skipping the report.
+    await db.workspace.update({ where: { id: ws.id }, data: { weeklyReportSentWeek: ws.weeklyReportSentWeek } });
+    throw e;
+  }
   return week;
 }

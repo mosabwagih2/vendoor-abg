@@ -4,6 +4,7 @@ import path from "node:path";
 import { S3Client, PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { hmac, safeEqual } from "./crypto";
+import { fileLinkMessage, servedType } from "@/domain/file-link";
 
 /**
  * Private file storage. "local" keeps files under ./storage and serves them through /api/files with an HMAC-signed,
@@ -29,7 +30,8 @@ function s3c(): S3Client {
 
 function localPath(key: string): string {
   const p = path.join(LOCAL_ROOT, key);
-  if (!p.startsWith(LOCAL_ROOT)) throw new Error("bad key");
+  // Compare with a trailing separator so a sibling folder such as "storage-old" does not pass.
+  if (!p.startsWith(LOCAL_ROOT + path.sep)) throw new Error("bad key");
   return p;
 }
 
@@ -65,20 +67,21 @@ export async function signedReadUrl(key: string, opts: { fileName?: string; cont
       new GetObjectCommand({
         Bucket: process.env.S3_BUCKET,
         Key: key,
-        ResponseContentType: opts.contentType,
+        ResponseContentType: servedType(opts.contentType),
         ResponseContentDisposition: opts.fileName ? `inline; filename="${encodeURIComponent(opts.fileName)}"` : undefined,
       }),
       { expiresIn: URL_TTL_SECONDS },
     );
   }
   const exp = Math.floor(Date.now() / 1000) + URL_TTL_SECONDS;
-  const sig = hmac(`${key}:${exp}`);
-  const q = new URLSearchParams({ exp: String(exp), sig });
-  if (opts.contentType) q.set("type", opts.contentType);
+  const type = servedType(opts.contentType);
+  const sig = hmac(fileLinkMessage(key, exp, type));
+  const q = new URLSearchParams({ exp: String(exp), sig, type });
   return `/api/files/${key.split("/").map(encodeURIComponent).join("/")}?${q}`;
 }
 
-export function verifyLocalSignature(key: string, exp: string, sig: string): boolean {
+/** The content type is signed too, so the link cannot be changed to make the browser run an uploaded file. */
+export function verifyLocalSignature(key: string, exp: string, sig: string, type: string): boolean {
   if (!exp || !sig || Number(exp) < Date.now() / 1000) return false;
-  return safeEqual(hmac(`${key}:${exp}`), sig);
+  return safeEqual(hmac(fileLinkMessage(key, exp, type)), sig);
 }

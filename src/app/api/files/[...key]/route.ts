@@ -1,25 +1,30 @@
 import { createReadStream } from "node:fs";
 import { Readable } from "node:stream";
 import { localFileInfo, verifyLocalSignature } from "@/server/storage";
+import { opensInline, servedType } from "@/domain/file-link";
 
 /** Serves local-driver files behind an HMAC-signed URL that expires in 1 hour. Supports Range (video/audio seeking). */
 export async function GET(req: Request, { params }: { params: Promise<{ key: string[] }> }) {
   const { key: parts } = await params;
   const key = parts.map(decodeURIComponent).join("/");
   const url = new URL(req.url);
-  if (!verifyLocalSignature(key, url.searchParams.get("exp") ?? "", url.searchParams.get("sig") ?? "")) return new Response("Link expired", { status: 403 });
+  const typeParam = url.searchParams.get("type") ?? "";
+  if (!verifyLocalSignature(key, url.searchParams.get("exp") ?? "", url.searchParams.get("sig") ?? "", typeParam)) return new Response("Link expired", { status: 403 });
   let info;
   try {
     info = await localFileInfo(key);
   } catch {
     return new Response("Not found", { status: 404 });
   }
-  const type = url.searchParams.get("type") ?? "application/octet-stream";
+  const type = servedType(typeParam);
   const headers: Record<string, string> = {
     "Content-Type": type,
     "Accept-Ranges": "bytes",
     "Cache-Control": "private, max-age=3600",
-    "Content-Disposition": `inline; filename="${encodeURIComponent(key.split("/").pop() ?? "file")}"`,
+    // Only media and PDFs open in the browser. Everything else downloads, and nothing can run scripts on our origin.
+    "Content-Disposition": `${opensInline(type) ? "inline" : "attachment"}; filename="${encodeURIComponent(key.split("/").pop() ?? "file")}"`,
+    "X-Content-Type-Options": "nosniff",
+    "Content-Security-Policy": "default-src 'none'; sandbox",
   };
   const range = req.headers.get("range");
   if (range) {

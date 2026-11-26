@@ -158,7 +158,7 @@ function Row({ item, onNavigate }: { item: DrawerItem; onNavigate: () => void })
                 variant="dark"
                 onClick={async () => {
                   const r = await alertAbgAction(item.incidentId!);
-                  r.ok ? toast.success(t("alerted")) : toast.error(t("alertFailed"));
+                  r.ok ? toast.success(t("alerted")) : toast.error(r.message ?? t("alertFailed"));
                 }}
               >
                 {t("alertAbg")}

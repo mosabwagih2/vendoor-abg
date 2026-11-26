@@ -67,3 +67,19 @@ export function isSafeLink(url: string): boolean {
     return false;
   }
 }
+
+// ───────────── alert cooldown ─────────────
+
+/** ABG can be alerted again only after this many minutes, so the button cannot be used to flood them. */
+export const ALERT_COOLDOWN_MINUTES = 10;
+
+/** `lastAlertAt` is the most recent "alert sent" entry on the timeline, or null when there is none. */
+export function canAlertAgain(lastAlertAt: Date | null, now: Date, minutes = ALERT_COOLDOWN_MINUTES): boolean {
+  return !lastAlertAt || now.getTime() - lastAlertAt.getTime() >= minutes * 60_000;
+}
+
+/** Whole minutes left before the next alert is allowed (0 when allowed now). */
+export function alertWaitMinutes(lastAlertAt: Date | null, now: Date, minutes = ALERT_COOLDOWN_MINUTES): number {
+  if (!lastAlertAt) return 0;
+  return Math.max(0, Math.ceil((minutes * 60_000 - (now.getTime() - lastAlertAt.getTime())) / 60_000));
+}

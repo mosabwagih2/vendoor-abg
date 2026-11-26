@@ -51,3 +51,17 @@ describe("reporting a problem", () => {
     expect(isSafeLink("not a url")).toBe(false);
   });
 });
+
+import { alertWaitMinutes, canAlertAgain } from "@/domain/incident";
+
+describe("alert cooldown", () => {
+  const last = new Date("2026-11-26T10:00:00Z");
+  it("allows the first alert", () => expect(canAlertAgain(null, last)).toBe(true));
+  it("blocks a second alert inside ten minutes", () => expect(canAlertAgain(last, new Date("2026-11-26T10:05:00Z"))).toBe(false));
+  it("allows it at exactly ten minutes", () => expect(canAlertAgain(last, new Date("2026-11-26T10:10:00Z"))).toBe(true));
+  it("says how long is left, rounded up", () => {
+    expect(alertWaitMinutes(last, new Date("2026-11-26T10:07:30Z"))).toBe(3);
+    expect(alertWaitMinutes(last, new Date("2026-11-26T10:11:00Z"))).toBe(0);
+    expect(alertWaitMinutes(null, last)).toBe(0);
+  });
+});

@@ -21,11 +21,11 @@ export function IncidentControls({ incidentId, state, side }: { incidentId: stri
   const [busy, setBusy] = useState(false);
   const [closing, setClosing] = useState(false);
 
-  async function run(fn: () => Promise<{ ok: boolean; error?: string }>, ok: string) {
+  async function run(fn: () => Promise<{ ok: boolean; error?: string; message?: string }>, ok: string) {
     setBusy(true);
     const r = await fn();
     setBusy(false);
-    if (!r.ok) return void toast.error(r.error === "forbidden" ? tc("forbidden") : tc("error"));
+    if (!r.ok) return void toast.error(r.error === "forbidden" ? tc("forbidden") : (r.message ?? tc("error")));
     toast.success(ok);
     router.refresh();
   }

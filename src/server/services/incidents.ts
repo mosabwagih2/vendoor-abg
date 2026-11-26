@@ -4,7 +4,7 @@ import { recordEvent } from "../activity";
 import { notify } from "../notify";
 import { AppError } from "../errors";
 import type { CurrentMember } from "../session";
-import { closingProblems, incidentTitle, type IncidentKind, type IncidentState } from "@/domain/incident";
+import { alertWaitMinutes, canAlertAgain, closingProblems, incidentTitle, type IncidentKind, type IncidentState } from "@/domain/incident";
 import { createAttachment, type AttachmentRef } from "./tasks";
 
 /** Only ABG works an incident. Vendoor reports it and reads the timeline. */
@@ -86,6 +86,10 @@ export async function resolveIncident(me: CurrentMember, d: { incidentId: string
 
 export async function alertAbg(me: CurrentMember, incidentId: string) {
   const i = await openOne(incidentId);
+  // Anyone can press the button, so limit how often it can email ABG.
+  const last = await db.incidentTimelineEntry.findFirst({ where: { incidentId: i.id, kind: "alert_sent" }, orderBy: { at: "desc" }, select: { at: true } });
+  const now = new Date();
+  if (!canAlertAgain(last?.at ?? null, now)) throw new AppError("invalid_input", `Already alerted. You can alert again in ${alertWaitMinutes(last!.at, now)} min.`);
   await db.$transaction(async (tx) => {
     await tx.incidentTimelineEntry.create({ data: { incidentId: i.id, authorId: me.id, kind: "alert_sent", body: "ABG alerted again" } });
     const ev = await recordEvent(tx, { actorId: me.id, subjectType: "incident", subjectId: i.id, verb: "incident_alerted" });
