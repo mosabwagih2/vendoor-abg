@@ -26,9 +26,9 @@ fi
 SLUG="${REPO_SLUG:-$(repo_slug)}"
 URL="https://github.com/$SLUG/releases/download/$TAG/deploy.tar.gz"
 
-if [ -f "$NODE_ENV_DIR/bin/activate" ]; then
-  # shellcheck disable=SC1091
-  source "$NODE_ENV_DIR/bin/activate"
+# The CloudLinux node selector's `activate` script is not `set -u` safe; putting its bin first on PATH is enough.
+if [ -x "$NODE_ENV_DIR/bin/node" ]; then
+  PATH="$NODE_ENV_DIR/bin:$PATH"
 fi
 command -v node >/dev/null || { echo "[deploy] node not found"; exit 1; }
 
