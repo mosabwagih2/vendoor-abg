@@ -67,7 +67,7 @@ async function abgAll(tx: Tx): Promise<string[]> {
 export async function refreshSla(tx: Tx, taskId: string, cfg?: WorkspaceConfig) {
   const c = cfg ?? (await getWorkspaceConfig());
   const t = await tx.task.findUniqueOrThrow({ where: { id: taskId } });
-  const spans = await tx.taskStatusSpan.findMany({ where: { taskId }, orderBy: { enteredAt: "asc" } });
+  const spans = await tx.taskStatusSpan.findMany({ where: { taskId }, orderBy: [{ enteredAt: "asc" }, { id: "asc" }] });
   const prio = (t.priority ?? t.suggestedPriority ?? "medium") as Priority;
   const target = c.targets[prio];
   const now = new Date();
@@ -428,7 +428,7 @@ export async function proposeCancel(actor: Actor, taskId: string, reason: string
 /** Undo the actor's own last status change within 10 seconds (PRD 9.5.3). */
 export async function undoLastTransition(actor: Actor, taskId: string) {
   return db.$transaction(async (tx) => {
-    const spans = await tx.taskStatusSpan.findMany({ where: { taskId }, orderBy: { enteredAt: "desc" }, take: 2 });
+    const spans = await tx.taskStatusSpan.findMany({ where: { taskId }, orderBy: [{ enteredAt: "desc" }, { id: "desc" }], take: 2 });
     const [current, prev] = spans;
     if (!current || !prev || current.actorId !== actor.id || Date.now() - current.enteredAt.getTime() > 10_000) {
       throw new AppError("conflict", "Too late to undo. Use the task actions instead.");

@@ -19,7 +19,7 @@ export default async function IncidentPage({ params }: { params: Promise<{ numbe
   const { number } = await params;
   const n = Number(number.replace(/^INC-/i, ""));
   if (!Number.isInteger(n)) notFound();
-  const incident = await db.incident.findUnique({ where: { number: n }, include: { timeline: { orderBy: { at: "asc" } } } });
+  const incident = await db.incident.findUnique({ where: { number: n }, include: { timeline: { orderBy: [{ at: "asc" }, { id: "asc" }] } } });
   if (!incident || incident.archivedAt) notFound();
   const t = await getTranslations("trouble");
   const authors = await db.member.findMany({ where: { id: { in: [...new Set(incident.timeline.map((e) => e.authorId))] } }, select: { id: true, name: true } });

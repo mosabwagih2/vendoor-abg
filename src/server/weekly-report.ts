@@ -75,7 +75,7 @@ export async function weeklySummary(startKey: string): Promise<WeeklySummary> {
   const ids = [...new Set(reopenEvents.map((e) => e.taskId).filter((x): x is string => !!x))];
   const [broken, waiting, abg] = await Promise.all([
     ids.length ? db.task.findMany({ where: { id: { in: ids } }, select: { key: true, title: true, reopenCount: true } }) : [],
-    db.task.findMany({ where: { archivedAt: null, status: "shipped" }, orderBy: { shippedAt: "asc" }, take: 8, select: { key: true } }),
+    db.task.findMany({ where: { archivedAt: null, status: "shipped" }, orderBy: { shippedAt: { sort: "asc", nulls: "last" } }, take: 8, select: { key: true } }),
     db.task.findMany({ where: { archivedAt: null, status: { in: ["triage", "planned", "in_progress", "reopened"] } }, select: { key: true, title: true, priority: true, suggestedPriority: true, dueAt: true }, take: 200 }),
   ]);
   const asks = [...abg]

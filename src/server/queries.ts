@@ -158,7 +158,7 @@ export function sortRows(rows: TaskRow[], order: TaskDisplay["order"]): TaskRow[
 
 export async function listTasks(f: TaskFilters, d: TaskDisplay, viewer: CurrentMember, take = 2000) {
   const where = await buildWhere(f, d, viewer);
-  const rows = await db.task.findMany({ where, select: taskRowSelect, take, orderBy: { updatedAt: "desc" } });
+  const rows = await db.task.findMany({ where, select: taskRowSelect, take, orderBy: [{ updatedAt: "desc" }, { id: "desc" }] });
   let out = await decorate(rows);
   if (f.unverified) out = out.filter((r) => r.unverified);
   return sortRows(out, d.order);
@@ -197,7 +197,7 @@ export async function waitingOnMe(viewer: CurrentMember) {
             ...(viewer.role === "abg_lead" ? [{ status: { in: ["planned", "reopened"] as TaskStatus[] }, assigneeId: null }] : []),
           ],
         };
-  const rows = await db.task.findMany({ where, select: taskRowSelect, take: 200, orderBy: { statusChangedAt: "asc" } });
+  const rows = await db.task.findMany({ where, select: taskRowSelect, take: 200, orderBy: [{ statusChangedAt: "asc" }, { id: "asc" }] });
   return decorate(rows);
 }
 

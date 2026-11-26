@@ -6,8 +6,9 @@ generator client {
   output   = "../src/generated/prisma"
 }
 
-// MySQL 8.0.16+ (or MariaDB 10.4+). Lists are JSON arrays (MySQL has no array columns); long text is @db.Text.
-// TEXT columns cannot take a plain default on MySQL, so their empty-string default is an expression,
+// MySQL 8.0.16+ (or MariaDB 10.4+). Lists are JSON arrays (MySQL has no array columns); long text is @db.MediumText
+// (TEXT holds only 64 KB: 50,000 Arabic characters or 20,000 emoji would not fit).
+// TEXT-type columns cannot take a plain default on MySQL, so their empty-string default is an expression,
 // written the way MySQL reports it back (_utf8mb4'') so `prisma migrate diff` sees no drift.
 datasource db {
   provider = "mysql"
@@ -133,7 +134,7 @@ enum HolidayCertainty {
 // ───────────────────────────── workspace & calendar ─────────────────────────────
 
 model Workspace {
-  id                        String   @id @default(uuid())
+  id                        String   @id @default(uuid(7))
   name                      String
   timezone                  String   @default("Africa/Cairo")
   workingDays               Json     @default("[6,0,1,2,3,4]") // 0 = Sunday; Saturday to Thursday, Friday off
@@ -155,7 +156,7 @@ model Workspace {
 }
 
 model SlaTarget {
-  id                   String    @id @default(uuid())
+  id                   String    @id @default(uuid(7))
   workspaceId          String
   priority             Priority
   firstResponseMinutes Int // working minutes
@@ -166,7 +167,7 @@ model SlaTarget {
 }
 
 model Holiday {
-  id          String           @id @default(uuid())
+  id          String           @id @default(uuid(7))
   workspaceId String
   date        DateTime         @db.Date
   name        String
@@ -178,7 +179,7 @@ model Holiday {
 
 /// Optional period with different working hours (e.g. Ramadan).
 model WorkSeason {
-  id          String    @id @default(uuid())
+  id          String    @id @default(uuid(7))
   workspaceId String
   name        String
   startDate   DateTime  @db.Date
@@ -189,7 +190,7 @@ model WorkSeason {
 }
 
 model Team {
-  id          String    @id @default(uuid())
+  id          String    @id @default(uuid(7))
   workspaceId String
   name        String
   side        TeamSide
@@ -203,11 +204,11 @@ model Team {
 
 /// A person. Also the Better Auth "user" model.
 model Member {
-  id            String       @id @default(uuid())
+  id            String       @id @default(uuid(7))
   name          String
   email         String       @unique @db.VarChar(255)
   emailVerified Boolean      @default(false)
-  image         String?      @db.Text
+  image         String?      @db.MediumText
   teamId        String
   handle        String       @unique
   role          Role
@@ -246,13 +247,13 @@ model Member {
 }
 
 model Session {
-  id        String   @id @default(uuid())
+  id        String   @id @default(uuid(7))
   expiresAt DateTime
   token     String   @unique
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   ipAddress String?  @db.VarChar(255)
-  userAgent String?  @db.Text
+  userAgent String?  @db.MediumText
   userId    String
   user      Member   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -261,18 +262,18 @@ model Session {
 }
 
 model Account {
-  id                    String    @id @default(uuid())
+  id                    String    @id @default(uuid(7))
   accountId             String    @db.VarChar(255)
   providerId            String
   userId                String
   user                  Member    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  accessToken           String?   @db.Text
-  refreshToken          String?   @db.Text
-  idToken               String?   @db.Text
+  accessToken           String?   @db.MediumText
+  refreshToken          String?   @db.MediumText
+  idToken               String?   @db.MediumText
   accessTokenExpiresAt  DateTime?
   refreshTokenExpiresAt DateTime?
-  scope                 String?   @db.Text
-  password              String?   @db.Text
+  scope                 String?   @db.MediumText
+  password              String?   @db.MediumText
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
 
@@ -281,9 +282,9 @@ model Account {
 }
 
 model Verification {
-  id         String   @id @default(uuid())
+  id         String   @id @default(uuid(7))
   identifier String   @db.VarChar(255)
-  value      String   @db.Text
+  value      String   @db.MediumText
   expiresAt  DateTime
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
@@ -293,7 +294,7 @@ model Verification {
 }
 
 model RateLimit {
-  id          String @id @default(uuid())
+  id          String @id @default(uuid(7))
   key         String @unique @db.VarChar(255)
   count       Int
   lastRequest BigInt
@@ -313,7 +314,7 @@ model NotificationPref {
 }
 
 model Invitation {
-  id          String    @id @default(uuid())
+  id          String    @id @default(uuid(7))
   email       String    @db.VarChar(255)
   name        String
   role        Role
@@ -328,11 +329,11 @@ model Invitation {
 // ───────────────────────────── projects ─────────────────────────────
 
 model Project {
-  id             String    @id @default(uuid())
+  id             String    @id @default(uuid(7))
   workspaceId    String
   key            String    @unique
   name           String
-  description    String?   @db.Text
+  description    String?   @db.MediumText
   health         Health    @default(on_track)
   vendoorLeadId  String?
   abgLeadId      String?
@@ -351,7 +352,7 @@ model Project {
 }
 
 model ProjectCategory {
-  id         String    @id @default(uuid())
+  id         String    @id @default(uuid(7))
   projectId  String
   name       String
   position   Int
@@ -364,7 +365,7 @@ model ProjectCategory {
 
 /// An extra label inside one of the five steps (Figma 5.1). Tasks keep their internal status; this only changes the name and colour people see.
 model CustomStatus {
-  id        String   @id @default(uuid())
+  id        String   @id @default(uuid(7))
   stepGroup String // request | processing | stuck | completed
   name      String
   color     String
@@ -376,12 +377,12 @@ model CustomStatus {
 model Task {
   customStatusId    String?
   customStatus      CustomStatus? @relation(fields: [customStatusId], references: [id], onDelete: SetNull)
-  id                String        @id @default(uuid())
+  id                String        @id @default(uuid(7))
   projectId         String
   number            Int
   key               String        @unique
   title             String        @db.VarChar(500)
-  description       String        @default(dbgenerated("(_utf8mb4\\'\\')")) @db.Text // Markdown
+  description       String        @default(dbgenerated("(_utf8mb4\\'\\')")) @db.MediumText // Markdown
   type              TaskType
   status            TaskStatus    @default(triage)
   previousStatus    TaskStatus?
@@ -395,15 +396,15 @@ model Task {
   parentId          String?
   currentReleaseId  String?
 
-  currentBehaviour  String?   @db.Text
-  expectedBehaviour String?   @db.Text
-  whyItMatters      String?   @db.Text
+  currentBehaviour  String?   @db.MediumText
+  expectedBehaviour String?   @db.MediumText
+  whyItMatters      String?   @db.MediumText
   howOften          HowOften?
   isOrderRelated    Boolean   @default(false)
   accounts          Json      @default("[]")
   orderCodes        Json      @default("[]")
 
-  decisionText        String?   @db.Text
+  decisionText        String?   @db.MediumText
   decisionUpdatedAt   DateTime?
   decisionUpdatedById String?
 
@@ -418,10 +419,10 @@ model Task {
   verifiedById          String?
   reopenCount           Int          @default(0)
   closeReason           CloseReason?
-  closeNote             String?      @db.Text
+  closeNote             String?      @db.MediumText
   closedAt              DateTime?
   cancelProposedById    String?
-  cancelProposedReason  String?      @db.Text
+  cancelProposedReason  String?      @db.MediumText
   occurrenceCount       Int          @default(0)
   attachmentCount       Int          @default(0)
   createdAt             DateTime     @default(now())
@@ -464,10 +465,10 @@ model TaskKeyAlias {
 }
 
 model DescriptionVersion {
-  id        String   @id @default(uuid())
+  id        String   @id @default(uuid(7))
   taskId    String
   authorId  String
-  body      String   @db.Text
+  body      String   @db.MediumText
   createdAt DateTime @default(now())
   task      Task     @relation(fields: [taskId], references: [id])
 
@@ -475,7 +476,7 @@ model DescriptionVersion {
 }
 
 model TaskStatusSpan {
-  id        String     @id @default(uuid())
+  id        String     @id @default(uuid(7))
   taskId    String
   status    TaskStatus
   enteredAt DateTime
@@ -500,13 +501,13 @@ model Follower {
 /// Account access for a task (login the team needs to reproduce or fix).
 /// The password is encrypted at rest (AES-256-GCM, key in CREDENTIALS_KEY).
 model AccessCredential {
-  id                String    @id @default(uuid())
+  id                String    @id @default(uuid(7))
   taskId            String
   label             String?   @db.VarChar(255)
   username          String    @db.VarChar(500)
-  passwordEncrypted String?   @db.Text
-  url               String?   @db.Text
-  note              String?   @db.Text
+  passwordEncrypted String?   @db.MediumText
+  url               String?   @db.MediumText
+  note              String?   @db.MediumText
   createdById       String
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
@@ -518,13 +519,13 @@ model AccessCredential {
 }
 
 model Occurrence {
-  id               String       @id @default(uuid())
+  id               String       @id @default(uuid(7))
   taskId           String
   reportedById     String
   accounts         Json         @default("[]")
   orderCodes       Json         @default("[]")
   happenedAt       DateTime
-  note             String?      @db.Text
+  note             String?      @db.MediumText
   mergedFromTaskId String?
   createdAt        DateTime     @default(now())
   updatedAt        DateTime     @updatedAt
@@ -537,11 +538,11 @@ model Occurrence {
 }
 
 model Comment {
-  id          String       @id @default(uuid())
+  id          String       @id @default(uuid(7))
   taskId      String
   authorId    String
   kind        CommentKind  @default(comment)
-  body        String       @db.Text
+  body        String       @db.MediumText
   isInternal  Boolean      @default(false)
   editedAt    DateTime?
   createdAt   DateTime     @default(now())
@@ -567,7 +568,7 @@ model Reaction {
 }
 
 model Attachment {
-  id              String          @id @default(uuid())
+  id              String          @id @default(uuid(7))
   taskId          String?
   commentId       String?
   occurrenceId    String?
@@ -599,7 +600,7 @@ model Attachment {
 }
 
 model TaskRelation {
-  id          String       @id @default(uuid())
+  id          String       @id @default(uuid(7))
   fromTaskId  String
   toTaskId    String
   kind        RelationKind
@@ -614,17 +615,17 @@ model TaskRelation {
 // ───────────────────────────── releases ─────────────────────────────
 
 model Release {
-  id             String        @id @default(uuid())
+  id             String        @id @default(uuid(7))
   number         String        @unique
   state          ReleaseState
   type           ReleaseType
   targetDate     DateTime?
   releasedAt     DateTime?
-  notes          String        @default(dbgenerated("(_utf8mb4\\'\\')")) @db.Text
+  notes          String        @default(dbgenerated("(_utf8mb4\\'\\')")) @db.MediumText
   deployedById   String?
-  deployNote     String?       @db.Text
+  deployNote     String?       @db.MediumText
   rolledBackAt   DateTime?
-  rollbackReason String?       @db.Text
+  rollbackReason String?       @db.MediumText
   createdById    String
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
@@ -648,19 +649,19 @@ model ReleaseTask {
 // ───────────────────────────── phase 2 tables (UI later) ─────────────────────────────
 
 model Incident {
-  id                 String                  @id @default(uuid())
+  id                 String                  @id @default(uuid(7))
   number             Int                     @unique
   title              String                  @db.VarChar(500)
-  scope              String                  @db.Text
+  scope              String                  @db.MediumText
   state              IncidentState
   startedAt          DateTime
   resolvedAt         DateTime?
-  impact             String?                 @db.Text
-  rootCause          String?                 @db.Text
-  summary            String?                 @db.Text
-  resolution         String?                 @db.Text
+  impact             String?                 @db.MediumText
+  rootCause          String?                 @db.MediumText
+  summary            String?                 @db.MediumText
+  resolution         String?                 @db.MediumText
   followUpTaskId     String?
-  followUpNoneReason String?                 @db.Text
+  followUpNoneReason String?                 @db.MediumText
   openedById         String
   closedAt           DateTime?
   createdAt          DateTime                @default(now())
@@ -671,22 +672,22 @@ model Incident {
 }
 
 model IncidentTimelineEntry {
-  id         String         @id @default(uuid())
+  id         String         @id @default(uuid(7))
   incidentId String
   authorId   String
   state      IncidentState?
-  body       String         @db.Text
+  body       String         @db.MediumText
   kind       String         @default("update") // reported | alert_sent | acknowledged | status | update | silence | resolved
   at         DateTime       @default(now())
   incident   Incident       @relation(fields: [incidentId], references: [id])
 }
 
 model ProjectUpdate {
-  id          String   @id @default(uuid())
+  id          String   @id @default(uuid(7))
   projectId   String
   authorId    String
   health      Health
-  body        String   @db.Text
+  body        String   @db.MediumText
   periodStart DateTime @db.Date
   periodEnd   DateTime @db.Date
   createdAt   DateTime @default(now())
@@ -697,7 +698,7 @@ model ProjectUpdate {
 // ───────────────────────────── activity, notifications, views ─────────────────────────────
 
 model ActivityEvent {
-  id            String         @id @default(uuid())
+  id            String         @id @default(uuid(7))
   actorId       String?
   subjectType   String
   subjectId     String
@@ -718,7 +719,7 @@ model ActivityEvent {
 }
 
 model Notification {
-  id           String        @id @default(uuid())
+  id           String        @id @default(uuid(7))
   memberId     String
   eventId      String
   taskId       String?
@@ -735,11 +736,11 @@ model Notification {
 }
 
 model SavedView {
-  id         String    @id @default(uuid())
+  id         String    @id @default(uuid(7))
   ownerId    String?
   isShared   Boolean   @default(false)
   name       String
-  query      String    @db.Text // URL query string of filters + display
+  query      String    @db.MediumText // URL query string of filters + display
   position   Int       @default(0)
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
@@ -749,12 +750,12 @@ model SavedView {
 
 /// Simple durable job queue (email, media processing, reminders). Polled by the worker.
 model Job {
-  id        String    @id @default(uuid())
+  id        String    @id @default(uuid(7))
   kind      String
   payload   Json
   runAt     DateTime  @default(now())
   attempts  Int       @default(0)
-  lastError String?   @db.Text
+  lastError String?   @db.MediumText
   doneAt    DateTime?
   createdAt DateTime  @default(now())
 

@@ -21,7 +21,7 @@ export default async function TroublePage() {
   await requireMember();
   const t = await getTranslations("trouble");
   const since = daysAgo(60);
-  const incidents = await db.incident.findMany({ where: { archivedAt: null, startedAt: { gte: since } }, orderBy: { startedAt: "desc" } });
+  const incidents = await db.incident.findMany({ where: { archivedAt: null, startedAt: { gte: since } }, orderBy: [{ startedAt: "desc" }, { id: "desc" }] });
   const open = incidents.filter((i) => i.state !== "resolved");
   return (
     <>

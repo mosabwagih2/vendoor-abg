@@ -19,7 +19,7 @@ export interface DrawerItem {
 export async function loadDrawer(me: CurrentMember, take = 60): Promise<DrawerItem[]> {
   const rows = await db.notification.findMany({
     where: { memberId: me.id, channel: "in_app" },
-    orderBy: { createdAt: "desc" },
+    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
     take,
     include: { event: { select: { actorId: true, subjectType: true, subjectId: true, meta: true } } },
   });

@@ -1,9 +1,10 @@
 -- MySQL schema for the Vendoor × ABG tracker (replaces the PostgreSQL migration history on this branch).
--- Generated with `prisma migrate diff --from-empty`, then edited by hand where Prisma cannot express MySQL:
+-- Built by scripts/mysql-init-migration.py from `prisma migrate diff --from-empty`, plus what Prisma cannot express:
 --   * TEXT and JSON columns take their defaults as expressions, e.g. DEFAULT (''): MySQL 8 refuses plain defaults on them.
 --   * Lists (accounts, order codes, working days) are JSON arrays; MySQL has no array columns.
---   * Secret lookups (session token, verification, rate limit key, invitation hash) compare case-sensitively (utf8mb4_bin),
---     as they did on PostgreSQL. Everything else uses utf8mb4_unicode_ci, so text search ignores case like ILIKE did.
+--   * Exact comparison (utf8mb4_bin) where PostgreSQL compared exactly and it matters: secret lookups (session token,
+--     verification, rate limit key, invitation hash) and reaction emoji (utf8mb4_unicode_ci treats all emoji as equal).
+--     Everything else uses utf8mb4_unicode_ci, so text search ignores case like ILIKE did.
 --   * The "one owner per attachment" check from the PostgreSQL search migration is kept below.
 -- Needs MySQL 8.0.16+ (or MariaDB 10.4+) for expression defaults and CHECK constraints.
 
@@ -80,7 +81,7 @@ CREATE TABLE `member` (
     `name` VARCHAR(191) NOT NULL,
     `email` VARCHAR(255) NOT NULL,
     `emailVerified` BOOLEAN NOT NULL DEFAULT false,
-    `image` TEXT NULL,
+    `image` MEDIUMTEXT NULL,
     `teamId` VARCHAR(191) NOT NULL,
     `handle` VARCHAR(191) NOT NULL,
     `role` ENUM('owner', 'admin', 'requester', 'abg_lead', 'abg_member') NOT NULL,
@@ -105,7 +106,7 @@ CREATE TABLE `session` (
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
     `ipAddress` VARCHAR(255) NULL,
-    `userAgent` TEXT NULL,
+    `userAgent` MEDIUMTEXT NULL,
     `userId` VARCHAR(191) NOT NULL,
 
     UNIQUE INDEX `session_token_key`(`token`),
@@ -119,13 +120,13 @@ CREATE TABLE `account` (
     `accountId` VARCHAR(255) NOT NULL,
     `providerId` VARCHAR(191) NOT NULL,
     `userId` VARCHAR(191) NOT NULL,
-    `accessToken` TEXT NULL,
-    `refreshToken` TEXT NULL,
-    `idToken` TEXT NULL,
+    `accessToken` MEDIUMTEXT NULL,
+    `refreshToken` MEDIUMTEXT NULL,
+    `idToken` MEDIUMTEXT NULL,
     `accessTokenExpiresAt` DATETIME(3) NULL,
     `refreshTokenExpiresAt` DATETIME(3) NULL,
-    `scope` TEXT NULL,
-    `password` TEXT NULL,
+    `scope` MEDIUMTEXT NULL,
+    `password` MEDIUMTEXT NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
 
@@ -137,7 +138,7 @@ CREATE TABLE `account` (
 CREATE TABLE `verification` (
     `id` VARCHAR(191) NOT NULL,
     `identifier` VARCHAR(255) NOT NULL,
-    `value` TEXT NOT NULL,
+    `value` MEDIUMTEXT NOT NULL,
     `expiresAt` DATETIME(3) NOT NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
@@ -191,7 +192,7 @@ CREATE TABLE `Project` (
     `workspaceId` VARCHAR(191) NOT NULL,
     `key` VARCHAR(191) NOT NULL,
     `name` VARCHAR(191) NOT NULL,
-    `description` TEXT NULL,
+    `description` MEDIUMTEXT NULL,
     `health` ENUM('on_track', 'at_risk', 'off_track') NOT NULL DEFAULT 'on_track',
     `vendoorLeadId` VARCHAR(191) NULL,
     `abgLeadId` VARCHAR(191) NULL,
@@ -236,7 +237,7 @@ CREATE TABLE `Task` (
     `number` INTEGER NOT NULL,
     `key` VARCHAR(191) NOT NULL,
     `title` VARCHAR(500) NOT NULL,
-    `description` TEXT NOT NULL DEFAULT (''),
+    `description` MEDIUMTEXT NOT NULL DEFAULT (''),
     `type` ENUM('bug', 'change', 'feature', 'question', 'ops') NOT NULL,
     `status` ENUM('triage', 'needs_info', 'planned', 'in_progress', 'shipped', 'reopened', 'done', 'closed') NOT NULL DEFAULT 'triage',
     `previousStatus` ENUM('triage', 'needs_info', 'planned', 'in_progress', 'shipped', 'reopened', 'done', 'closed') NULL,
@@ -249,14 +250,14 @@ CREATE TABLE `Task` (
     `assigneeId` VARCHAR(191) NULL,
     `parentId` VARCHAR(191) NULL,
     `currentReleaseId` VARCHAR(191) NULL,
-    `currentBehaviour` TEXT NULL,
-    `expectedBehaviour` TEXT NULL,
-    `whyItMatters` TEXT NULL,
+    `currentBehaviour` MEDIUMTEXT NULL,
+    `expectedBehaviour` MEDIUMTEXT NULL,
+    `whyItMatters` MEDIUMTEXT NULL,
     `howOften` ENUM('once', 'sometimes', 'always') NULL,
     `isOrderRelated` BOOLEAN NOT NULL DEFAULT false,
     `accounts` JSON NOT NULL DEFAULT (JSON_ARRAY()),
     `orderCodes` JSON NOT NULL DEFAULT (JSON_ARRAY()),
-    `decisionText` TEXT NULL,
+    `decisionText` MEDIUMTEXT NULL,
     `decisionUpdatedAt` DATETIME(3) NULL,
     `decisionUpdatedById` VARCHAR(191) NULL,
     `dueAt` DATETIME(3) NULL,
@@ -270,10 +271,10 @@ CREATE TABLE `Task` (
     `verifiedById` VARCHAR(191) NULL,
     `reopenCount` INTEGER NOT NULL DEFAULT 0,
     `closeReason` ENUM('duplicate', 'wont_do', 'canceled') NULL,
-    `closeNote` TEXT NULL,
+    `closeNote` MEDIUMTEXT NULL,
     `closedAt` DATETIME(3) NULL,
     `cancelProposedById` VARCHAR(191) NULL,
-    `cancelProposedReason` TEXT NULL,
+    `cancelProposedReason` MEDIUMTEXT NULL,
     `occurrenceCount` INTEGER NOT NULL DEFAULT 0,
     `attachmentCount` INTEGER NOT NULL DEFAULT 0,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
@@ -305,7 +306,7 @@ CREATE TABLE `DescriptionVersion` (
     `id` VARCHAR(191) NOT NULL,
     `taskId` VARCHAR(191) NOT NULL,
     `authorId` VARCHAR(191) NOT NULL,
-    `body` TEXT NOT NULL,
+    `body` MEDIUMTEXT NOT NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
     INDEX `DescriptionVersion_taskId_createdAt_idx`(`taskId`, `createdAt`),
@@ -341,9 +342,9 @@ CREATE TABLE `AccessCredential` (
     `taskId` VARCHAR(191) NOT NULL,
     `label` VARCHAR(255) NULL,
     `username` VARCHAR(500) NOT NULL,
-    `passwordEncrypted` TEXT NULL,
-    `url` TEXT NULL,
-    `note` TEXT NULL,
+    `passwordEncrypted` MEDIUMTEXT NULL,
+    `url` MEDIUMTEXT NULL,
+    `note` MEDIUMTEXT NULL,
     `createdById` VARCHAR(191) NOT NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
@@ -361,7 +362,7 @@ CREATE TABLE `Occurrence` (
     `accounts` JSON NOT NULL DEFAULT (JSON_ARRAY()),
     `orderCodes` JSON NOT NULL DEFAULT (JSON_ARRAY()),
     `happenedAt` DATETIME(3) NOT NULL,
-    `note` TEXT NULL,
+    `note` MEDIUMTEXT NULL,
     `mergedFromTaskId` VARCHAR(191) NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
@@ -377,7 +378,7 @@ CREATE TABLE `Comment` (
     `taskId` VARCHAR(191) NOT NULL,
     `authorId` VARCHAR(191) NOT NULL,
     `kind` ENUM('comment', 'ask_info', 'answer', 'reopen_note', 'status_request', 'close_note', 'verify_note') NOT NULL DEFAULT 'comment',
-    `body` TEXT NOT NULL,
+    `body` MEDIUMTEXT NOT NULL,
     `isInternal` BOOLEAN NOT NULL DEFAULT false,
     `editedAt` DATETIME(3) NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
@@ -449,11 +450,11 @@ CREATE TABLE `Release` (
     `type` ENUM('planned', 'hotfix') NOT NULL,
     `targetDate` DATETIME(3) NULL,
     `releasedAt` DATETIME(3) NULL,
-    `notes` TEXT NOT NULL DEFAULT (''),
+    `notes` MEDIUMTEXT NOT NULL DEFAULT (''),
     `deployedById` VARCHAR(191) NULL,
-    `deployNote` TEXT NULL,
+    `deployNote` MEDIUMTEXT NULL,
     `rolledBackAt` DATETIME(3) NULL,
-    `rollbackReason` TEXT NULL,
+    `rollbackReason` MEDIUMTEXT NULL,
     `createdById` VARCHAR(191) NOT NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
@@ -477,16 +478,16 @@ CREATE TABLE `Incident` (
     `id` VARCHAR(191) NOT NULL,
     `number` INTEGER NOT NULL,
     `title` VARCHAR(500) NOT NULL,
-    `scope` TEXT NOT NULL,
+    `scope` MEDIUMTEXT NOT NULL,
     `state` ENUM('investigating', 'identified', 'monitoring', 'resolved') NOT NULL,
     `startedAt` DATETIME(3) NOT NULL,
     `resolvedAt` DATETIME(3) NULL,
-    `impact` TEXT NULL,
-    `rootCause` TEXT NULL,
-    `summary` TEXT NULL,
-    `resolution` TEXT NULL,
+    `impact` MEDIUMTEXT NULL,
+    `rootCause` MEDIUMTEXT NULL,
+    `summary` MEDIUMTEXT NULL,
+    `resolution` MEDIUMTEXT NULL,
     `followUpTaskId` VARCHAR(191) NULL,
-    `followUpNoneReason` TEXT NULL,
+    `followUpNoneReason` MEDIUMTEXT NULL,
     `openedById` VARCHAR(191) NOT NULL,
     `closedAt` DATETIME(3) NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
@@ -503,7 +504,7 @@ CREATE TABLE `IncidentTimelineEntry` (
     `incidentId` VARCHAR(191) NOT NULL,
     `authorId` VARCHAR(191) NOT NULL,
     `state` ENUM('investigating', 'identified', 'monitoring', 'resolved') NULL,
-    `body` TEXT NOT NULL,
+    `body` MEDIUMTEXT NOT NULL,
     `kind` VARCHAR(191) NOT NULL DEFAULT 'update',
     `at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
@@ -516,7 +517,7 @@ CREATE TABLE `ProjectUpdate` (
     `projectId` VARCHAR(191) NOT NULL,
     `authorId` VARCHAR(191) NOT NULL,
     `health` ENUM('on_track', 'at_risk', 'off_track') NOT NULL,
-    `body` TEXT NOT NULL,
+    `body` MEDIUMTEXT NOT NULL,
     `periodStart` DATE NOT NULL,
     `periodEnd` DATE NOT NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
@@ -569,7 +570,7 @@ CREATE TABLE `SavedView` (
     `ownerId` VARCHAR(191) NULL,
     `isShared` BOOLEAN NOT NULL DEFAULT false,
     `name` VARCHAR(191) NOT NULL,
-    `query` TEXT NOT NULL,
+    `query` MEDIUMTEXT NOT NULL,
     `position` INTEGER NOT NULL DEFAULT 0,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
@@ -585,7 +586,7 @@ CREATE TABLE `Job` (
     `payload` JSON NOT NULL,
     `runAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `attempts` INTEGER NOT NULL DEFAULT 0,
-    `lastError` TEXT NULL,
+    `lastError` MEDIUMTEXT NULL,
     `doneAt` DATETIME(3) NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
@@ -743,12 +744,13 @@ ALTER TABLE `Notification` ADD CONSTRAINT `Notification_eventId_fkey` FOREIGN KE
 -- AddForeignKey
 ALTER TABLE `SavedView` ADD CONSTRAINT `SavedView_ownerId_fkey` FOREIGN KEY (`ownerId`) REFERENCES `member`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
--- Secret lookups compare exactly, as on PostgreSQL.
+-- Exact comparison where PostgreSQL compared exactly.
 ALTER TABLE `session` MODIFY `token` VARCHAR(191) NOT NULL COLLATE utf8mb4_bin;
 ALTER TABLE `verification` MODIFY `identifier` VARCHAR(255) NOT NULL COLLATE utf8mb4_bin;
-ALTER TABLE `verification` MODIFY `value` TEXT NOT NULL COLLATE utf8mb4_bin;
+ALTER TABLE `verification` MODIFY `value` MEDIUMTEXT NOT NULL COLLATE utf8mb4_bin;
 ALTER TABLE `rate_limit` MODIFY `key` VARCHAR(255) NOT NULL COLLATE utf8mb4_bin;
 ALTER TABLE `Invitation` MODIFY `tokenHash` VARCHAR(191) NOT NULL COLLATE utf8mb4_bin;
+ALTER TABLE `Reaction` MODIFY `emoji` VARCHAR(191) NOT NULL COLLATE utf8mb4_bin;
 
 -- An attachment belongs to exactly one of: task, comment, occurrence, incident.
 ALTER TABLE `Attachment` ADD CONSTRAINT `attachment_one_owner` CHECK (

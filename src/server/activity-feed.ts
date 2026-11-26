@@ -20,7 +20,7 @@ export interface FeedItem {
 export async function activityFeed(viewer: CurrentMember, where: Prisma.ActivityEventWhereInput, take = 15): Promise<FeedItem[]> {
   const rows = await db.activityEvent.findMany({
     where: { ...where, ...(viewer.side === "vendoor" ? { isInternal: false } : {}) },
-    orderBy: { at: "desc" },
+    orderBy: [{ at: "desc" }, { id: "desc" }],
     take,
     include: { actor: { select: { name: true } } },
   });

@@ -88,7 +88,7 @@ async function verifyReminders() {
 }
 
 async function tick() {
-  const jobs = await db.job.findMany({ where: { doneAt: null, runAt: { lte: new Date() }, attempts: { lt: 5 } }, orderBy: { runAt: "asc" }, take: 5 });
+  const jobs = await db.job.findMany({ where: { doneAt: null, runAt: { lte: new Date() }, attempts: { lt: 5 } }, orderBy: [{ runAt: "asc" }, { id: "asc" }], take: 5 });
   for (const j of jobs) {
     try {
       const p = j.payload as Record<string, string>;

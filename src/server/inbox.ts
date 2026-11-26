@@ -24,7 +24,7 @@ function involvedWhere(me: CurrentMember): Prisma.TaskWhereInput {
 /** Everything the Inbox list needs, newest activity first. */
 export async function loadInbox(me: CurrentMember): Promise<InboxRow[]> {
   const [tasks, unread] = await Promise.all([
-    db.task.findMany({ where: involvedWhere(me), select: taskRowSelect, orderBy: { statusChangedAt: "desc" }, take: 300 }),
+    db.task.findMany({ where: involvedWhere(me), select: taskRowSelect, orderBy: [{ statusChangedAt: "desc" }, { id: "desc" }], take: 300 }),
     db.notification.findMany({ where: { memberId: me.id, channel: "in_app", readAt: null, taskId: { not: null } }, select: { taskId: true } }),
   ]);
   const unreadIds = new Set(unread.map((n) => n.taskId));

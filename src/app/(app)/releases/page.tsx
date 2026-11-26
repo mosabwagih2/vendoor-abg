@@ -12,7 +12,8 @@ export default async function ReleasesPage() {
   const [releases, candidates, number] = await Promise.all([
     db.release.findMany({
       where: { archivedAt: null },
-      orderBy: [{ state: "desc" }, { releasedAt: "desc" }, { targetDate: "asc" }],
+      // nulls as PostgreSQL ordered them (MySQL puts NULL first on asc and last on desc).
+      orderBy: [{ state: "desc" }, { releasedAt: { sort: "desc", nulls: "first" } }, { targetDate: { sort: "asc", nulls: "last" } }],
       include: { tasks: { include: { task: { select: { status: true, statusChangedAt: true } } } } },
     }),
     me.side === "abg"
