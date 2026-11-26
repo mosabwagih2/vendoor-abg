@@ -4,7 +4,8 @@ import { recordEvent } from "../activity";
 import { notify } from "../notify";
 import { AppError } from "../errors";
 import type { CurrentMember } from "../session";
-import { closingProblems, type IncidentState } from "@/domain/incident";
+import { closingProblems, incidentTitle, type IncidentKind, type IncidentState } from "@/domain/incident";
+import { createAttachment, type AttachmentRef } from "./tasks";
 
 /** Only ABG works an incident. Vendoor reports it and reads the timeline. */
 function requireAbg(me: CurrentMember) {
@@ -16,13 +17,13 @@ async function abgIds(tx: Pick<typeof db, "member">) {
   return rows.map((m) => m.id);
 }
 
-export async function openIncident(me: CurrentMember, data: { scope: string; title: string; details?: string; startedAt?: string | null }) {
+export async function openIncident(me: CurrentMember, data: { kind: IncidentKind; scope: string; details?: string; startedAt?: string | null; alert: boolean; attachments?: AttachmentRef[] }) {
   return db.$transaction(async (tx) => {
     const last = await tx.incident.findFirst({ orderBy: { number: "desc" } });
     const incident = await tx.incident.create({
       data: {
         number: (last?.number ?? 0) + 1,
-        title: data.title || "System is down",
+        title: incidentTitle(data.kind),
         scope: data.scope,
         state: "investigating",
         startedAt: data.startedAt ? new Date(data.startedAt) : new Date(),
@@ -31,19 +32,21 @@ export async function openIncident(me: CurrentMember, data: { scope: string; tit
         timeline: {
           create: [
             { authorId: me.id, kind: "reported", state: "investigating", body: [data.scope, data.details].filter(Boolean).join(". ") },
-            { authorId: me.id, kind: "alert_sent", body: "ABG alerted" },
+            ...(data.alert ? [{ authorId: me.id, kind: "alert_sent", body: "ABG alerted" }] : []),
           ],
         },
       },
     });
+    for (const a of data.attachments ?? []) await createAttachment(tx, me.id, a, { incidentId: incident.id });
     const ev = await recordEvent(tx, { actorId: me.id, subjectType: "incident", subjectId: incident.id, verb: "incident_opened", meta: { number: incident.number } });
+    if (!data.alert) return incident;
     const everyone = await tx.member.findMany({ where: { status: { not: "deactivated" } }, select: { id: true } });
     await notify(tx, {
       eventId: ev.id,
       kind: "task.new_request",
       actorId: me.id,
       recipients: everyone.map((m) => m.id),
-      email: { subject: `[INC-${incident.number}] System is down`, line: `${me.name} reported: ${data.scope}. ${data.details ?? ""}`, actionLabel: "Open tracker", path: `/trouble/${incident.number}` },
+      email: { subject: `[INC-${incident.number}] ${incident.title}`, line: `${me.name} reported: ${data.scope}. ${data.details ?? ""}`, actionLabel: "Open tracker", path: `/trouble/${incident.number}` },
     });
     return incident;
   });

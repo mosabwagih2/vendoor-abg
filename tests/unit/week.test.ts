@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { addDays, deltaVs, isWorkDay, nextWeek, previousWeek, weekRange, weekStart } from "@/domain/week";
+import { addDays, deltaVs, isoWeek, isWorkDay, nextWeek, previousWeek, weekRange, weekStart } from "@/domain/week";
 
 describe("work week (Saturday to Thursday)", () => {
   // 2026-11-21 is a Saturday.
@@ -33,4 +33,12 @@ describe("deltaVs", () => {
   it("handles a drop", () => expect(deltaVs(5, 10)).toEqual({ diff: -5, pct: -50, direction: "down" }));
   it("has no percent against zero", () => expect(deltaVs(3, 0)).toEqual({ diff: 3, pct: null, direction: "up" }));
   it("is same when equal", () => expect(deltaVs(0, 0).direction).toBe("same"));
+});
+
+describe("isoWeek", () => {
+  it("numbers the week by its Thursday", () => {
+    expect(isoWeek("2026-11-21")).toBe(48); // Thursday Nov 26 is in ISO week 48
+    expect(isoWeek("2026-11-25")).toBe(48);
+  });
+  it("is week 1 when the Thursday is January 1", () => expect(isoWeek("2025-12-27")).toBe(1));
 });

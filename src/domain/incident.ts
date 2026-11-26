@@ -38,3 +38,32 @@ export function formatDuration(minutes: number): string {
   const h = Math.floor((minutes % 1440) / 60);
   return `${Math.floor(minutes / 1440)} d${h ? ` ${h} h` : ""}`;
 }
+
+// ───────────── reporting a problem (Figma 7.3) ─────────────
+
+export const INCIDENT_KINDS = ["down", "slow", "other"] as const;
+export type IncidentKind = (typeof INCIDENT_KINDS)[number];
+export const INCIDENT_AFFECTED = ["everyone", "vendoor", "one"] as const;
+export type IncidentAffected = (typeof INCIDENT_AFFECTED)[number];
+
+/** The incident title shown on the banner and the Trouble list. */
+export function incidentTitle(kind: IncidentKind): string {
+  return kind === "down" ? "System is down" : kind === "slow" ? "System is slow" : "System problem";
+}
+
+/** Joins a link onto the end of the description, one per line, without duplicating it. */
+export function appendLink(text: string, url: string): string {
+  const link = url.trim();
+  if (!link || text.includes(link)) return text;
+  return text.trim() ? `${text.trim()}\n${link}` : link;
+}
+
+/** A link must be http(s). Anything else is dropped so the timeline never carries javascript: URLs. */
+export function isSafeLink(url: string): boolean {
+  try {
+    const u = new URL(url.trim());
+    return u.protocol === "https:" || u.protocol === "http:";
+  } catch {
+    return false;
+  }
+}

@@ -95,4 +95,42 @@ test.describe("Phase 1 main flows", () => {
     await yara.getByRole("button", { name: "Move to Account access" }).click();
     await expect(yara.getByPlaceholder(/Write a comment/)).toHaveValue(/\[see Account access\]/);
   });
+
+  test("report a system problem: banner shows, ABG closes it with Summary, Impact and Resolution", async ({ browser }) => {
+    const yara = await signIn(browser, YARA);
+    await yara.getByRole("button", { name: "New request" }).first().click();
+    await yara.getByRole("dialog").getByRole("button", { name: /System problem/ }).click();
+    await yara.getByRole("radio", { name: /System is slow/ }).click();
+    await yara.getByLabel("What do you see?").fill("Saving an order takes 2-3 minutes.");
+    await yara.getByRole("button", { name: "Report problem" }).click();
+    await expect(yara.getByText(/INC-\d+ opened/)).toBeVisible();
+    await expect(yara.getByRole("status").filter({ hasText: "System is slow" })).toBeVisible();
+
+    const lead = await signIn(browser, ZA8LOUL);
+    await lead.goto("/trouble");
+    await lead.locator('a[href^="/trouble/"]').first().click();
+    await lead.getByRole("button", { name: "Mark as fixed" }).click();
+    const dlg = lead.getByRole("dialog");
+    await expect(dlg.getByRole("button", { name: "Mark as fixed" })).toBeDisabled(); // all three parts are required
+    await dlg.getByLabel("Summary").fill("Database was slow");
+    await dlg.getByLabel("Impact").fill("Orders took minutes");
+    await dlg.getByLabel("Resolution").fill("Added an index");
+    await dlg.getByRole("button", { name: "Mark as fixed" }).click();
+    await expect(lead.getByText("Incident closed.")).toBeVisible();
+  });
+
+  test("weekly report: share link opens without signing in, a tampered link does not", async ({ browser }) => {
+    const lead = await signIn(browser, ZA8LOUL);
+    await lead.context().grantPermissions(["clipboard-read", "clipboard-write"]);
+    await lead.goto("/reports/weekly");
+    await lead.getByRole("button", { name: "Send report" }).click();
+    await lead.getByRole("radio", { name: /Copy a link/ }).click();
+    await lead.getByRole("dialog").getByRole("button", { name: "Copy link" }).click();
+    await expect(lead.getByText(/Link copied/)).toBeVisible();
+    const url = await lead.evaluate(() => navigator.clipboard.readText());
+    const anon = await (await browser.newContext()).newPage();
+    expect((await anon.goto(url))!.status()).toBe(200);
+    await expect(anon.getByRole("heading", { name: "Weekly report" })).toBeVisible();
+    expect((await anon.goto(url.slice(0, -3) + "xyz"))!.status()).toBe(404);
+  });
 });

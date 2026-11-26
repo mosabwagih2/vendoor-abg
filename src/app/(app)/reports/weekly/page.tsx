@@ -2,6 +2,8 @@ import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight, Minus } from "lucide-react";
 import { requireMember } from "@/server/session";
+import { SendReportDialog } from "./send-report-dialog";
+import { weekRangeLabel, weekTitle } from "@/domain/weekly-text";
 import { PageHeader } from "@/components/layout/page-header";
 import { weeklyReport, type WeekTotals } from "@/server/weekly-report";
 import { getWorkspaceConfig } from "@/server/calendar";
@@ -50,6 +52,7 @@ export default async function WeeklyReportPage({ searchParams }: { searchParams:
             <ChevronRight size={16} aria-hidden />
           </Link>
         </nav>
+        <SendReportDialog week={start} title={weekTitle(start)} range={weekRangeLabel(r.week.start, r.week.end)} />
       </PageHeader>
       <div className="mx-auto max-w-5xl space-y-4 p-4 md:p-6">
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">

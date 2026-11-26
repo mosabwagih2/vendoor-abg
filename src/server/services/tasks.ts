@@ -205,7 +205,7 @@ function dedupe(a?: string[]): string[] {
   return [...new Set((a ?? []).map((s) => s.trim()).filter(Boolean))];
 }
 
-export async function createAttachment(tx: Tx, uploaderId: string, a: AttachmentRef, owner: { taskId?: string; commentId?: string; occurrenceId?: string }) {
+export async function createAttachment(tx: Tx, uploaderId: string, a: AttachmentRef, owner: { taskId?: string; commentId?: string; occurrenceId?: string; incidentId?: string }) {
   // Keys are minted per uploader by /api/uploads; refuse keys that belong to someone else.
   if (!a.key.startsWith(`uploads/${uploaderId}/`)) throw new AppError("forbidden", "attachment");
   const isMedia = a.mime.startsWith("audio/") || a.mime.startsWith("video/") || /\.(opus|ogg|mov|m4a|webm)$/i.test(a.fileName);

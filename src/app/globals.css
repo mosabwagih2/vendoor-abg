@@ -209,3 +209,20 @@ body {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Download PDF = print: hide the app frame so only the report is printed. */
+@media print {
+  nav,
+  header,
+  [role="dialog"],
+  [data-sonner-toaster] {
+    display: none !important;
+  }
+  html,
+  body,
+  #main,
+  .h-dvh {
+    height: auto !important;
+    overflow: visible !important;
+  }
+}

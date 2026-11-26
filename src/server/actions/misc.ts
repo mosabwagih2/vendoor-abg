@@ -10,6 +10,11 @@ import * as rel from "../services/releases";
 import * as inc from "../services/incidents";
 import { loadDrawer } from "../notifications";
 import { can } from "@/domain/policy";
+import { weekStart } from "@/domain/week";
+import { weeklyText, weekTitle } from "@/domain/weekly-text";
+import { weeklySummary } from "../weekly-report";
+import { createShareToken } from "../report-share";
+import { sendEmail } from "../email";
 import { statusGroup } from "@/domain/status-display";
 import type { TaskStatus } from "@/domain/types";
 
@@ -102,6 +107,41 @@ export async function searchPaletteAction(q: string, recent: string[] = []) {
   });
 }
 
+const weekKey = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
+
+/** Plain text of the weekly report, for the share dialog preview and "Copy for WhatsApp". */
+export async function weeklyTextAction(week: string) {
+  return runAction(async () => {
+    await requireMember();
+    return weeklyText(await weeklySummary(weekStart(weekKey.parse(week))));
+  });
+}
+
+/** "Copy a link": a public read-only link to this week's report, valid for 7 days. */
+export async function weeklyLinkAction(week: string) {
+  return runAction(async () => {
+    const me = await requireMember();
+    if (me.side !== "abg" && !["owner", "admin"].includes(me.role)) throw new AppError("forbidden");
+    return { url: `${process.env.APP_URL ?? "http://localhost:3000"}/shared/weekly/${createShareToken(weekStart(weekKey.parse(week)))}` };
+  });
+}
+
+/** "Send to ABG by email": the report text to every active ABG lead, with a link to the full report. */
+export async function weeklyEmailAction(week: string) {
+  return runAction(async () => {
+    const me = await requireMember();
+    if (me.side !== "abg" && !["owner", "admin"].includes(me.role)) throw new AppError("forbidden");
+    const start = weekStart(weekKey.parse(week));
+    const [text, leads] = await Promise.all([
+      weeklyText(await weeklySummary(start)),
+      db.member.findMany({ where: { status: "active", role: "abg_lead" }, select: { email: true } }),
+    ]);
+    const url = `${process.env.APP_URL ?? "http://localhost:3000"}/shared/weekly/${createShareToken(start)}`;
+    for (const l of leads) await sendEmail({ to: l.email, subject: `Weekly report · ${weekTitle(start)}`, line: text, actionLabel: "Open the full report", actionUrl: url });
+    return { count: leads.length };
+  });
+}
+
 export async function markAllReadAction() {
   return runAction(async () => {
     const me = await requireMember();
@@ -131,7 +171,14 @@ export async function deleteViewAction(id: string) {
   });
 }
 
-const incidentSchema = z.object({ scope: z.string().max(200), title: z.string().max(300), details: z.string().max(10_000).optional(), startedAt: z.string().nullish() });
+const incidentSchema = z.object({
+  kind: z.enum(["down", "slow", "other"]),
+  scope: z.string().max(200),
+  details: z.string().max(10_000).optional(),
+  startedAt: z.string().nullish(),
+  alert: z.boolean().default(true),
+  attachments: z.array(z.object({ key: z.string(), fileName: z.string(), mime: z.string(), size: z.number().int().nonnegative(), durationSec: z.number().nullish() })).max(10).optional(),
+});
 
 /** "System is down": opens an incident, writes the first timeline entries and alerts everyone at once. */
 export async function openIncidentAction(input: z.input<typeof incidentSchema>) {

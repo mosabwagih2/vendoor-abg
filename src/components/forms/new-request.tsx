@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
-import { AlertOctagon, Bug, HelpCircle, KeyRound, Lightbulb, PencilRuler } from "lucide-react";
+import { AlertOctagon, Bug, HelpCircle, KeyRound, Lightbulb, Link as LinkIcon, PencilRuler, Power, TriangleAlert, Zap } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { FieldError, Input, Label, Select, Textarea } from "@/components/ui/input";
@@ -22,6 +22,7 @@ import { PRIORITIES, type Priority, type TaskStatus, type TaskType } from "@/dom
 import type { UploadedRef } from "@/lib/upload";
 import { addOccurrenceAction, createRequestAction, duplicatesAction } from "@/server/actions/tasks";
 import { openIncidentAction } from "@/server/actions/misc";
+import { INCIDENT_AFFECTED, INCIDENT_KINDS, appendLink, isSafeLink, type IncidentAffected, type IncidentKind } from "@/domain/incident";
 
 const DRAFT_KEY = "new-request-draft-v1";
 type Kind = Exclude<TaskType, "ops">;
@@ -77,8 +78,8 @@ export function NewRequestDialog({ open, onOpenChange, opts }: { open: boolean; 
   const [incident, setIncident] = useState(!!opts.incident);
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent title={incident ? t("systemDown") : t("title")} wide>
-        {incident ? <IncidentForm onDone={() => onOpenChange(false)} /> : <RequestForm opts={opts} onDone={() => onOpenChange(false)} onIncident={() => setIncident(true)} />}
+      <DialogContent title={incident ? t("reportTitle") : t("title")} wide>
+        {incident ? <IncidentForm onDone={() => onOpenChange(false)} onBack={() => setIncident(false)} /> : <RequestForm opts={opts} onDone={() => onOpenChange(false)} onIncident={() => setIncident(true)} />}
       </DialogContent>
     </Dialog>
   );
@@ -549,19 +550,37 @@ function Opt() {
   return <span className="font-normal text-fg-secondary">({t("optional")})</span>;
 }
 
-function IncidentForm({ onDone }: { onDone: () => void }) {
+/** Figma 7.3: step 2 of reporting a system problem. Kind, start time, who is affected, what they see, and whether to alert ABG now. */
+function IncidentForm({ onDone, onBack }: { onDone: () => void; onBack: () => void }) {
   const t = useTranslations("incident");
   const tc = useTranslations("common");
-  const [scope, setScope] = useState("whole");
+  const [kind, setKind] = useState<IncidentKind>("down");
+  const [affected, setAffected] = useState<IncidentAffected>("everyone");
+  const [startedAt, setStartedAt] = useState(() => toLocalInput(new Date()));
   const [details, setDetails] = useState("");
+  const [files, setFiles] = useState<UploadedRef[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const [linkOpen, setLinkOpen] = useState(false);
+  const [link, setLink] = useState("");
+  const [alert, setAlert] = useState(true);
   const [busy, setBusy] = useState(false);
+  const KINDS = { down: Power, slow: Zap, other: TriangleAlert } as const;
+  const tone = { down: "border-danger bg-danger-subtle", slow: "border-[#f3d98b] bg-warning-subtle", other: "border-border bg-subtle" } as const;
+  const chip = { down: "bg-danger text-white", slow: "bg-[#fbe3a0] text-warning-text", other: "bg-subtle text-fg-secondary" } as const;
   return (
     <form
       className="space-y-4"
       onSubmit={async (e) => {
         e.preventDefault();
         setBusy(true);
-        const r = await openIncidentAction({ scope: t(scope as "whole"), title: "System is down", details });
+        const r = await openIncidentAction({
+          kind,
+          scope: t(`affected.${affected}`),
+          details,
+          startedAt: new Date(startedAt).toISOString(),
+          alert,
+          attachments: files.map((f) => ({ key: f.key, fileName: f.fileName, mime: f.mime, size: f.size, durationSec: f.durationSec ?? null })),
+        });
         setBusy(false);
         if (r.ok) {
           toast.success(t("created", { number: r.data!.number }));
@@ -569,30 +588,89 @@ function IncidentForm({ onDone }: { onDone: () => void }) {
         } else toast.error(tc("error"));
       }}
     >
-      <fieldset>
-        <legend className="mb-1 text-meta font-medium text-fg-secondary">{t("what")}</legend>
-        <div className="flex flex-wrap gap-2">
-          {(["whole", "page", "role"] as const).map((s) => (
-            <label key={s} className={cn("inline-flex h-9 items-center gap-2 rounded-control border px-3 text-ui", scope === s ? "border-danger bg-danger-subtle" : "border-border")}>
-              <input type="radio" name="scope" value={s} checked={scope === s} onChange={() => setScope(s)} />
-              {t(s)}
-            </label>
-          ))}
+      <div role="radiogroup" aria-label={t("what")} className="grid gap-2 sm:grid-cols-3">
+        {INCIDENT_KINDS.map((k) => {
+          const Icon = KINDS[k];
+          return (
+            <button key={k} type="button" role="radio" aria-checked={kind === k} onClick={() => setKind(k)} className={cn("rounded-xl border p-3 text-start", kind === k ? tone[k] + " ring-1 ring-current/10" : "border-border bg-surface hover:bg-subtle")}>
+              <span className={cn("grid h-7 w-7 place-items-center rounded-lg", chip[k])}>
+                <Icon size={15} aria-hidden />
+              </span>
+              <span className="mt-2 block text-ui font-semibold">{t(`kind.${k}`)}</span>
+              <span className="block text-meta text-fg-secondary">{t(`kindHint.${k}`)}</span>
+            </button>
+          );
+        })}
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div>
+          <Label htmlFor="inc-start">{t("startedAt")}</Label>
+          <Input id="inc-start" type="datetime-local" value={startedAt} max={toLocalInput(new Date())} onChange={(e) => setStartedAt(e.target.value)} required />
         </div>
-      </fieldset>
+        <div>
+          <Label htmlFor="inc-affected">{t("affectedLabel")}</Label>
+          <Select id="inc-affected" value={affected} onChange={(e) => setAffected(e.target.value as IncidentAffected)}>
+            {INCIDENT_AFFECTED.map((a) => (
+              <option key={a} value={a}>
+                {t(`affected.${a}`)}
+              </option>
+            ))}
+          </Select>
+        </div>
+      </div>
       <div>
         <Label htmlFor="inc-details">{t("details")}</Label>
-        <Textarea id="inc-details" rows={3} value={details} onChange={(e) => setDetails(e.target.value)} />
+        <Textarea id="inc-details" rows={3} value={details} onChange={(e) => setDetails(e.target.value)} required minLength={3} />
       </div>
-      <div className="flex justify-end gap-2">
-        <Button variant="ghost" onClick={onDone}>
-          {tc("cancel")}
+      <AttachmentField value={files} onChange={setFiles} compact onBusyChange={setUploading} />
+      <div>
+        <Button type="button" size="sm" variant="secondary" onClick={() => setLinkOpen((o) => !o)}>
+          <LinkIcon size={14} aria-hidden />
+          {t("addLink")}
         </Button>
-        <Button type="submit" variant="danger" disabled={busy}>
-          <AlertOctagon size={15} aria-hidden />
-          {t("submit")}
-        </Button>
+        {linkOpen && (
+          <div className="mt-2 flex gap-2">
+            <Input aria-label={t("addLink")} type="url" placeholder="https://…" value={link} onChange={(e) => setLink(e.target.value)} />
+            <Button
+              type="button"
+              variant="secondary"
+              disabled={!isSafeLink(link)}
+              onClick={() => {
+                setDetails(appendLink(details, link));
+                setLink("");
+                setLinkOpen(false);
+              }}
+            >
+              {tc("add")}
+            </Button>
+          </div>
+        )}
+      </div>
+      <label className="flex cursor-pointer items-start gap-3 rounded-xl bg-danger-subtle p-3 text-danger-text">
+        <input type="checkbox" role="switch" checked={alert} onChange={(e) => setAlert(e.target.checked)} className="mt-1 h-4 w-4 accent-[#e5484d]" />
+        <span>
+          <span className="block text-ui font-semibold">{t("alertNow")}</span>
+          <span className="block text-meta">{t("alertHint")}</span>
+        </span>
+      </label>
+      <div className="flex items-center justify-between gap-2 border-t border-border pt-3">
+        <span className="text-meta text-fg-secondary">{t("stepNote")}</span>
+        <span className="flex gap-2">
+          <Button variant="ghost" onClick={onBack}>
+            {t("back")}
+          </Button>
+          <Button type="submit" variant="danger" disabled={busy || uploading}>
+            <AlertOctagon size={15} aria-hidden />
+            {t("submit")}
+          </Button>
+        </span>
       </div>
     </form>
   );
+}
+
+/** "YYYY-MM-DDTHH:mm" in the browser's local time, the format datetime-local inputs use. */
+function toLocalInput(d: Date): string {
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
 }

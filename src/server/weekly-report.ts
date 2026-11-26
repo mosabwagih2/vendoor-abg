@@ -4,6 +4,7 @@ import { getWorkspaceConfig } from "./calendar";
 import { localDateKey } from "@/domain/sla";
 import { startOfLocalDay } from "./local-time";
 import { addDays, previousWeek, weekRange, type WeekRange } from "@/domain/week";
+import type { WeeklySummary } from "@/domain/weekly-text";
 
 export interface WeekTotals {
   requested: number;
@@ -58,5 +59,37 @@ export async function weeklyReport(startKey: string): Promise<WeeklyReport> {
     previous: previous.totals,
     days: current.byDay,
     releases: rels.map((r) => ({ number: r.number, type: r.type, releasedAt: r.releasedAt!.toISOString(), taskCount: r._count.tasks })),
+  };
+}
+
+const RANK: Record<string, number> = { highest: 0, high: 1, medium: 2, low: 3, lowest: 4 };
+
+/** Everything the share text needs, from the same tasks, releases and events as the report screen. */
+export async function weeklySummary(startKey: string): Promise<WeeklySummary> {
+  const cfg = await getWorkspaceConfig();
+  const tz = cfg.calendar.tz;
+  const r = await weeklyReport(startKey);
+  const from = startOfLocalDay(r.week.start, tz);
+  const to = startOfLocalDay(addDays(r.week.end, 1), tz);
+  const reopenEvents = await db.activityEvent.findMany({ where: { verb: "reopened", at: { gte: from, lt: to } }, select: { taskId: true } });
+  const ids = [...new Set(reopenEvents.map((e) => e.taskId).filter((x): x is string => !!x))];
+  const [broken, waiting, abg] = await Promise.all([
+    ids.length ? db.task.findMany({ where: { id: { in: ids } }, select: { key: true, title: true, reopenCount: true } }) : [],
+    db.task.findMany({ where: { archivedAt: null, status: "shipped" }, orderBy: { shippedAt: "asc" }, take: 8, select: { key: true } }),
+    db.task.findMany({ where: { archivedAt: null, status: { in: ["triage", "planned", "in_progress", "reopened"] } }, select: { key: true, title: true, priority: true, suggestedPriority: true, dueAt: true }, take: 200 }),
+  ]);
+  const asks = [...abg]
+    .sort((a, b) => (RANK[a.priority ?? a.suggestedPriority ?? "lowest"] ?? 4) - (RANK[b.priority ?? b.suggestedPriority ?? "lowest"] ?? 4) || (a.dueAt?.getTime() ?? Infinity) - (b.dueAt?.getTime() ?? Infinity))
+    .slice(0, 3)
+    .map((t) => ({ key: t.key, title: t.title }));
+  return {
+    start: r.week.start,
+    end: r.week.end,
+    completed: r.totals.completed,
+    verified: r.totals.done,
+    releases: r.releases.map((x) => ({ number: x.number, taskCount: x.taskCount })),
+    cameBackBroken: broken.map((t) => ({ key: t.key, title: t.title, times: t.reopenCount })),
+    waitingCheck: waiting.map((t) => t.key),
+    asks,
   };
 }

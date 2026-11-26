@@ -49,3 +49,11 @@ export function deltaVs(current: number, previous: number): { diff: number; pct:
 export function isWorkDay(key: string, start: string): boolean {
   return weekRange(start).workDays.includes(key);
 }
+
+/** ISO week number of the work week. The Thursday decides the week, so a Saturday-to-Thursday week gets a stable number. */
+export function isoWeek(startKey: string): number {
+  const thursday = parse(addDays(weekStart(startKey), 5));
+  const jan1 = Date.UTC(thursday.getUTCFullYear(), 0, 1);
+  const dayOfYear = Math.floor((thursday.getTime() - jan1) / DAY);
+  return Math.floor(dayOfYear / 7) + 1;
+}

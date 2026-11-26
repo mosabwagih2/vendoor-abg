@@ -556,18 +556,40 @@
       "ops": "Server"
     },
     "systemProblem": "System problem",
-    "systemProblemHint": "Down or slow"
+    "systemProblemHint": "Down or slow",
+    "reportTitle": "Report a system problem"
   },
   "incident": {
     "title": "System is down",
-    "what": "What is affected?",
+    "what": "What kind of problem is it?",
     "whole": "Whole system",
     "page": "A page",
     "role": "A role",
-    "details": "Details",
-    "startedAt": "Started at",
-    "submit": "Alert ABG now",
-    "created": "Incident INC-{number} opened. ABG was alerted."
+    "details": "What do you see?",
+    "startedAt": "When did it start?",
+    "submit": "Report problem",
+    "created": "Incident INC-{number} opened. ABG was alerted.",
+    "kind": {
+      "down": "System is down",
+      "slow": "System is slow",
+      "other": "Something else"
+    },
+    "kindHint": {
+      "down": "Nobody can use it",
+      "slow": "It works, but very slowly",
+      "other": "Emails, sync, printing…"
+    },
+    "affectedLabel": "Who is affected?",
+    "affected": {
+      "everyone": "Everyone",
+      "vendoor": "The Vendoor team",
+      "one": "One person or one page"
+    },
+    "addLink": "Add link",
+    "alertNow": "Alert ABG now",
+    "alertHint": "Email and notification to ABG. If nobody replies in 10 minutes, you can alert again.",
+    "stepNote": "A banner shows on every page until it is fixed",
+    "back": "Back"
   },
   "attachments": {
     "drop": "Drop files here, paste, or",
@@ -1066,7 +1088,42 @@
     "releases": "Releases this week",
     "noReleases": "Nothing was released this week.",
     "tasksShipped": "{count, plural, one {# task} other {# tasks}}",
-    "monthTab": "Month and year"
+    "monthTab": "Month and year",
+    "send": {
+      "open": "Send report",
+      "title": "Send weekly report",
+      "preview": "Preview · WhatsApp",
+      "loading": "Building the report…",
+      "how": "How do you want to send it?",
+      "way": {
+        "whatsapp": "Copy for WhatsApp",
+        "email": "Send to ABG by email",
+        "pdf": "Download PDF",
+        "link": "Copy a link"
+      },
+      "wayHint": {
+        "whatsapp": "Plain text, ready to paste in the group",
+        "email": "The ABG leads, with a link to the full report",
+        "pdf": "One page, same layout as the screen",
+        "link": "Anyone with the link can open it for 7 days"
+      },
+      "auto": "Reports are not sent automatically. Pick a way when you are ready.",
+      "note": "The report is built from task activity, nothing to type",
+      "copyText": "Copy text",
+      "sendEmail": "Send email",
+      "printPdf": "Open print dialog",
+      "copyLink": "Copy link",
+      "copied": "Copied. Paste it in the group.",
+      "linkCopied": "Link copied. It works for 7 days.",
+      "emailSent": "{count, plural, one {Sent to # person} other {Sent to # people}}"
+    },
+    "shared": {
+      "cameBack": "Came back broken",
+      "waiting": "Waiting for your check",
+      "asks": "Our asks",
+      "none": "Nothing this week.",
+      "note": "This link works for 7 days and shows this week only."
+    }
   },
   "errorPage": {
     "title": "Something went wrong on our side",

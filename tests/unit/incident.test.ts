@@ -31,3 +31,23 @@ describe("duration", () => {
     expect(formatDuration(1620)).toBe("1 d 3 h");
   });
 });
+
+import { appendLink, incidentTitle, isSafeLink } from "@/domain/incident";
+
+describe("reporting a problem", () => {
+  it("titles each kind", () => {
+    expect(incidentTitle("down")).toBe("System is down");
+    expect(incidentTitle("slow")).toBe("System is slow");
+    expect(incidentTitle("other")).toBe("System problem");
+  });
+  it("appends a link on its own line, once", () => {
+    expect(appendLink("Nothing opens", "https://x.test/a")).toBe("Nothing opens\nhttps://x.test/a");
+    expect(appendLink("see https://x.test/a", "https://x.test/a")).toBe("see https://x.test/a");
+    expect(appendLink("", "https://x.test/a")).toBe("https://x.test/a");
+  });
+  it("accepts only http and https links", () => {
+    expect(isSafeLink("https://x.test/a")).toBe(true);
+    expect(isSafeLink("javascript:alert(1)")).toBe(false);
+    expect(isSafeLink("not a url")).toBe(false);
+  });
+});
