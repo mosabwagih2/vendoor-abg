@@ -9,9 +9,15 @@ import { StatusLozenge } from "@/components/ui/lozenge";
 import { Avatar } from "@/components/ui/avatar";
 import { shortAge } from "@/lib/format";
 import { groupByDay } from "@/domain/notification-groups";
-import type { TaskStatus } from "@/domain/types";
+import { DRAWER_FILTERS, countsFor, filterDrawer, type DrawerFilter } from "@/domain/drawer-filter";
+import { ActionButtons } from "@/components/task/action-buttons";
+import { availableActions } from "@/components/task/workflow-actions";
+import { useApp } from "@/components/layout/app-context";
+import type { Priority, TaskStatus } from "@/domain/types";
 import type { DrawerItem } from "@/server/notifications";
-import { loadDrawerAction, markAllReadAction } from "@/server/actions/misc";
+import { alertAbgAction, loadDrawerAction, markAllReadAction } from "@/server/actions/misc";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 /** Figma 5.2: bell opens a right-hand drawer with Incoming (unread) and Archive (read), grouped by day. */
 export function NotificationsDrawer({ unread }: { unread: number }) {
@@ -20,6 +26,9 @@ export function NotificationsDrawer({ unread }: { unread: number }) {
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<DrawerItem[] | null>(null);
   const [tab, setTab] = useState<"incoming" | "archive">("incoming");
+  const [filter, setFilter] = useState<DrawerFilter>("all");
+  const { me } = useApp();
+  const needsMe = (i: DrawerItem) => !!i.task && !i.read && hasNextStep(me, i.task);
 
   const load = useCallback(async () => {
     const r = await loadDrawerAction();
@@ -33,7 +42,9 @@ export function NotificationsDrawer({ unread }: { unread: number }) {
 
   const incoming = (items ?? []).filter((i) => !i.read);
   const archive = (items ?? []).filter((i) => i.read);
-  const shown = tab === "incoming" ? incoming : archive;
+  const base = tab === "incoming" ? incoming : archive;
+  const shown = filterDrawer(base, filter, needsMe);
+  const counts = countsFor(base, needsMe);
 
   return (
     <D.Root open={open} onOpenChange={onOpenChange}>
@@ -70,6 +81,14 @@ export function NotificationsDrawer({ unread }: { unread: number }) {
               </button>
             ))}
           </div>
+          <div className="flex shrink-0 gap-2 px-5 py-3" role="group" aria-label={t("filters")}>
+            {DRAWER_FILTERS.map((f) => (
+              <button key={f} type="button" aria-pressed={filter === f} onClick={() => setFilter(f)} className={cn("h-8 rounded-full border px-3.5 text-[13px] font-semibold", filter === f ? "border-fg bg-fg text-white" : "border-border bg-surface text-fg-secondary")}>
+                {t(`filter.${f}`)}
+                {f !== "all" && counts[f] > 0 && <span className="ms-1.5 font-medium opacity-70">{counts[f]}</span>}
+              </button>
+            ))}
+          </div>
           <div className="min-h-0 flex-1 overflow-y-auto">
             {items === null ? (
               <p className="p-5 text-ui text-fg-secondary">{t("loading")}</p>
@@ -94,14 +113,25 @@ export function NotificationsDrawer({ unread }: { unread: number }) {
   );
 }
 
+/** True when the viewer has a real next step on the task. Cancel alone does not count: it never needs attention. */
+function hasNextStep(me: Parameters<typeof availableActions>[0], t: NonNullable<DrawerItem["task"]>) {
+  return availableActions(me, toWf(t)).some((a) => a !== "cancel");
+}
+
+function toWf(t: NonNullable<DrawerItem["task"]>) {
+  return { id: t.id, key: t.key, title: t.title, status: t.status as TaskStatus, requesterId: t.requesterId, assigneeId: t.assigneeId, priority: t.priority as Priority | null, suggestedPriority: t.suggestedPriority as Priority | null };
+}
+
 function Row({ item, onNavigate }: { item: DrawerItem; onNavigate: () => void }) {
   const t = useTranslations("drawer");
+  const { me } = useApp();
   const isIncident = item.incident !== null;
   const href = isIncident ? `/trouble/${item.incident}` : item.task ? `/tasks/${item.task.key}` : "/inbox";
   const text = isIncident ? t("incident", { actor: item.actor ?? "" }) : t(`kind.${item.kind}` as "kind.task.commented", { actor: item.actor ?? t("someone"), task: item.task?.key ?? "" });
+  const showActions = !item.read && item.task && hasNextStep(me, item.task);
   return (
-    <li>
-      <Link href={href} onClick={onNavigate} className={cn("flex gap-3 border-b border-border px-5 py-3.5 hover:bg-subtle", isIncident && !item.read && "bg-danger-subtle/60")}>
+    <li className={cn("border-b border-border px-5 py-3.5", isIncident && !item.read && "bg-danger-subtle/60")}>
+      <div className="flex gap-3">
         <span aria-hidden className={cn("mt-2 h-2 w-2 shrink-0 rounded-full", item.read ? "bg-transparent" : isIncident ? "bg-danger" : "bg-accent")} />
         {isIncident ? (
           <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-danger-subtle text-danger">
@@ -110,16 +140,38 @@ function Row({ item, onNavigate }: { item: DrawerItem; onNavigate: () => void })
         ) : (
           <Avatar name={item.actor ?? "?"} size={32} />
         )}
-        <span className="min-w-0 flex-1">
-          <span className={cn("block text-[14px] leading-[1.35]", isIncident && !item.read && "font-semibold text-danger-text")}>{text}</span>
+        <div className="min-w-0 flex-1">
+          <Link href={href} onClick={onNavigate} className="block hover:underline">
+            <span className={cn("block text-[14px] leading-[1.35]", isIncident && !item.read && "font-semibold text-danger-text")}>{text}</span>
+          </Link>
           <span className="mt-1 flex flex-wrap items-center gap-2 text-meta text-fg-muted">
             {item.task && <span className="font-mono">{item.task.key}</span>}
             {isIncident && <span className="font-mono">INC-{item.incident}</span>}
             {item.task && <StatusLozenge status={item.task.status as TaskStatus} />}
             <span suppressHydrationWarning>{shortAge(item.at)}</span>
           </span>
-        </span>
-      </Link>
+          {showActions && item.task && <ActionButtons task={toWf(item.task)} className="mt-2.5 flex flex-wrap gap-2" />}
+          {isIncident && !item.read && item.incidentId && (
+            <div className="mt-2.5 flex gap-2">
+              <Button
+                size="sm"
+                variant="dark"
+                onClick={async () => {
+                  const r = await alertAbgAction(item.incidentId!);
+                  r.ok ? toast.success(t("alerted")) : toast.error(t("alertFailed"));
+                }}
+              >
+                {t("alertAbg")}
+              </Button>
+              <Button asChild size="sm" variant="secondary">
+                <Link href={href} onClick={onNavigate}>
+                  {t("open")}
+                </Link>
+              </Button>
+            </div>
+          )}
+        </div>
+      </div>
     </li>
   );
 }

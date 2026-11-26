@@ -1209,7 +1209,17 @@
       "release": {
         "recorded": "A release was recorded."
       }
-    }
+    },
+    "filters": "Filter notifications",
+    "filter": {
+      "all": "All",
+      "needs_me": "Needs me",
+      "system": "System"
+    },
+    "alertAbg": "Alert ABG",
+    "alerted": "ABG was alerted.",
+    "alertFailed": "Could not alert ABG. Try again.",
+    "open": "Open"
   },
   "dashboard": {
     "thisWeek": "This week",

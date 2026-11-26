@@ -98,13 +98,14 @@ export function AppShell({ me, counts, projects, members, incident, upcoming, ch
       <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:start-2 focus:top-2 focus:z-50 focus:rounded-control focus:bg-surface focus:px-3 focus:py-2">
         Skip to content
       </a>
+      <WorkflowProvider releases={upcoming}>
       <div className="flex h-dvh bg-surface">
         <Sidebar me={me} counts={counts} projects={projects} hasIncident={!!incident} roleLabel={tr(me.role)} />
         <div className="flex min-w-0 flex-1 flex-col">
           <Topbar onCreate={() => openNewRequest()} onSearch={() => setPaletteOpen(true)} unread={counts.unread} />
           {incident && <IncidentBanner incident={incident} />}
           <main id="main" className="min-h-0 min-w-0 flex-1 overflow-y-auto pb-16 md:pb-0">
-            <WorkflowProvider releases={upcoming}>{children}</WorkflowProvider>
+            {children}
           </main>
         </div>
 
@@ -127,6 +128,7 @@ export function AppShell({ me, counts, projects, members, incident, upcoming, ch
           )}
         </nav>
       </div>
+      </WorkflowProvider>
       <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} onAction={(a) => openNewRequest(a === "new_incident" ? { incident: true } : {})} />
       <NewRequestDialog key={newKey} open={newOpen} onOpenChange={setNewOpen} opts={newOpts} />
     </AppContext>
