@@ -40,6 +40,8 @@ Flow: you push to GitHub, cPanel pulls the repo, and one click (or a webhook) re
    | `RESEND_API_KEY`, `EMAIL_FROM` | from Resend |
    | `NODE_ENV` | `production` |
 
+   **Also put the same values in `~/tracker/.env`** (cPanel File Manager > `tracker` > + File > `.env`, one `NAME="value"` per line, like `.env.example`). The variables in the Setup Node.js App screen reach only the running website. The deploy steps (`db:migrate`, `build`) and the cron worker run in a normal shell and read `.env` instead; without it the first deploy stops at the migration with "DATABASE_URL not found". `.env` is not in Git, so deploys never overwrite it. Leave `NODE_ENV` out of `.env`.
+
 5. **First deploy.** Git Version Control > Manage > Deploy HEAD Commit. This runs `.cpanel.yml`: copies the code, installs, runs migrations, builds, and restarts the app.
 6. **First data.** Do not run the demo seed on production. Create your real members and projects by running, once, in the cPanel Terminal inside `~/tracker`: `npx pnpm@10.28.0 run db:seed` **only** if you want the demo people, otherwise add members from Settings after creating the first admin by hand in the database.
 7. **Cron for the worker.** cPanel > Cron Jobs, every minute:
