@@ -8,9 +8,16 @@ import { formatDue, formatExact, relative, shortAge } from "@/lib/format";
 import type { Priority, TaskStatus } from "@/domain/types";
 import { Tooltip } from "./tooltip";
 
-export function StatusBadge({ status, className, iconOnly }: { status: TaskStatus; className?: string; iconOnly?: boolean }) {
+export function StatusBadge({ status, className, iconOnly, custom }: { status: TaskStatus; className?: string; iconOnly?: boolean; custom?: { name: string; color: string } | null }) {
   const t = useTranslations("status");
-  if (iconOnly) return <StatusIcon status={status} label={t(status)} />;
+  if (iconOnly) return <StatusIcon status={status} label={custom?.name ?? t(status)} />;
+  if (custom)
+    return (
+      <span className={cn("inline-flex items-center gap-1.5 text-ui", className)}>
+        <span aria-hidden className="h-2.5 w-2.5 rounded-full" style={{ background: custom.color }} />
+        {custom.name}
+      </span>
+    );
   return (
     <span className={cn("inline-flex items-center gap-1.5 text-ui", status === "closed" && "text-fg-secondary", className)}>
       <StatusIcon status={status} />

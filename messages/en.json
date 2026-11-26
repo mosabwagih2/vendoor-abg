@@ -831,7 +831,7 @@
     },
     "workflow": {
       "title": "Workflow",
-      "hint": "Five steps. Statuses are fixed so everyone reads the board the same way.",
+      "hint": "Five steps. Add your own statuses inside a step. The steps and who can move a task stay fixed.",
       "locked": "Locked",
       "step": {
         "request": "Request",
@@ -858,7 +858,19 @@
         "complete": "Needs release and note",
         "verify": "Works",
         "reopen": "Still broken, reopen count +1"
-      }
+      },
+      "custom": "custom",
+      "addStatus": "Add status",
+      "statusName": "Status name",
+      "rename": "Rename",
+      "edit": "Edit",
+      "color": "Colour",
+      "delete": "Delete status…",
+      "deleteHint": "{count, plural, =0 {No tasks use {name}.} one {# task in {name} will move to {to}.} other {# tasks in {name} will move to {to}.}}",
+      "deleted": "Deleted. {count, plural, =0 {No tasks moved.} one {# task is back in {to}.} other {# tasks are back in {to}.}}",
+      "errDuplicate": "That name is already used in this step.",
+      "errEmpty": "Give the status a name.",
+      "errTooLong": "Keep it to 24 characters."
     },
     "workWeek": {
       "title": "Work week and holidays",

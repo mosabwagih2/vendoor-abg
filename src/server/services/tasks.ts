@@ -1,3 +1,4 @@
+import { statusGroup } from "@/domain/status-display";
 import "server-only";
 import type { Prisma } from "@/generated/prisma/client";
 import { db } from "../db";
@@ -253,6 +254,8 @@ export async function transition(actor: Actor, taskId: string, action: WorkflowA
     const from = t.status as TaskStatus;
     const to = resolveTarget(action, (t.previousStatus as TaskStatus | null) ?? null);
     const data: Prisma.TaskUpdateInput = { status: to, statusChangedAt: now };
+    // A custom status belongs to one step, so it ends when the task moves to another step.
+    if (statusGroup(from) !== statusGroup(to)) data.customStatus = { disconnect: true };
     const isFirstResponse = !t.firstResponseAt && ["accept", "ask_info", "decline", "merge"].includes(action);
     if (isFirstResponse) data.firstResponseAt = now;
 

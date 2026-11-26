@@ -2,7 +2,11 @@
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/cn";
 import { statusGroup, type StatusGroup } from "@/domain/status-display";
+import { tintFor } from "@/domain/custom-status";
 import type { TaskStatus } from "@/domain/types";
+
+/** A custom status replaces the step name and colour. */
+export type CustomLabel = { name: string; color: string } | null | undefined;
 
 /** Soft background, coloured dot, dark label. Colours are the Figma status palette. */
 const TONES: Record<StatusGroup | "closed", { bg: string; fg: string; dot: string }> = {
@@ -14,14 +18,14 @@ const TONES: Record<StatusGroup | "closed", { bg: string; fg: string; dot: strin
   closed: { bg: "#eef0f3", fg: "#4b5160", dot: "#7a8090" },
 };
 
-export function StatusLozenge({ status, className }: { status: TaskStatus; className?: string }) {
+export function StatusLozenge({ status, className, custom }: { status: TaskStatus; className?: string; custom?: CustomLabel }) {
   const t = useTranslations("statusGroup");
   const group = statusGroup(status);
-  const tone = TONES[group ?? "closed"];
+  const tone = custom ? tintFor(custom.color) : TONES[group ?? "closed"];
   return (
     <span className={cn("inline-flex h-[22px] shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md px-2 text-[12px] font-medium", className)} style={{ background: tone.bg, color: tone.fg }}>
       <span aria-hidden className="h-[7px] w-[7px] rounded-full" style={{ background: tone.dot }} />
-      {group ? t(group) : t("closed")}
+      {custom ? custom.name : group ? t(group) : t("closed")}
     </span>
   );
 }

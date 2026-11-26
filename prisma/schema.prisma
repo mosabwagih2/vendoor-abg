@@ -359,17 +359,30 @@ model ProjectCategory {
 
 // ───────────────────────────── tasks ─────────────────────────────
 
+/// An extra label inside one of the five steps (Figma 5.1). Tasks keep their internal status; this only changes the name and colour people see.
+model CustomStatus {
+  id        String   @id @default(uuid())
+  stepGroup String // request | processing | stuck | completed
+  name      String
+  color     String
+  position  Int      @default(0)
+  createdAt DateTime @default(now()) @db.Timestamptz
+  tasks     Task[]
+}
+
 model Task {
-  id                String      @id @default(uuid())
+  customStatusId    String?
+  customStatus      CustomStatus? @relation(fields: [customStatusId], references: [id], onDelete: SetNull)
+  id                String        @id @default(uuid())
   projectId         String
   number            Int
-  key               String      @unique
+  key               String        @unique
   title             String
-  description       String      @default("") // Markdown
+  description       String        @default("") // Markdown
   type              TaskType
-  status            TaskStatus  @default(triage)
+  status            TaskStatus    @default(triage)
   previousStatus    TaskStatus?
-  statusChangedAt   DateTime    @default(now()) @db.Timestamptz
+  statusChangedAt   DateTime      @default(now()) @db.Timestamptz
   priority          Priority?
   suggestedPriority Priority?
   categoryId        String?

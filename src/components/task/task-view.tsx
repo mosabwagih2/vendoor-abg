@@ -20,6 +20,8 @@ import { can, canAssign } from "@/domain/policy";
 import { PRIORITIES, TASK_TYPES, type Priority, type TaskStatus } from "@/domain/types";
 import type { TaskDetail } from "@/server/task-detail";
 import { setFollowAction, updateFieldAction } from "@/server/actions/tasks";
+import { setTaskCustomStatusAction } from "@/server/actions/custom-status";
+import { statusGroup } from "@/domain/status-display";
 import { ActionButtons } from "./action-buttons";
 import { JourneyStepper } from "./journey-bar";
 import { ReleaseLine } from "./release-line";
@@ -78,7 +80,7 @@ export function TaskView({ task, compact }: { task: TaskDetail; compact?: boolea
           {/* Action bar (FR-6.1) */}
           <div className={cn("rounded-card border p-4", mine && acts.length ? "border-[#c9d8fb] bg-info-subtle shadow-[0_2px_12px_rgba(37,99,235,0.08)]" : "border-border bg-subtle")}>
             <div className="flex flex-wrap items-center gap-2">
-              <StatusBadge status={task.status} className="font-medium" />
+              <StatusBadge status={task.status} custom={task.customStatus} className="font-medium" />
               <WaitingBadge side={task.waitingOn} viewerSide={me.side} />
               {task.status === "closed" && task.closeReason && <span className="text-meta text-fg-secondary">{t("closedAs", { reason: tcr(task.closeReason as "duplicate") })}</span>}
               {task.status === "done" && task.verifiedBy && task.verifiedAt && (
@@ -328,6 +330,7 @@ function Properties({ task }: { task: TaskDetail }) {
   const ts = useTranslations("sla");
   const tp = useTranslations("priority");
   const tt = useTranslations("type");
+  const tg = useTranslations("statusGroup");
   const tc = useTranslations("common");
   const { me, members, projects } = useApp();
   const router = useRouter();
@@ -368,8 +371,27 @@ function Properties({ task }: { task: TaskDetail }) {
     <div className="space-y-4 rounded-card border border-border bg-surface p-4">
       <h2 className="sr-only">{t("properties")}</h2>
       <dl className="space-y-2.5">
-        <Prop label={t("status")}>
-          <StatusBadge status={task.status} />
+        <Prop label={t("status")} htmlFor="p-status">
+          {me.side === "abg" && task.customOptions.length > 0 ? (
+            <Select
+              id="p-status"
+              value={task.customStatus?.id ?? ""}
+              onChange={async (e) => {
+                const r = await setTaskCustomStatusAction(task.key, e.target.value || null);
+                if (!r.ok) toast.error(tc("error"));
+              }}
+              className="h-7"
+            >
+              <option value="">{tg(statusGroup(task.status) ?? "request")}</option>
+              {task.customOptions.map((o) => (
+                <option key={o.id} value={o.id}>
+                  {o.name}
+                </option>
+              ))}
+            </Select>
+          ) : (
+            <StatusBadge status={task.status} custom={task.customStatus} />
+          )}
         </Prop>
         <Prop label={t("waitingOn")}>
           <WaitingBadge side={task.waitingOn} viewerSide={me.side} />

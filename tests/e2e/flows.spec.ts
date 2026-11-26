@@ -133,4 +133,30 @@ test.describe("Phase 1 main flows", () => {
     await expect(anon.getByRole("heading", { name: "Weekly report" })).toBeVisible();
     expect((await anon.goto(url.slice(0, -3) + "xyz"))!.status()).toBe(404);
   });
+
+  test("custom status: admin adds one to a step, ABG sets it on a task, deleting it puts the task back", async ({ browser }) => {
+    const admin = await signIn(browser, YARA);
+    await admin.goto("/settings/workflow");
+    const name = `Testing ${Date.now() % 10000}`;
+    await admin.getByRole("button", { name: "Add status" }).nth(1).click(); // the Active (Processing) step
+    await admin.getByLabel("Status name").fill(name);
+    await admin.getByRole("button", { name: "Add", exact: true }).click();
+    await expect(admin.getByTitle(`${name} (custom)`)).toBeVisible();
+    // A duplicate in the same step is refused.
+    await admin.getByRole("button", { name: "Add status" }).nth(1).click();
+    await admin.getByLabel("Status name").fill(name.toUpperCase());
+    await admin.getByRole("button", { name: "Add", exact: true }).click();
+    await expect(admin.getByText(/already used/)).toBeVisible();
+
+    const lead = await signIn(browser, ZA8LOUL);
+    await lead.goto("/tasks/BOS-2"); // seeded task that is in Processing
+    await lead.getByLabel("Status", { exact: true }).selectOption({ label: name });
+    await lead.reload();
+    await expect(lead.getByLabel("Status", { exact: true })).toHaveValue(/.+/);
+
+    await admin.reload();
+    await admin.getByRole("button", { name: `Edit ${name}` }).click();
+    await admin.getByRole("button", { name: /Delete status/ }).click();
+    await expect(admin.getByText(/back in Processing/)).toBeVisible();
+  });
 });

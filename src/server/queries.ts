@@ -32,6 +32,7 @@ export const taskRowSelect = {
   firstResponseAt: true,
   closeReason: true,
   project: { select: { id: true, key: true, name: true } },
+  customStatus: { select: { name: true, color: true } },
   assignee: { select: { id: true, name: true, handle: true } },
   requester: { select: { id: true, name: true, handle: true } },
   _count: { select: { subtasks: true } },

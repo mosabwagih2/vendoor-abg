@@ -5,6 +5,7 @@ import { decorate, taskRowSelect } from "./queries";
 import { getWorkspaceConfig } from "./calendar";
 import { computeClock, pausesFromSpans } from "@/domain/sla";
 import { SLA_PAUSE_STATUSES, waitingOn } from "@/domain/workflow";
+import { statusGroup } from "@/domain/status-display";
 import { findTaskByKey } from "./services/tasks";
 import { activityFeed } from "./activity-feed";
 import type { CurrentMember } from "./session";
@@ -35,6 +36,7 @@ export async function loadTaskDetail(key: string, viewer: CurrentMember) {
     include: {
       project: { select: { id: true, key: true, name: true } },
       category: { select: { id: true, name: true } },
+      customStatus: { select: { id: true, name: true, color: true, stepGroup: true } },
       requester: { select: { id: true, name: true, handle: true } },
       createdBy: { select: { id: true, name: true } },
       assignee: { select: { id: true, name: true, handle: true } },
@@ -102,6 +104,8 @@ export async function loadTaskDetail(key: string, viewer: CurrentMember) {
     credentials: Array<{ id: string; label: string | null; username: string; passwordEncrypted: string | null; url: string | null; note: string | null; createdById: string; createdAt: Date; createdBy: { name: string } }>;
   };
   const r = t as unknown as Raw;
+  const stepGroup = statusGroup(base.status as TaskStatus);
+  const customOptions = stepGroup ? await db.customStatus.findMany({ where: { stepGroup }, orderBy: { position: "asc" }, select: { id: true, name: true, color: true } }) : [];
 
   return {
     id: base.id,
@@ -110,6 +114,8 @@ export async function loadTaskDetail(key: string, viewer: CurrentMember) {
     description: base.description,
     type: base.type,
     status: base.status as TaskStatus,
+    customStatus: (t as unknown as { customStatus: { id: string; name: string; color: string; stepGroup: string } | null }).customStatus,
+    customOptions,
     waitingOn: waitingOn(base.status as TaskStatus),
     priority: base.priority as Priority | null,
     suggestedPriority: base.suggestedPriority as Priority | null,

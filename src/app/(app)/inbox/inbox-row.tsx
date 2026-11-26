@@ -37,7 +37,7 @@ export function InboxRowItem({ row, href, selected, viewerSide }: { row: InboxRo
       </span>
       <span className="text-[13.5px] font-semibold leading-[19px] text-fg">{row.title}</span>
       <span className="flex flex-wrap items-center gap-2">
-        <StatusLozenge status={row.status as TaskStatus} />
+        <StatusLozenge status={row.status as TaskStatus} custom={row.customStatus} />
         <WaitingBadge side={row.waitingOn} viewerSide={viewerSide} />
         {hintText && <span className={cn("text-[11.5px] font-medium", danger ? "text-danger-text" : "text-fg-muted")}>{hintText}</span>}
       </span>
