@@ -56,8 +56,17 @@ set `STORAGE_DRIVER=s3` and the `S3_*` variables for an S3/R2 bucket.
 pnpm lint
 pnpm typecheck
 pnpm test
+pnpm test:db   # against the database in DATABASE_URL, after db:migrate and db:seed
 pnpm e2e
 ```
+
+`pnpm test:db` covers what MySQL needs care for: long text, emoji, JSON lists, case rules, NULL order, rows written in the
+same instant, time zones and concurrent writes.
+
+The database is **MySQL 8.0.16+** (or MariaDB 10.4+). After a schema change, rebuild the single MySQL migration while
+the app is not yet in production with
+`pnpm exec prisma migrate diff --from-empty --to-schema prisma/schema.prisma --script | python3 scripts/mysql-init-migration.py > prisma/migrations/20261126100000_init_mysql/migration.sql`;
+once there is real data, add a new migration instead.
 
 `pnpm e2e` needs `pnpm dev:web` running and `npx playwright install chromium` once. If the browser is installed somewhere else, point `PW_CHROMIUM_PATH` at it.
 

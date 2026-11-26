@@ -15,6 +15,7 @@
     "worker:once": "tsx --conditions=react-server scripts/worker.ts --once",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "test:db": "vitest run --config vitest.db.config.mts",
     "e2e": "playwright test --trace off",
     "db:migrate": "prisma migrate deploy",
     "db:seed": "tsx prisma/seed/index.ts",
