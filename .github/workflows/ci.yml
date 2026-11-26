@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: tracker
+          POSTGRES_PASSWORD: tracker
+          POSTGRES_DB: tracker
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U tracker" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql://tracker:tracker@localhost:5432/tracker
+      BETTER_AUTH_SECRET: ci-secret-not-used-in-production-0123456789
+      CREDENTIALS_KEY: MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=
+      FILE_URL_SECRET: ci-file-secret
+      APP_URL: http://localhost:3000
+      BETTER_AUTH_URL: http://localhost:3000
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+      - run: pnpm lint
+      - run: pnpm test
+      - name: Apply migrations to a fresh database
+        run: pnpm db:migrate
+      - run: pnpm build
+      - name: Pack the build for cPanel
+        run: tar -czf build.tar.gz .next
+      - uses: actions/upload-artifact@v4
+        with:
+          name: next-build
+          path: build.tar.gz
+          retention-days: 14

@@ -68,7 +68,7 @@ Shared plans often kill `next build`. Build somewhere else and ship the result:
 2. Upload the `.next` folder to `~/tracker/.next` (cPanel File Manager or SFTP).
 3. In `.cpanel.yml`, delete the line that runs `run build`.
 
-A GitHub Actions workflow can do step 1 and 2 for you on every push.
+The GitHub Actions workflow (`.github/workflows/ci.yml`) already does step 1 on every push to `main`: open the run, download the artifact **next-build** (`build.tar.gz`), and extract it into `~/tracker` so `.next` lands next to `server.js`. The build uses the Node 22 and the same lockfile as production.
 
 ## Checks after a deploy
 
