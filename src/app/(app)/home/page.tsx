@@ -33,14 +33,14 @@ export default async function HomePage() {
     db.task.count({ where: { archivedAt: null, status: { in: ["in_progress", "reopened", "planned"] } } }),
     db.release.findFirst({
       where: { state: "released", archivedAt: null },
-      orderBy: { releasedAt: "desc" },
+      orderBy: { releasedAt: { sort: "desc", nulls: "first" } },
       include: { tasks: { include: { task: { select: { status: true, reopenCount: true } } } } },
     }),
     db.release.findFirst({ where: { state: "upcoming", archivedAt: null, targetDate: { gte: now } }, orderBy: { targetDate: "asc" }, include: { _count: { select: { tasks: true } } } }),
     activityFeed(me, {}, 15),
   ]);
   const abgWork = await decorate(
-    await db.task.findMany({ where: { archivedAt: null, status: { in: ["in_progress", "reopened", "planned"] } }, select: taskRowSelect, orderBy: [{ updatedAt: "desc" }], take: 5 }),
+    await db.task.findMany({ where: { archivedAt: null, status: { in: ["in_progress", "reopened", "planned"] } }, select: taskRowSelect, orderBy: [{ updatedAt: "desc" }, { id: "desc" }], take: 5 }),
   );
   const overdue = (await decorate(overdueRaw))
     .filter((r) => r.isOverdue || r.sla?.state === "breached")

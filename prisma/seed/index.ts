@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { PrismaPg } from "@prisma/adapter-pg";
+import { PrismaMariaDb } from "@prisma/adapter-mariadb";
 import { hash } from "@node-rs/argon2";
 import { PrismaClient, type Priority } from "../../src/generated/prisma/client";
 import { addWorkingMinutes, DEFAULT_CALENDAR, type WorkCalendar } from "../../src/domain/sla";
@@ -9,13 +9,18 @@ import { BACKLOG, HOLIDAYS, PEOPLE, PROJECTS, SLA } from "./data";
  * Seeds the workspace, the two teams, the people (PRD 3.1), the 11 projects (4.4), SLA defaults (4.3), Egypt holidays,
  * and the migration backlog (11.1). Run with `pnpm db:seed`. `--reset` wipes the database first.
  */
-const db = new PrismaClient({ adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }) });
+const db = new PrismaClient({ adapter: new PrismaMariaDb(process.env.DATABASE_URL!) });
 
 export const DEV_PASSWORD = process.env.SEED_PASSWORD ?? "Vendoor!2026";
 
 async function wipe() {
-  const tables = await db.$queryRaw<Array<{ tablename: string }>>`SELECT tablename FROM pg_tables WHERE schemaname='public' AND tablename <> '_prisma_migrations'`;
-  await db.$executeRawUnsafe(`TRUNCATE ${tables.map((t) => `"${t.tablename}"`).join(", ")} CASCADE`);
+  const tables = await db.$queryRaw<Array<{ name: string }>>`SELECT TABLE_NAME AS name FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_TYPE = 'BASE TABLE' AND TABLE_NAME <> '_prisma_migrations'`;
+  // One connection for all statements, so the foreign key switch applies to every TRUNCATE.
+  await db.$transaction(async (tx) => {
+    await tx.$executeRawUnsafe("SET FOREIGN_KEY_CHECKS = 0");
+    for (const t of tables) await tx.$executeRawUnsafe(`TRUNCATE TABLE \`${t.name}\``);
+    await tx.$executeRawUnsafe("SET FOREIGN_KEY_CHECKS = 1");
+  });
 }
 
 function cairoNoon(date: string): Date {

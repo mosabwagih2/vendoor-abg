@@ -14,7 +14,7 @@ export const auth = betterAuth({
   appName: "Vendoor × ABG",
   baseURL: process.env.BETTER_AUTH_URL,
   secret: process.env.BETTER_AUTH_SECRET,
-  database: prismaAdapter(db, { provider: "postgresql", transaction: true }),
+  database: prismaAdapter(db, { provider: "mysql", transaction: true }),
   user: {
     modelName: "member",
     additionalFields: {

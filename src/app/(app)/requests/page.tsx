@@ -12,7 +12,7 @@ export default async function RequestsPage({ searchParams }: { searchParams: Pro
   const me = await requireMember();
   const sp = await searchParams;
   const t = await getTranslations("requests");
-  const rows = await decorate(await db.task.findMany({ where: { status: "triage", archivedAt: null }, select: taskRowSelect, orderBy: { createdAt: "asc" } }));
+  const rows = await decorate(await db.task.findMany({ where: { status: "triage", archivedAt: null }, select: taskRowSelect, orderBy: [{ createdAt: "asc" }, { id: "asc" }] }));
   const selectedKey = sp.peek ?? rows[0]?.key;
   const selected = selectedKey ? await loadTaskDetail(selectedKey, me) : null;
   return <RequestsView rows={rows} selected={selected && selected.status === "triage" ? selected : selected} title={t("title")} />;

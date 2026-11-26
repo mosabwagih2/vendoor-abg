@@ -4,6 +4,9 @@ import createNextIntlPlugin from "next-intl/plugin";
 const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 
 const nextConfig: NextConfig = {
+  // Ships .next/standalone: a server with only the node_modules it needs, so a small host (cPanel, 1 GB)
+  // never runs `pnpm install` or `next build`. CI packs it into the deploy bundle (scripts/pack-deploy.sh).
+  output: "standalone",
   serverExternalPackages: ["@node-rs/argon2"],
   turbopack: {
     rules: {

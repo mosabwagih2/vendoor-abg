@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 export async function GET() {
   const me = await getCurrentMember();
   if (!me) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  const last = await db.activityEvent.findFirst({ orderBy: { at: "desc" }, select: { id: true, at: true } });
+  const last = await db.activityEvent.findFirst({ orderBy: [{ at: "desc" }, { id: "desc" }], select: { id: true, at: true } });
   const n = await db.notification.count({ where: { memberId: me.id, readAt: null } });
   return NextResponse.json({ marker: `${last?.id ?? ""}:${n}` });
 }

@@ -13,8 +13,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     db.task.count({ where: { archivedAt: null, status: "triage" } }),
     projectsLite(),
     membersLite(),
-    db.incident.findFirst({ where: { state: { not: "resolved" }, archivedAt: null }, orderBy: { startedAt: "desc" } }),
-    db.release.findMany({ where: { state: "upcoming", archivedAt: null }, select: { id: true, number: true, targetDate: true }, orderBy: { targetDate: "asc" } }),
+    db.incident.findFirst({ where: { state: { not: "resolved" }, archivedAt: null }, orderBy: [{ startedAt: "desc" }, { id: "desc" }] }),
+    db.release.findMany({ where: { state: "upcoming", archivedAt: null }, select: { id: true, number: true, targetDate: true }, orderBy: { targetDate: { sort: "asc", nulls: "last" } } }),
   ]);
   return (
     <AppShell

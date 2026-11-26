@@ -43,3 +43,7 @@ next-env.d.ts
 /src/generated
 !.env.example
 /docs/vendoor-tracker.zip
+# deploy bundle (scripts/pack-deploy.sh)
+/dist-scripts
+/deploy-bundle
+/deploy.tar.gz

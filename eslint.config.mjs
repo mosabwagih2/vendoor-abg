@@ -15,6 +15,10 @@ const eslintConfig = defineConfig([
     "src/generated/**",
     "test-results/**",
     "server.js", // Passenger entry point, plain CommonJS
+    "scripts/cpanel/app.js", // Passenger entry point of the deploy bundle, plain CommonJS
+    // Deploy bundle outputs (scripts/pack-deploy.sh)
+    "dist-scripts/**",
+    "deploy-bundle/**",
   ]),
   {
     rules: {

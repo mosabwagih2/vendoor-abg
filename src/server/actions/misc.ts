@@ -91,9 +91,9 @@ export async function searchPaletteAction(q: string, recent: string[] = []) {
     const needle = q.trim().slice(0, 80);
     const taskSelect = { key: true, title: true, status: true, project: { select: { name: true } } } as const;
     const [tasks, projects, people, recents] = await Promise.all([
-      needle ? db.task.findMany({ where: { archivedAt: null, OR: [{ key: { equals: needle.toUpperCase() } }, { title: { contains: needle, mode: "insensitive" } }] }, select: taskSelect, orderBy: { updatedAt: "desc" }, take: 6 }) : Promise.resolve([]),
-      needle ? db.project.findMany({ where: { archivedAt: null, OR: [{ name: { contains: needle, mode: "insensitive" } }, { key: { equals: needle.toUpperCase() } }] }, select: { key: true, name: true, _count: { select: { tasks: true } } }, take: 4 }) : Promise.resolve([]),
-      needle ? db.member.findMany({ where: { status: { not: "deactivated" }, name: { contains: needle, mode: "insensitive" } }, select: { id: true, name: true, role: true }, take: 4 }) : Promise.resolve([]),
+      needle ? db.task.findMany({ where: { archivedAt: null, OR: [{ key: { equals: needle.toUpperCase() } }, { title: { contains: needle } }] }, select: taskSelect, orderBy: [{ updatedAt: "desc" }, { id: "desc" }], take: 6 }) : Promise.resolve([]),
+      needle ? db.project.findMany({ where: { archivedAt: null, OR: [{ name: { contains: needle } }, { key: { equals: needle.toUpperCase() } }] }, select: { key: true, name: true, _count: { select: { tasks: true } } }, take: 4 }) : Promise.resolve([]),
+      needle ? db.member.findMany({ where: { status: { not: "deactivated" }, name: { contains: needle } }, select: { id: true, name: true, role: true }, take: 4 }) : Promise.resolve([]),
       !needle && recent.length ? db.task.findMany({ where: { key: { in: recent.slice(0, 5) } }, select: taskSelect }) : Promise.resolve([]),
     ]);
     const fromTask = (t: (typeof tasks)[number], kind: "task" | "recent") => ({ id: t.key, kind, title: t.title, subtitle: `${t.key} · ${t.project.name} · ${statusLabel(t.status)}`, href: `/tasks/${t.key}` });

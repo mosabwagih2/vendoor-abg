@@ -1,6 +1,8 @@
 import "server-only";
 import { decryptSecret } from "./crypto";
 import { db } from "./db";
+import { stringList } from "./json-list";
+import type { Prisma } from "@/generated/prisma/client";
 import { decorate, taskRowSelect } from "./queries";
 import { getWorkspaceConfig } from "./calendar";
 import { computeClock, pausesFromSpans } from "@/domain/sla";
@@ -43,15 +45,15 @@ export async function loadTaskDetail(key: string, viewer: CurrentMember) {
       verifiedBy: { select: { id: true, name: true } },
       parent: { select: { id: true, key: true, title: true, status: true } },
       currentRelease: { select: { id: true, number: true, state: true, releasedAt: true, rollbackReason: true, deployedBy: { select: { name: true } } } },
-      attachments: { where: { archivedAt: null }, include: { uploadedBy: { select: { name: true } } }, orderBy: { createdAt: "asc" } },
+      attachments: { where: { archivedAt: null }, include: { uploadedBy: { select: { name: true } } }, orderBy: [{ createdAt: "asc" }, { id: "asc" }] },
       occurrences: {
         where: { archivedAt: null },
-        orderBy: { happenedAt: "desc" },
+        orderBy: [{ happenedAt: "desc" }, { id: "desc" }],
         include: { reportedBy: { select: { name: true } }, attachments: { where: { archivedAt: null }, include: { uploadedBy: { select: { name: true } } } } },
       },
       comments: {
         where: { archivedAt: null, ...(isVendoor ? { isInternal: false } : {}) },
-        orderBy: { createdAt: "asc" },
+        orderBy: [{ createdAt: "asc" }, { id: "asc" }],
         include: {
           author: { select: { id: true, name: true, role: true } },
           reactions: { include: { member: { select: { id: true, name: true } } } },
@@ -61,8 +63,8 @@ export async function loadTaskDetail(key: string, viewer: CurrentMember) {
       relationsFrom: { include: { to: { select: { id: true, key: true, title: true, status: true } } } },
       relationsTo: { include: { from: { select: { id: true, key: true, title: true, status: true } } } },
       followers: { where: { following: true }, include: { member: { select: { id: true, name: true } } } },
-      credentials: { where: { archivedAt: null }, include: { createdBy: { select: { name: true } } }, orderBy: { createdAt: "asc" } },
-      statusSpans: { orderBy: { enteredAt: "asc" } },
+      credentials: { where: { archivedAt: null }, include: { createdBy: { select: { name: true } } }, orderBy: [{ createdAt: "asc" }, { id: "asc" }] },
+      statusSpans: { orderBy: [{ enteredAt: "asc" }, { id: "asc" }] },
     },
   });
   const task = t as unknown as typeof t & Record<string, never> & {
@@ -96,7 +98,7 @@ export async function loadTaskDetail(key: string, viewer: CurrentMember) {
 
   type Raw = {
     attachments: Parameters<typeof att>[0][];
-    occurrences: Array<{ id: string; accounts: string[]; orderCodes: string[]; happenedAt: Date; note: string | null; mergedFromTaskId: string | null; reportedBy: { name: string }; attachments: Parameters<typeof att>[0][] }>;
+    occurrences: Array<{ id: string; accounts: Prisma.JsonValue; orderCodes: Prisma.JsonValue; happenedAt: Date; note: string | null; mergedFromTaskId: string | null; reportedBy: { name: string }; attachments: Parameters<typeof att>[0][] }>;
     comments: Array<{ id: string; kind: string; body: string; isInternal: boolean; editedAt: Date | null; createdAt: Date; author: { id: string; name: string; role: string }; reactions: Array<{ emoji: string; member: { id: string; name: string } }>; attachments: Parameters<typeof att>[0][] }>;
     relationsFrom: Array<{ id: string; kind: string; to: { id: string; key: string; title: string; status: string } }>;
     relationsTo: Array<{ id: string; kind: string; from: { id: string; key: string; title: string; status: string } }>;
@@ -123,8 +125,8 @@ export async function loadTaskDetail(key: string, viewer: CurrentMember) {
     expectedBehaviour: base.expectedBehaviour,
     whyItMatters: base.whyItMatters,
     howOften: base.howOften,
-    accounts: base.accounts,
-    orderCodes: base.orderCodes,
+    accounts: stringList(base.accounts),
+    orderCodes: stringList(base.orderCodes),
     decisionText: base.decisionText,
     decisionUpdatedAt: base.decisionUpdatedAt?.toISOString() ?? null,
     decisionBy: decisionBy?.name ?? null,
@@ -154,7 +156,7 @@ export async function loadTaskDetail(key: string, viewer: CurrentMember) {
       resolution: { ...resolution, dueAt: resolution.dueAt?.toISOString() ?? null },
     },
     attachments: r.attachments.map(att),
-    occurrences: r.occurrences.map((o) => ({ id: o.id, accounts: o.accounts, orderCodes: o.orderCodes, happenedAt: o.happenedAt.toISOString(), note: o.note, merged: !!o.mergedFromTaskId, reportedBy: o.reportedBy.name, attachments: o.attachments.map(att) })),
+    occurrences: r.occurrences.map((o) => ({ id: o.id, accounts: stringList(o.accounts), orderCodes: stringList(o.orderCodes), happenedAt: o.happenedAt.toISOString(), note: o.note, merged: !!o.mergedFromTaskId, reportedBy: o.reportedBy.name, attachments: o.attachments.map(att) })),
     comments: r.comments.map((c) => ({
       id: c.id,
       kind: c.kind,

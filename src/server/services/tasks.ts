@@ -2,6 +2,7 @@ import { statusGroup } from "@/domain/status-display";
 import "server-only";
 import type { Prisma } from "@/generated/prisma/client";
 import { db } from "../db";
+import { withLists } from "../json-list";
 import { recordEvent } from "../activity";
 import { notify } from "../notify";
 import { AppError } from "../errors";
@@ -30,7 +31,7 @@ export async function findTaskByKey(key: string, tx: Tx | typeof db = db) {
 async function getTaskOrThrow(tx: Tx, id: string) {
   const t = await tx.task.findUnique({ where: { id } });
   if (!t || t.archivedAt) throw new AppError("not_found", "Task not found");
-  return t;
+  return withLists(t);
 }
 
 async function allocateKey(tx: Tx, projectId: string) {
@@ -66,7 +67,7 @@ async function abgAll(tx: Tx): Promise<string[]> {
 export async function refreshSla(tx: Tx, taskId: string, cfg?: WorkspaceConfig) {
   const c = cfg ?? (await getWorkspaceConfig());
   const t = await tx.task.findUniqueOrThrow({ where: { id: taskId } });
-  const spans = await tx.taskStatusSpan.findMany({ where: { taskId }, orderBy: { enteredAt: "asc" } });
+  const spans = await tx.taskStatusSpan.findMany({ where: { taskId }, orderBy: [{ enteredAt: "asc" }, { id: "asc" }] });
   const prio = (t.priority ?? t.suggestedPriority ?? "medium") as Priority;
   const target = c.targets[prio];
   const now = new Date();
@@ -382,7 +383,8 @@ export async function transition(actor: Actor, taskId: string, action: WorkflowA
 }
 
 async function mergeInto(tx: Tx, actor: Actor, source: { id: string; key: string; requesterId: string; accounts: string[]; orderCodes: string[]; description: string; currentBehaviour: string | null; title: string; createdAt: Date }, targetId: string) {
-  const target = await tx.task.findUnique({ where: { id: targetId } });
+  const found = await tx.task.findUnique({ where: { id: targetId } });
+  const target = found && withLists(found);
   if (!target || target.id === source.id) throw new AppError("invalid_input", "target");
   if (target.status === "closed") throw new AppError("invalid_input", "Target task is closed.");
   // The request becomes an occurrence of the target (FR-4.2), with its attachments.
@@ -426,7 +428,7 @@ export async function proposeCancel(actor: Actor, taskId: string, reason: string
 /** Undo the actor's own last status change within 10 seconds (PRD 9.5.3). */
 export async function undoLastTransition(actor: Actor, taskId: string) {
   return db.$transaction(async (tx) => {
-    const spans = await tx.taskStatusSpan.findMany({ where: { taskId }, orderBy: { enteredAt: "desc" }, take: 2 });
+    const spans = await tx.taskStatusSpan.findMany({ where: { taskId }, orderBy: [{ enteredAt: "desc" }, { id: "desc" }], take: 2 });
     const [current, prev] = spans;
     if (!current || !prev || current.actorId !== actor.id || Date.now() - current.enteredAt.getTime() > 10_000) {
       throw new AppError("conflict", "Too late to undo. Use the task actions instead.");

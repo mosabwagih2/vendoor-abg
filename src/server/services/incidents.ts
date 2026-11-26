@@ -87,7 +87,7 @@ export async function resolveIncident(me: CurrentMember, d: { incidentId: string
 export async function alertAbg(me: CurrentMember, incidentId: string) {
   const i = await openOne(incidentId);
   // Anyone can press the button, so limit how often it can email ABG.
-  const last = await db.incidentTimelineEntry.findFirst({ where: { incidentId: i.id, kind: "alert_sent" }, orderBy: { at: "desc" }, select: { at: true } });
+  const last = await db.incidentTimelineEntry.findFirst({ where: { incidentId: i.id, kind: "alert_sent" }, orderBy: [{ at: "desc" }, { id: "desc" }], select: { at: true } });
   const now = new Date();
   if (!canAlertAgain(last?.at ?? null, now)) throw new AppError("invalid_input", `Already alerted. You can alert again in ${alertWaitMinutes(last!.at, now)} min.`);
   await db.$transaction(async (tx) => {

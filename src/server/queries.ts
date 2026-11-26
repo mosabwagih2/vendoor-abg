@@ -4,6 +4,7 @@ import { db } from "./db";
 import type { TaskFilters, TaskDisplay } from "@/lib/filters";
 import type { CurrentMember } from "./session";
 import { getWorkspaceConfig } from "./calendar";
+import { rankSimilar } from "@/domain/trigram";
 import { addWorkingMinutes, endOfWorkingDay, localDateKey, workingMinutesBetween } from "@/domain/sla";
 import { OPEN_STATUSES, waitingOn } from "@/domain/workflow";
 import type { Priority, TaskStatus } from "@/domain/types";
@@ -130,13 +131,14 @@ export async function buildWhere(f: TaskFilters, d: TaskDisplay, viewer: Current
     const q = f.q.trim();
     and.push({
       OR: [
+        // contains is case-insensitive: the tables use a case-insensitive collation (utf8mb4_unicode_ci).
         { key: { equals: q.toUpperCase() } },
-        { title: { contains: q, mode: "insensitive" } },
-        { description: { contains: q, mode: "insensitive" } },
-        { accounts: { has: q } },
-        { orderCodes: { has: q } },
-        { occurrences: { some: { OR: [{ orderCodes: { has: q } }, { accounts: { has: q } }] } } },
-        { comments: { some: { body: { contains: q, mode: "insensitive" }, ...(viewer.side === "vendoor" ? { isInternal: false } : {}) } } },
+        { title: { contains: q } },
+        { description: { contains: q } },
+        { accounts: { array_contains: [q] } },
+        { orderCodes: { array_contains: [q] } },
+        { occurrences: { some: { OR: [{ orderCodes: { array_contains: [q] } }, { accounts: { array_contains: [q] } }] } } },
+        { comments: { some: { body: { contains: q }, ...(viewer.side === "vendoor" ? { isInternal: false } : {}) } } },
       ],
     });
   }
@@ -156,7 +158,7 @@ export function sortRows(rows: TaskRow[], order: TaskDisplay["order"]): TaskRow[
 
 export async function listTasks(f: TaskFilters, d: TaskDisplay, viewer: CurrentMember, take = 2000) {
   const where = await buildWhere(f, d, viewer);
-  const rows = await db.task.findMany({ where, select: taskRowSelect, take, orderBy: { updatedAt: "desc" } });
+  const rows = await db.task.findMany({ where, select: taskRowSelect, take, orderBy: [{ updatedAt: "desc" }, { id: "desc" }] });
   let out = await decorate(rows);
   if (f.unverified) out = out.filter((r) => r.unverified);
   return sortRows(out, d.order);
@@ -195,22 +197,17 @@ export async function waitingOnMe(viewer: CurrentMember) {
             ...(viewer.role === "abg_lead" ? [{ status: { in: ["planned", "reopened"] as TaskStatus[] }, assigneeId: null }] : []),
           ],
         };
-  const rows = await db.task.findMany({ where, select: taskRowSelect, take: 200, orderBy: { statusChangedAt: "asc" } });
+  const rows = await db.task.findMany({ where, select: taskRowSelect, take: 200, orderBy: [{ statusChangedAt: "asc" }, { id: "asc" }] });
   return decorate(rows);
 }
 
-/** Possible duplicates: open tasks in the same project with a similar title (pg_trgm). */
+/** Possible duplicates: open tasks in the same project with a similar title (trigram similarity, as pg_trgm). */
 export async function possibleDuplicates(projectId: string | null, title: string, excludeId?: string) {
   const t = title.trim();
   if (t.length < 4) return [];
-  const rows = await db.$queryRaw<Array<{ id: string; key: string; title: string; status: string; occurrenceCount: number; sim: number }>>`
-    SELECT id, key, title, status, "occurrenceCount", similarity(title, ${t}) AS sim
-    FROM "Task"
-    WHERE "archivedAt" IS NULL AND status NOT IN ('done','closed')
-      ${projectId ? Prisma.sql`AND "projectId" = ${projectId}` : Prisma.empty}
-      ${excludeId ? Prisma.sql`AND id <> ${excludeId}` : Prisma.empty}
-      AND (similarity(title, ${t}) > 0.18 OR title ILIKE ${"%" + t + "%"})
-    ORDER BY sim DESC
-    LIMIT 5`;
-  return rows;
+  const open = await db.task.findMany({
+    where: { archivedAt: null, status: { notIn: ["done", "closed"] }, ...(projectId ? { projectId } : {}), ...(excludeId ? { id: { not: excludeId } } : {}) },
+    select: { id: true, key: true, title: true, status: true, occurrenceCount: true },
+  });
+  return rankSimilar(open, t);
 }

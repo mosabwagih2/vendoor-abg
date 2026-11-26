@@ -1,13 +1,9 @@
 ---
 # Runs when cPanel > Git Version Control > "Deploy HEAD Commit" is used.
-# Copy this folder's contents to the app root, then install, migrate and build there.
-# Change DEPLOYPATH to the "Application root" you gave in Setup Node.js App.
+# Shared plans kill `pnpm install` and `next build` (1 GB limit), so nothing is built here:
+# CI builds a ready-to-run bundle on every push and publishes it as the release "deploy-<branch>".
+# This downloads that bundle into ~/tracker, runs the migrations and restarts the app.
+# Wait for the GitHub Actions run of your commit to finish before deploying.
 deployment:
   tasks:
-    - export DEPLOYPATH=$HOME/tracker
-    - /bin/mkdir -p $DEPLOYPATH
-    - /bin/cp -R . $DEPLOYPATH
-    - cd $DEPLOYPATH && source $HOME/nodevenv/tracker/22/bin/activate && npx --yes pnpm@10.28.0 install --frozen-lockfile
-    - cd $DEPLOYPATH && source $HOME/nodevenv/tracker/22/bin/activate && npx --yes pnpm@10.28.0 run db:migrate
-    - cd $DEPLOYPATH && source $HOME/nodevenv/tracker/22/bin/activate && npx --yes pnpm@10.28.0 run build
-    - /bin/mkdir -p $DEPLOYPATH/tmp && /bin/touch $DEPLOYPATH/tmp/restart.txt
+    - /bin/bash scripts/cpanel/deploy.sh

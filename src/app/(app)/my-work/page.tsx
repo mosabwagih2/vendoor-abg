@@ -21,7 +21,7 @@ export default async function MyWorkPage({ searchParams }: { searchParams: Promi
     following: { archivedAt: null, followers: { some: { memberId: me.id, following: true } }, status: { notIn: ["done", "closed"] } },
     done: { archivedAt: null, OR: [mineWhere, { verifiedById: me.id }], status: "done", verifiedAt: { gte: since } },
   };
-  const rows = tab === "waiting" ? await waitingOnMe(me) : await decorate(await db.task.findMany({ where: where[tab] ?? where.mine, select: taskRowSelect, orderBy: { updatedAt: "desc" }, take: 500 }));
+  const rows = tab === "waiting" ? await waitingOnMe(me) : await decorate(await db.task.findMany({ where: where[tab] ?? where.mine, select: taskRowSelect, orderBy: [{ updatedAt: "desc" }, { id: "desc" }], take: 500 }));
   const needsMe = tab === "waiting" ? rows : await waitingOnMe(me);
   const tabs = [
     { id: "waiting", label: t("needsMe"), count: needsMe.length },

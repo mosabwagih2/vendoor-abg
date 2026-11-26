@@ -40,7 +40,7 @@ export async function loadDashboard(): Promise<Dashboard> {
     db.member.findMany({ where: { status: { not: "deactivated" }, team: { side: "delivery" } }, select: { id: true, name: true, role: true }, orderBy: { name: "asc" } }),
     db.task.groupBy({ by: ["assigneeId"], where: { archivedAt: null, status: { in: ["planned", "in_progress", "reopened"] }, assigneeId: { not: null } }, _count: true }),
     db.task.count({ where: { archivedAt: null, status: { in: ["planned", "in_progress", "reopened"] }, assigneeId: null } }),
-    db.task.findMany({ where: { archivedAt: null, status: { in: ["needs_info", "shipped"] } }, orderBy: { statusChangedAt: "asc" }, take: 5, select: pick }),
+    db.task.findMany({ where: { archivedAt: null, status: { in: ["needs_info", "shipped"] } }, orderBy: [{ statusChangedAt: "asc" }, { id: "asc" }], take: 5, select: pick }),
     db.task.count({ where: { archivedAt: null, status: { in: ["needs_info", "shipped"] } } }),
   ]);
   const counts = Object.fromEntries(STATUS_GROUPS.map((g) => [g, 0])) as Record<StatusGroup, number>;
