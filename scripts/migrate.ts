@@ -31,6 +31,9 @@ const conn = await mariadb.createConnection({
 });
 
 try {
+  // Some shared hosts default to MyISAM: 1000-byte keys (the init migration needs more) and no foreign keys.
+  // The migrations do not name an engine, so pin InnoDB for this session.
+  await conn.query("SET SESSION default_storage_engine = InnoDB");
   await conn.query(`CREATE TABLE IF NOT EXISTS \`_prisma_migrations\` (
     \`id\` VARCHAR(36) PRIMARY KEY NOT NULL,
     \`checksum\` VARCHAR(64) NOT NULL,
@@ -40,7 +43,7 @@ try {
     \`rolled_back_at\` DATETIME(3),
     \`started_at\` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     \`applied_steps_count\` INTEGER UNSIGNED NOT NULL DEFAULT 0
-  ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`);
+  ) ENGINE = InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`);
 
   const rows: { migration_name: string; checksum: string; finished_at: Date | null; rolled_back_at: Date | null }[] =
     await conn.query("SELECT migration_name, checksum, finished_at, rolled_back_at FROM `_prisma_migrations`");
