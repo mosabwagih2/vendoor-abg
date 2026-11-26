@@ -363,7 +363,8 @@
       "timeline": "Timeline"
     },
     "hintStuck": "ABG is asking you",
-    "hintCompleted": "Needs your verification"
+    "hintCompleted": "Needs your verification",
+    "emptyBody": "Try removing a filter or checking the spelling. Closed tasks are hidden unless you ask for them."
   },
   "task": {
     "breadcrumb": "Breadcrumb",
@@ -1159,10 +1160,11 @@
     }
   },
   "errorPage": {
-    "title": "Something went wrong on our side",
-    "body": "Nothing you did. Try again, and if it keeps happening tell ABG with the reference below.",
+    "title": "Something went wrong",
+    "body": "Nothing you did. Trying again usually fixes it. Your work is safe.",
     "reference": "Reference {id}",
-    "retry": "Try again"
+    "retry": "Try again",
+    "report": "Report a problem"
   },
   "drawer": {
     "title": "Notifications",

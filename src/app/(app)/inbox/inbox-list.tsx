@@ -1,9 +1,10 @@
 "use client";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { CheckCheck } from "lucide-react";
+import { Check, CheckCheck } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { EmptyState } from "@/components/layout/page-header";
+import { useApp } from "@/components/layout/app-context";
 import { Button } from "@/components/ui/button";
 import { INBOX_TABS, turnFor, type InboxTab } from "@/domain/inbox";
 import type { Side } from "@/domain/types";
@@ -65,9 +66,12 @@ export function InboxList({ tab, counts, rows, selectedKey, viewerSide }: { tab:
 
 function InboxEmpty() {
   const t = useTranslations("inbox");
+  const { openNewRequest } = useApp();
   return (
-    <EmptyState title={t("emptyTitle")}>
-      <p className="max-w-xs text-ui text-fg-muted">{t("emptyBody")}</p>
+    <EmptyState title={t("emptyTitle")} body={t("emptyBody")} tone="success" icon={Check}>
+      <Button size="md" variant="primary" className="bg-accent text-white" onClick={() => openNewRequest()}>
+        {t("emptyAction")}
+      </Button>
     </EmptyState>
   );
 }

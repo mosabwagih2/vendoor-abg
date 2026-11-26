@@ -6,7 +6,7 @@ import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { DndContext, KeyboardSensor, PointerSensor, useDraggable, useDroppable, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
-import { CalendarDays, ChevronRight, Download, GanttChart, List, Columns3, Bookmark, MoreHorizontal, X, Expand, Repeat, Paperclip, Trash2 } from "lucide-react";
+import { Search, CalendarDays, ChevronRight, Download, GanttChart, List, Columns3, Bookmark, MoreHorizontal, X, Expand, Repeat, Paperclip, Trash2 } from "lucide-react";
 import { PageHeader, EmptyState } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { Input, Select } from "@/components/ui/input";
@@ -92,8 +92,8 @@ export function TasksView({ rows, filters, display, query, savedViews, peek, pro
       <div className="flex min-h-0 flex-1">
         <div className="min-w-0 flex-1">
           {!rows.length ? (
-            <EmptyState title={t("tasks.empty")}>
-              <Button size="sm" onClick={() => navigate({ ...Object.fromEntries(Object.keys(filters).map((k) => [k, Array.isArray(filters[k as keyof TaskFilters]) ? [] : typeof filters[k as keyof TaskFilters] === "boolean" ? false : ""])) })}>
+            <EmptyState title={t("tasks.empty")} body={t("tasks.emptyBody")} tone="info" icon={Search}>
+              <Button size="md" variant="primary" className="bg-accent text-white" onClick={() => navigate({ ...Object.fromEntries(Object.keys(filters).map((k) => [k, Array.isArray(filters[k as keyof TaskFilters]) ? [] : typeof filters[k as keyof TaskFilters] === "boolean" ? false : ""])) })}>
                 {t("tasks.clearFilters")}
               </Button>
             </EmptyState>
