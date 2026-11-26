@@ -1,6 +1,7 @@
 import { getTranslations } from "next-intl/server";
 import { requireMember } from "@/server/session";
 import { db } from "@/server/db";
+import { numberList } from "@/server/json-list";
 import { SettingsHeader } from "@/components/layout/settings-header";
 import { WorkWeekForm } from "./work-week-form";
 
@@ -13,7 +14,7 @@ export default async function WorkWeekPage() {
   return (
     <>
       <SettingsHeader title={t("title")} hint={t("hint")} />
-      <WorkWeekForm workingDays={ws.workingDays} startMin={ws.workDayStartMin} endMin={ws.workDayEndMin} timezone={ws.timezone} holidays={ws.holidays.map((h) => ({ id: h.id, date: h.date.toISOString().slice(0, 10), name: h.name, certainty: h.certainty }))} />
+      <WorkWeekForm workingDays={numberList(ws.workingDays)} startMin={ws.workDayStartMin} endMin={ws.workDayEndMin} timezone={ws.timezone} holidays={ws.holidays.map((h) => ({ id: h.id, date: h.date.toISOString().slice(0, 10), name: h.name, certainty: h.certainty }))} />
     </>
   );
 }

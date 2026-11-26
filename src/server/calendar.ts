@@ -1,5 +1,6 @@
 import "server-only";
 import { db } from "./db";
+import { numberList } from "./json-list";
 import { DEFAULT_CALENDAR, localDateKey, type WorkCalendar } from "@/domain/sla";
 import type { Priority } from "@/domain/types";
 
@@ -32,7 +33,7 @@ export async function getWorkspaceConfig(): Promise<WorkspaceConfig> {
     calendar: {
       ...DEFAULT_CALENDAR,
       tz,
-      workingDays: ws.workingDays,
+      workingDays: numberList(ws.workingDays),
       startMin: ws.workDayStartMin,
       endMin: ws.workDayEndMin,
       holidays: ws.holidays.map((h) => h.date.toISOString().slice(0, 10)),

@@ -1,13 +1,16 @@
 // Vendoor × ABG Work Tracker — data model (PRD section 8, plus additive tables documented in docs/PLAN.md §3 and §10).
-// Deletes are soft (archivedAt). All timestamps are stored in UTC; the UI renders Africa/Cairo.
+// Deletes are soft (archivedAt). All timestamps are stored in UTC (DATETIME(3)); the UI renders Africa/Cairo.
 
 generator client {
   provider = "prisma-client"
   output   = "../src/generated/prisma"
 }
 
+// MySQL 8.0.16+ (or MariaDB 10.4+). Lists are JSON arrays (MySQL has no array columns); long text is @db.Text.
+// TEXT columns cannot take a plain default on MySQL, so their empty-string default is an expression,
+// written the way MySQL reports it back (_utf8mb4'') so `prisma migrate diff` sees no drift.
 datasource db {
-  provider = "postgresql"
+  provider = "mysql"
 }
 
 // ───────────────────────────── enums ─────────────────────────────
@@ -133,7 +136,7 @@ model Workspace {
   id                        String   @id @default(uuid())
   name                      String
   timezone                  String   @default("Africa/Cairo")
-  workingDays               Int[]    @default([6, 0, 1, 2, 3, 4]) // 0 = Sunday; Saturday to Thursday, Friday off
+  workingDays               Json     @default("[6,0,1,2,3,4]") // 0 = Sunday; Saturday to Thursday, Friday off
   workDayStartMin           Int      @default(540) // 09:00
   workDayEndMin             Int      @default(1020) // 17:00
   verifyReminderWorkingDays Int      @default(3)
@@ -141,8 +144,8 @@ model Workspace {
   weeklyReportAuto          Boolean  @default(true)
   weeklyReportSentWeek      String? // start key of the last work week that was sent automatically
   slaAtRiskPercentLeft      Int      @default(25)
-  createdAt                 DateTime @default(now()) @db.Timestamptz
-  updatedAt                 DateTime @updatedAt @db.Timestamptz
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @updatedAt
 
   teams      Team[]
   projects   Project[]
@@ -202,19 +205,19 @@ model Team {
 model Member {
   id            String       @id @default(uuid())
   name          String
-  email         String       @unique
+  email         String       @unique @db.VarChar(255)
   emailVerified Boolean      @default(false)
-  image         String?
+  image         String?      @db.Text
   teamId        String
   handle        String       @unique
   role          Role
   status        MemberStatus @default(active)
   locale        String       @default("en")
   theme         String       @default("light")
-  lastActiveAt  DateTime?    @db.Timestamptz
-  createdAt     DateTime     @default(now()) @db.Timestamptz
-  updatedAt     DateTime     @updatedAt @db.Timestamptz
-  archivedAt    DateTime?    @db.Timestamptz
+  lastActiveAt  DateTime?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  archivedAt    DateTime?
 
   team              Team               @relation(fields: [teamId], references: [id])
   sessions          Session[]
@@ -244,12 +247,12 @@ model Member {
 
 model Session {
   id        String   @id @default(uuid())
-  expiresAt DateTime @db.Timestamptz
+  expiresAt DateTime
   token     String   @unique
-  createdAt DateTime @default(now()) @db.Timestamptz
-  updatedAt DateTime @updatedAt @db.Timestamptz
-  ipAddress String?
-  userAgent String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?  @db.VarChar(255)
+  userAgent String?  @db.Text
   userId    String
   user      Member   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -259,19 +262,19 @@ model Session {
 
 model Account {
   id                    String    @id @default(uuid())
-  accountId             String
+  accountId             String    @db.VarChar(255)
   providerId            String
   userId                String
   user                  Member    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  accessToken           String?
-  refreshToken          String?
-  idToken               String?
-  accessTokenExpiresAt  DateTime? @db.Timestamptz
-  refreshTokenExpiresAt DateTime? @db.Timestamptz
-  scope                 String?
-  password              String?
-  createdAt             DateTime  @default(now()) @db.Timestamptz
-  updatedAt             DateTime  @updatedAt @db.Timestamptz
+  accessToken           String?   @db.Text
+  refreshToken          String?   @db.Text
+  idToken               String?   @db.Text
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?   @db.Text
+  password              String?   @db.Text
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
 
   @@index([userId])
   @@map("account")
@@ -279,11 +282,11 @@ model Account {
 
 model Verification {
   id         String   @id @default(uuid())
-  identifier String
-  value      String
-  expiresAt  DateTime @db.Timestamptz
-  createdAt  DateTime @default(now()) @db.Timestamptz
-  updatedAt  DateTime @updatedAt @db.Timestamptz
+  identifier String   @db.VarChar(255)
+  value      String   @db.Text
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   @@index([identifier])
   @@map("verification")
@@ -291,7 +294,7 @@ model Verification {
 
 model RateLimit {
   id          String @id @default(uuid())
-  key         String @unique
+  key         String @unique @db.VarChar(255)
   count       Int
   lastRequest BigInt
 
@@ -311,15 +314,15 @@ model NotificationPref {
 
 model Invitation {
   id          String    @id @default(uuid())
-  email       String
+  email       String    @db.VarChar(255)
   name        String
   role        Role
   teamId      String
   tokenHash   String    @unique
   invitedById String
-  expiresAt   DateTime  @db.Timestamptz
-  acceptedAt  DateTime? @db.Timestamptz
-  createdAt   DateTime  @default(now()) @db.Timestamptz
+  expiresAt   DateTime
+  acceptedAt  DateTime?
+  createdAt   DateTime  @default(now())
 }
 
 // ───────────────────────────── projects ─────────────────────────────
@@ -329,15 +332,15 @@ model Project {
   workspaceId    String
   key            String    @unique
   name           String
-  description    String?
+  description    String?   @db.Text
   health         Health    @default(on_track)
   vendoorLeadId  String?
   abgLeadId      String?
   nextTaskNumber Int       @default(1)
   position       Int       @default(0)
-  createdAt      DateTime  @default(now()) @db.Timestamptz
-  updatedAt      DateTime  @updatedAt @db.Timestamptz
-  archivedAt     DateTime? @db.Timestamptz
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  archivedAt     DateTime?
 
   workspace   Workspace         @relation(fields: [workspaceId], references: [id])
   vendoorLead Member?           @relation("VendoorLead", fields: [vendoorLeadId], references: [id])
@@ -352,7 +355,7 @@ model ProjectCategory {
   projectId  String
   name       String
   position   Int
-  archivedAt DateTime? @db.Timestamptz
+  archivedAt DateTime?
   project    Project   @relation(fields: [projectId], references: [id])
   tasks      Task[]
 }
@@ -366,7 +369,7 @@ model CustomStatus {
   name      String
   color     String
   position  Int      @default(0)
-  createdAt DateTime @default(now()) @db.Timestamptz
+  createdAt DateTime @default(now())
   tasks     Task[]
 }
 
@@ -377,12 +380,12 @@ model Task {
   projectId         String
   number            Int
   key               String        @unique
-  title             String
-  description       String        @default("") // Markdown
+  title             String        @db.VarChar(500)
+  description       String        @default(dbgenerated("(_utf8mb4\\'\\')")) @db.Text // Markdown
   type              TaskType
   status            TaskStatus    @default(triage)
   previousStatus    TaskStatus?
-  statusChangedAt   DateTime      @default(now()) @db.Timestamptz
+  statusChangedAt   DateTime      @default(now())
   priority          Priority?
   suggestedPriority Priority?
   categoryId        String?
@@ -392,38 +395,38 @@ model Task {
   parentId          String?
   currentReleaseId  String?
 
-  currentBehaviour  String?
-  expectedBehaviour String?
-  whyItMatters      String?
+  currentBehaviour  String?   @db.Text
+  expectedBehaviour String?   @db.Text
+  whyItMatters      String?   @db.Text
   howOften          HowOften?
   isOrderRelated    Boolean   @default(false)
-  accounts          String[]
-  orderCodes        String[]
+  accounts          Json      @default("[]")
+  orderCodes        Json      @default("[]")
 
-  decisionText        String?
-  decisionUpdatedAt   DateTime? @db.Timestamptz
+  decisionText        String?   @db.Text
+  decisionUpdatedAt   DateTime?
   decisionUpdatedById String?
 
-  dueAt                 DateTime?    @db.Timestamptz
-  slaClockStartedAt     DateTime     @default(now()) @db.Timestamptz
-  slaFirstResponseDueAt DateTime?    @db.Timestamptz
-  slaResolutionDueAt    DateTime?    @db.Timestamptz
-  firstResponseAt       DateTime?    @db.Timestamptz
-  shippedAt             DateTime?    @db.Timestamptz
-  verifyReminderSentAt  DateTime?    @db.Timestamptz
-  verifiedAt            DateTime?    @db.Timestamptz
+  dueAt                 DateTime?
+  slaClockStartedAt     DateTime     @default(now())
+  slaFirstResponseDueAt DateTime?
+  slaResolutionDueAt    DateTime?
+  firstResponseAt       DateTime?
+  shippedAt             DateTime?
+  verifyReminderSentAt  DateTime?
+  verifiedAt            DateTime?
   verifiedById          String?
   reopenCount           Int          @default(0)
   closeReason           CloseReason?
-  closeNote             String?
-  closedAt              DateTime?    @db.Timestamptz
+  closeNote             String?      @db.Text
+  closedAt              DateTime?
   cancelProposedById    String?
-  cancelProposedReason  String?
+  cancelProposedReason  String?      @db.Text
   occurrenceCount       Int          @default(0)
   attachmentCount       Int          @default(0)
-  createdAt             DateTime     @default(now()) @db.Timestamptz
-  updatedAt             DateTime     @updatedAt @db.Timestamptz
-  archivedAt            DateTime?    @db.Timestamptz
+  createdAt             DateTime     @default(now())
+  updatedAt             DateTime     @updatedAt
+  archivedAt            DateTime?
 
   project             Project              @relation(fields: [projectId], references: [id])
   category            ProjectCategory?     @relation(fields: [categoryId], references: [id])
@@ -464,8 +467,8 @@ model DescriptionVersion {
   id        String   @id @default(uuid())
   taskId    String
   authorId  String
-  body      String
-  createdAt DateTime @default(now()) @db.Timestamptz
+  body      String   @db.Text
+  createdAt DateTime @default(now())
   task      Task     @relation(fields: [taskId], references: [id])
 
   @@index([taskId, createdAt])
@@ -475,8 +478,8 @@ model TaskStatusSpan {
   id        String     @id @default(uuid())
   taskId    String
   status    TaskStatus
-  enteredAt DateTime   @db.Timestamptz
-  leftAt    DateTime?  @db.Timestamptz
+  enteredAt DateTime
+  leftAt    DateTime?
   actorId   String?
   task      Task       @relation(fields: [taskId], references: [id])
 
@@ -499,15 +502,15 @@ model Follower {
 model AccessCredential {
   id                String    @id @default(uuid())
   taskId            String
-  label             String?
-  username          String
-  passwordEncrypted String?
-  url               String?
-  note              String?
+  label             String?   @db.VarChar(255)
+  username          String    @db.VarChar(500)
+  passwordEncrypted String?   @db.Text
+  url               String?   @db.Text
+  note              String?   @db.Text
   createdById       String
-  createdAt         DateTime  @default(now()) @db.Timestamptz
-  updatedAt         DateTime  @updatedAt @db.Timestamptz
-  archivedAt        DateTime? @db.Timestamptz
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  archivedAt        DateTime?
   task              Task      @relation(fields: [taskId], references: [id])
   createdBy         Member    @relation(fields: [createdById], references: [id])
 
@@ -518,14 +521,14 @@ model Occurrence {
   id               String       @id @default(uuid())
   taskId           String
   reportedById     String
-  accounts         String[]
-  orderCodes       String[]
-  happenedAt       DateTime     @db.Timestamptz
-  note             String?
+  accounts         Json         @default("[]")
+  orderCodes       Json         @default("[]")
+  happenedAt       DateTime
+  note             String?      @db.Text
   mergedFromTaskId String?
-  createdAt        DateTime     @default(now()) @db.Timestamptz
-  updatedAt        DateTime     @updatedAt @db.Timestamptz
-  archivedAt       DateTime?    @db.Timestamptz
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  archivedAt       DateTime?
   task             Task         @relation(fields: [taskId], references: [id])
   reportedBy       Member       @relation(fields: [reportedById], references: [id])
   attachments      Attachment[]
@@ -538,12 +541,12 @@ model Comment {
   taskId      String
   authorId    String
   kind        CommentKind  @default(comment)
-  body        String
+  body        String       @db.Text
   isInternal  Boolean      @default(false)
-  editedAt    DateTime?    @db.Timestamptz
-  createdAt   DateTime     @default(now()) @db.Timestamptz
-  updatedAt   DateTime     @updatedAt @db.Timestamptz
-  archivedAt  DateTime?    @db.Timestamptz
+  editedAt    DateTime?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  archivedAt  DateTime?
   task        Task         @relation(fields: [taskId], references: [id])
   author      Member       @relation(fields: [authorId], references: [id])
   reactions   Reaction[]
@@ -556,7 +559,7 @@ model Reaction {
   commentId String
   memberId  String
   emoji     String
-  createdAt DateTime @default(now()) @db.Timestamptz
+  createdAt DateTime @default(now())
   comment   Comment  @relation(fields: [commentId], references: [id])
   member    Member   @relation(fields: [memberId], references: [id])
 
@@ -570,24 +573,24 @@ model Attachment {
   occurrenceId    String?
   incidentId      String?
   uploadedById    String
-  storageKey      String          @unique
-  playbackKey     String?
-  posterKey       String?
-  fileName        String
-  mime            String
+  storageKey      String          @unique @db.VarChar(512)
+  playbackKey     String?         @db.VarChar(512)
+  posterKey       String?         @db.VarChar(512)
+  fileName        String          @db.VarChar(255)
+  mime            String          @db.VarChar(255)
   size            BigInt
   durationSec     Float?
   width           Int?
   height          Int?
   waveform        Json?
   processingState ProcessingState @default(pending)
-  createdAt       DateTime        @default(now()) @db.Timestamptz
-  updatedAt       DateTime        @updatedAt @db.Timestamptz
-  archivedAt      DateTime?       @db.Timestamptz
-  task            Task?           @relation(fields: [taskId], references: [id])
-  comment         Comment?        @relation(fields: [commentId], references: [id])
-  occurrence      Occurrence?     @relation(fields: [occurrenceId], references: [id])
-  incident        Incident?       @relation(fields: [incidentId], references: [id])
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  archivedAt      DateTime?
+  task            Task?           @relation(fields: [taskId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  comment         Comment?        @relation(fields: [commentId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  occurrence      Occurrence?     @relation(fields: [occurrenceId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  incident        Incident?       @relation(fields: [incidentId], references: [id], onDelete: Restrict, onUpdate: Restrict)
   uploadedBy      Member          @relation(fields: [uploadedById], references: [id])
 
   @@index([taskId])
@@ -601,7 +604,7 @@ model TaskRelation {
   toTaskId    String
   kind        RelationKind
   createdById String
-  createdAt   DateTime     @default(now()) @db.Timestamptz
+  createdAt   DateTime     @default(now())
   from        Task         @relation("RelFrom", fields: [fromTaskId], references: [id])
   to          Task         @relation("RelTo", fields: [toTaskId], references: [id])
 
@@ -615,17 +618,17 @@ model Release {
   number         String        @unique
   state          ReleaseState
   type           ReleaseType
-  targetDate     DateTime?     @db.Timestamptz
-  releasedAt     DateTime?     @db.Timestamptz
-  notes          String        @default("")
+  targetDate     DateTime?
+  releasedAt     DateTime?
+  notes          String        @default(dbgenerated("(_utf8mb4\\'\\')")) @db.Text
   deployedById   String?
-  deployNote     String?
-  rolledBackAt   DateTime?     @db.Timestamptz
-  rollbackReason String?
+  deployNote     String?       @db.Text
+  rolledBackAt   DateTime?
+  rollbackReason String?       @db.Text
   createdById    String
-  createdAt      DateTime      @default(now()) @db.Timestamptz
-  updatedAt      DateTime      @updatedAt @db.Timestamptz
-  archivedAt     DateTime?     @db.Timestamptz
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  archivedAt     DateTime?
   createdBy      Member        @relation("ReleaseCreator", fields: [createdById], references: [id])
   deployedBy     Member?       @relation("ReleaseDeployer", fields: [deployedById], references: [id])
   tasks          ReleaseTask[]
@@ -635,7 +638,7 @@ model Release {
 model ReleaseTask {
   releaseId String
   taskId    String
-  addedAt   DateTime @default(now()) @db.Timestamptz
+  addedAt   DateTime @default(now())
   release   Release  @relation(fields: [releaseId], references: [id])
   task      Task     @relation(fields: [taskId], references: [id])
 
@@ -647,22 +650,22 @@ model ReleaseTask {
 model Incident {
   id                 String                  @id @default(uuid())
   number             Int                     @unique
-  title              String
-  scope              String
+  title              String                  @db.VarChar(500)
+  scope              String                  @db.Text
   state              IncidentState
-  startedAt          DateTime                @db.Timestamptz
-  resolvedAt         DateTime?               @db.Timestamptz
-  impact             String?
-  rootCause          String?
-  summary            String?
-  resolution         String?
+  startedAt          DateTime
+  resolvedAt         DateTime?
+  impact             String?                 @db.Text
+  rootCause          String?                 @db.Text
+  summary            String?                 @db.Text
+  resolution         String?                 @db.Text
   followUpTaskId     String?
-  followUpNoneReason String?
+  followUpNoneReason String?                 @db.Text
   openedById         String
-  closedAt           DateTime?               @db.Timestamptz
-  createdAt          DateTime                @default(now()) @db.Timestamptz
-  updatedAt          DateTime                @updatedAt @db.Timestamptz
-  archivedAt         DateTime?               @db.Timestamptz
+  closedAt           DateTime?
+  createdAt          DateTime                @default(now())
+  updatedAt          DateTime                @updatedAt
+  archivedAt         DateTime?
   timeline           IncidentTimelineEntry[]
   attachments        Attachment[]
 }
@@ -672,9 +675,9 @@ model IncidentTimelineEntry {
   incidentId String
   authorId   String
   state      IncidentState?
-  body       String
+  body       String         @db.Text
   kind       String         @default("update") // reported | alert_sent | acknowledged | status | update | silence | resolved
-  at         DateTime       @default(now()) @db.Timestamptz
+  at         DateTime       @default(now())
   incident   Incident       @relation(fields: [incidentId], references: [id])
 }
 
@@ -683,11 +686,11 @@ model ProjectUpdate {
   projectId   String
   authorId    String
   health      Health
-  body        String
+  body        String   @db.Text
   periodStart DateTime @db.Date
   periodEnd   DateTime @db.Date
-  createdAt   DateTime @default(now()) @db.Timestamptz
-  updatedAt   DateTime @updatedAt @db.Timestamptz
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
   project     Project  @relation(fields: [projectId], references: [id])
 }
 
@@ -705,7 +708,7 @@ model ActivityEvent {
   toValue       Json?
   isInternal    Boolean        @default(false)
   meta          Json?
-  at            DateTime       @default(now()) @db.Timestamptz
+  at            DateTime       @default(now())
   actor         Member?        @relation(fields: [actorId], references: [id])
   notifications Notification[]
 
@@ -721,10 +724,10 @@ model Notification {
   taskId       String?
   kind         String
   channel      Channel
-  readAt       DateTime?     @db.Timestamptz
-  snoozedUntil DateTime?     @db.Timestamptz
-  sentAt       DateTime?     @db.Timestamptz
-  createdAt    DateTime      @default(now()) @db.Timestamptz
+  readAt       DateTime?
+  snoozedUntil DateTime?
+  sentAt       DateTime?
+  createdAt    DateTime      @default(now())
   member       Member        @relation(fields: [memberId], references: [id])
   event        ActivityEvent @relation(fields: [eventId], references: [id])
 
@@ -736,11 +739,11 @@ model SavedView {
   ownerId    String?
   isShared   Boolean   @default(false)
   name       String
-  query      String // URL query string of filters + display
+  query      String    @db.Text // URL query string of filters + display
   position   Int       @default(0)
-  createdAt  DateTime  @default(now()) @db.Timestamptz
-  updatedAt  DateTime  @updatedAt @db.Timestamptz
-  archivedAt DateTime? @db.Timestamptz
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  archivedAt DateTime?
   owner      Member?   @relation(fields: [ownerId], references: [id])
 }
 
@@ -749,11 +752,11 @@ model Job {
   id        String    @id @default(uuid())
   kind      String
   payload   Json
-  runAt     DateTime  @default(now()) @db.Timestamptz
+  runAt     DateTime  @default(now())
   attempts  Int       @default(0)
-  lastError String?
-  doneAt    DateTime? @db.Timestamptz
-  createdAt DateTime  @default(now()) @db.Timestamptz
+  lastError String?   @db.Text
+  doneAt    DateTime?
+  createdAt DateTime  @default(now())
 
   @@index([doneAt, runAt])
 }

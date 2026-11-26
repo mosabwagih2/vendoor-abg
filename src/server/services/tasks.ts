@@ -2,6 +2,7 @@ import { statusGroup } from "@/domain/status-display";
 import "server-only";
 import type { Prisma } from "@/generated/prisma/client";
 import { db } from "../db";
+import { withLists } from "../json-list";
 import { recordEvent } from "../activity";
 import { notify } from "../notify";
 import { AppError } from "../errors";
@@ -30,7 +31,7 @@ export async function findTaskByKey(key: string, tx: Tx | typeof db = db) {
 async function getTaskOrThrow(tx: Tx, id: string) {
   const t = await tx.task.findUnique({ where: { id } });
   if (!t || t.archivedAt) throw new AppError("not_found", "Task not found");
-  return t;
+  return withLists(t);
 }
 
 async function allocateKey(tx: Tx, projectId: string) {
@@ -382,7 +383,8 @@ export async function transition(actor: Actor, taskId: string, action: WorkflowA
 }
 
 async function mergeInto(tx: Tx, actor: Actor, source: { id: string; key: string; requesterId: string; accounts: string[]; orderCodes: string[]; description: string; currentBehaviour: string | null; title: string; createdAt: Date }, targetId: string) {
-  const target = await tx.task.findUnique({ where: { id: targetId } });
+  const found = await tx.task.findUnique({ where: { id: targetId } });
+  const target = found && withLists(found);
   if (!target || target.id === source.id) throw new AppError("invalid_input", "target");
   if (target.status === "closed") throw new AppError("invalid_input", "Target task is closed.");
   // The request becomes an occurrence of the target (FR-4.2), with its attachments.

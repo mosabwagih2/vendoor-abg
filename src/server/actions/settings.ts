@@ -5,6 +5,7 @@ import { hash } from "@node-rs/argon2";
 import { requireMember } from "../session";
 import { runAction, AppError } from "../errors";
 import { db } from "../db";
+import { numberList } from "../json-list";
 import { recordEvent } from "../activity";
 import { invalidateWorkspaceConfig } from "../calendar";
 import { can } from "@/domain/policy";
@@ -118,7 +119,7 @@ export async function saveSlaAction(input: z.input<typeof slaSchema>) {
     const end = d.workDayEndMin ?? ws.workDayEndMin;
     if (end <= start) throw new AppError("invalid_input", "hours");
     await db.$transaction(async (tx) => {
-      await tx.workspace.update({ where: { id: ws.id }, data: { workingDays: d.workingDays ?? ws.workingDays, workDayStartMin: start, workDayEndMin: end } });
+      await tx.workspace.update({ where: { id: ws.id }, data: { workingDays: d.workingDays ?? numberList(ws.workingDays), workDayStartMin: start, workDayEndMin: end } });
       for (const t of d.targets ?? []) await tx.slaTarget.update({ where: { workspaceId_priority: { workspaceId: ws.id, priority: t.priority } }, data: { firstResponseMinutes: t.firstResponseMinutes, resolutionMinutes: t.resolutionMinutes } });
       await recordEvent(tx, { actorId: me.id, subjectType: "settings", subjectId: ws.id, verb: "sla_updated", to: d });
     });
